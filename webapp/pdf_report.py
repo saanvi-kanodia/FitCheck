@@ -240,7 +240,7 @@ def _row(pdf, label, value, value_color=INK):
     pdf.cell(w * 0.4, 7.5, value, align="R", new_x="LMARGIN", new_y="NEXT")
 
 
-def build_pdf(job, job_dir, out_path):
+def build_pdf(job, job_dir, out_path, summary=None):
     pdf = Report(format="A4", unit="mm")
     pdf.set_margins(20, 20, 20)
     pdf.set_auto_page_break(True, margin=22)
@@ -249,7 +249,7 @@ def build_pdf(job, job_dir, out_path):
     pdf.alias_nb_pages()
     pdf.add_page()
     w = pdf.epw
-    s = _summarise(job)
+    s = summary or _summarise(job)
 
     # Title
     created = time.strftime("%d %B %Y, %H:%M", time.localtime(job.get("created") or time.time()))

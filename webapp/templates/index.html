@@ -37,7 +37,12 @@
 
   .intro { padding: 36px 0 40px; max-width: 760px; }
   .intro h1 { overflow-wrap: break-word; font: 900 clamp(30px, 8vw, 68px)/.95 var(--display); margin: 0 0 18px; letter-spacing: -.035em; text-transform: uppercase; }
-  .intro h1 em { font-style: normal; color: var(--accent-text); }
+  .intro { text-align: center; margin-left: auto; margin-right: auto; }
+  .intro .wordmark { gap: .22em; justify-content: center; }
+  .intro p { margin-left: auto; margin-right: auto; }
+  .intro .wordmark::before { width: .22em; height: .22em; flex: none; }
+  .tagline { margin: 0 0 12px; font: 900 22px/1.1 var(--display); letter-spacing: -.02em; text-transform: uppercase; }
+  .tagline em { font-style: normal; color: var(--accent-text); }
   .intro p { margin: 0; color: var(--muted); font-size: 17px; max-width: 580px; }
 
   main { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px; align-items: start; padding-bottom: 48px; }
@@ -193,11 +198,13 @@
   @media (min-width: 901px) and (min-height: 560px) {
     .wrap { height: 100vh; display: flex; flex-direction: column; }
     header { padding: 16px 0 6px; flex: none; }
-    .intro { padding: 10px 0 20px; flex: none; max-width: none; }
+    .intro { padding: 0 0 22px; flex: none; max-width: none; margin-top: auto; }
     .intro h1 { font-size: clamp(30px, 3.4vw, 44px); margin: 0 0 8px; white-space: nowrap; }
+    .tagline { margin-bottom: 8px; }
     .intro p { font-size: 15px; max-width: none; }
-    #form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    main { flex: 1; min-height: 0; padding-bottom: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+    /* Cards keep a comfortable height and the heading + cards sit centred in the window. */
+    #form { flex: none; display: flex; flex-direction: column; }
+    main { height: clamp(500px, calc(100vh - 290px), 640px); padding-bottom: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
     .picker, .stage { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
     .picker, .stage { align-self: stretch; }
     .stage { display: flex; flex-direction: column; }
@@ -207,7 +214,7 @@
     #empty .drop { flex: 1; min-height: 140px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     #running:not(.hidden), #result:not(.hidden) { display: block; }
     .media { max-height: 52vh; }
-    footer { flex: none; padding: 10px 0 12px; font-size: 12px; line-height: 1.4; }
+    footer { flex: none; margin-top: auto; padding: 10px 0 12px; font-size: 12px; line-height: 1.4; }
   }
   /* Light mode: crisper tiles and a stronger accent */
   :root[data-theme=light] .wordmark::before { background: var(--accent-text); box-shadow: 0 0 10px rgba(63, 107, 0, .35); }
@@ -244,17 +251,41 @@
     .r-card { padding: 16px; }
     .actions .ghost, .actions .btn-sm { flex: 1; text-align: center; }
   }
+
+  /* Analyses list: each item has its own progress */
+  .saved .open { grid-template-columns: 64px minmax(0, 1fr); }
+  .saved .prog { grid-column: 2; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; margin-top: 4px; }
+  .saved .prog i { display: block; height: 100%; width: 0; background: var(--accent-text); transition: width .4s; }
+  .saved .state { color: var(--accent-text); font-weight: 700; }
+  .saved .state.bad { color: var(--err); }
+  .saved .retry { background: none; border: 1px solid var(--line); color: var(--ink); font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; border-radius: 999px; }
+  .saved .retry:hover { border-color: var(--ink); }
+  .store-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+  .msg { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--err); font-size: 14px; line-height: 1.5; }
+  .msg:empty { display: none; }
+  /* Live camera */
+  .live-box { position: relative; overflow: hidden; }
+  .live-box video { display: none; }
+  .live-box canvas { width: 100%; aspect-ratio: 4/3; border-radius: var(--r); background: #000; display: block; object-fit: contain; }
+  .live-hud { position: absolute; top: 12px; left: 12px; padding: 10px 14px; border-radius: 12px; background: rgba(0,0,0,.6); color: #fff; line-height: 1; }
+  .live-hud b { display: block; font: 900 44px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .live-hud span { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
+  .live-time { position: absolute; top: 12px; right: 12px; padding: 6px 10px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font: 700 13px/1 var(--sans); font-variant-numeric: tabular-nums; }
+  .live-cue { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--plate); font-weight: 700; min-height: 46px; }
+  .live-cue.good { color: var(--accent-text); }
+  .live-cue.warn { color: var(--err); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <span class="wordmark">FitCheck</span>
+    <span></span>
     <button class="theme-btn" id="themeBtn" type="button">Dark</button>
   </header>
 
   <section class="intro">
-    <h1>Analyse your <em>fitness test.</em></h1>
+    <h1 class="wordmark">FitCheck</h1>
+    <h2 class="tagline">Analyse your <em>fitness test.</em></h2>
     <p>Upload a video of a fitness test. FitCheck counts your reps and flags form problems.</p>
   </section>
 
@@ -276,9 +307,10 @@
       </div>
 
       <div class="group" id="savedGroup">
-        <p class="label"><span>Saved analyses</span><span id="savedCount"></span></p>
+        <p class="label"><span>Your analyses</span><span id="savedCount"></span></p>
         <ul class="saved" id="saved"></ul>
-        <p class="saved-empty" id="savedEmpty">Nothing saved yet. Press Save on a result to keep it here.</p>
+        <p class="saved-empty" id="savedEmpty">Your analyses appear here automatically, with the video and PDF.</p>
+        <p class="store-note">Kept privately in this browser on this device.</p>
       </div>
     </div>
 
@@ -309,25 +341,32 @@
       </div>
 
       <button class="btn" id="go" type="submit" disabled>Analyse video</button>
-      <p class="note">Analysis takes about 1&ndash;2 minutes. <button type="button" class="link" id="sampleBtn">No video? Try a sample clip</button></p>
+      <p class="note">Analysis takes about 1&ndash;2 minutes. <button type="button" class="link" id="sampleBtn">No video? Try a sample clip</button>
+        <br><button type="button" class="link" id="liveBtn">Or analyse live with your camera</button></p>
       <div class="error" id="err"></div>
       </div>
       </div>
 
       <div id="running" class="hidden">
-        <div class="stage-head"><h2 id="runTitle">Analysing</h2><span class="tag">Analysing</span></div>
+        <div class="stage-head"><h2 id="runTitle">Analysing</h2><span class="tag" id="runTag">Analysing</span>
+          <button class="ghost new-btn" type="button" data-new>&larr; New analysis</button></div>
         <div class="media-box">
           <img class="media" id="preview" alt="Live analysis preview">
-          <div class="waiting" id="waiting"><div><span class="spinner" aria-hidden="true"></span>Loading pose model…</div></div>
+          <div class="waiting" id="waiting"><div><span class="spinner" aria-hidden="true"></span><span id="waitText">Starting…</span></div></div>
         </div>
         <div class="bar" id="bar"><div id="barFill"></div></div>
         <div class="status"><span id="statusText">Starting</span><span id="pct"></span></div>
         <p class="slow hidden" id="slowNote"><span class="dot-spin" aria-hidden="true"></span><span id="slowText"></span></p>
+        <p class="msg" id="runMsg"></p>
+        <div class="actions hidden" id="runActions">
+          <button class="btn-sm" type="button" id="retryBtn">Try again</button>
+          <button class="ghost" type="button" id="removeBtn">Remove</button>
+        </div>
       </div>
 
       <div id="result" class="hidden">
-        <div class="stage-head"><h2 id="resTitle">Results</h2><span class="tag" id="resChip">Done</span>
-          <button class="ghost new-btn" type="button" id="again">&larr; New analysis</button></div>
+        <div class="stage-head"><h2 id="resTitle">Results</h2><span class="tag" id="resChip">Saved</span>
+          <button class="ghost new-btn" type="button" data-new>&larr; New analysis</button></div>
         <video class="media" id="video" controls playsinline></video>
         <div class="report" id="reportView"></div>
         <details id="reportBox" class="hidden">
@@ -335,15 +374,30 @@
           <pre id="report"></pre>
         </details>
         <div class="actions">
-          <button class="btn-sm" type="button" id="saveBtn">Save</button>
           <a class="ghost" id="dl" download>Download video</a>
-          <a class="ghost" id="dlReport">Download PDF</a>
+          <a class="ghost" id="dlReport" download>Download PDF</a>
         </div>
+      </div>
+
+      <div id="live" class="hidden">
+        <div class="stage-head"><h2 id="liveTitle">Live</h2><span class="tag" id="liveTag">Camera</span>
+          <button class="ghost new-btn" type="button" id="liveClose">&larr; Back</button></div>
+        <div class="media-box live-box">
+          <video id="cam" playsinline muted></video>
+          <canvas id="liveCanvas" width="640" height="480"></canvas>
+          <div class="live-time" id="liveTime">0:00</div>
+        </div>
+        <p class="live-cue" id="liveCue">Press Start and allow camera access.</p>
+        <div class="actions">
+          <button class="btn-sm" type="button" id="liveStart">Start</button>
+          <button class="ghost" type="button" id="liveStop" disabled>Stop and save</button>
+        </div>
+        <p class="r-note">Counting runs in your browser and the camera video never leaves this device. Live results are less precise than an uploaded analysis.</p>
       </div>
     </section>
   </main></form>
   <div id="infoPop" class="hidden" role="dialog"></div>
-  <footer>Videos are processed on the server to analyse your test and are not shared. Built by <a href="https://portfolio-website-theta-lilac.vercel.app/" target="_blank" rel="noopener">Saanvi Kanodia</a>.</footer>
+  <footer>Uploaded videos are processed on the server and are not shared. Built by <a href="https://portfolio-website-theta-lilac.vercel.app/" target="_blank" rel="noopener">Saanvi Kanodia</a>.</footer>
 </div>
 
 <script>
@@ -359,6 +413,13 @@ $('themeBtn').addEventListener('click', () => {
 });
 syncThemeLabel();
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// Sizes in decimal megabytes, the way phones and computers show them.
+const fmtSize = b => `${(b / 1e6).toFixed(b < 1e7 ? 1 : 0)} MB`;
+const fmtDate = t => new Date(t * 1000).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const rating = f => f == null ? null : f >= 3.5 ? 'Excellent' : f >= 2.5 ? 'Good' : f >= 1.5 ? 'Fair' : 'Needs work';
+
 const G = '<path class="ground" d="M6 66h108"/>';
 const ILLUS = {
   pushup: ['<circle cx="22" cy="40" r="5"/><path d="M28 44L66 50L104 64M32 45v19"/>', 'Side view. Head, hips and heels should stay in one line.'],
@@ -371,49 +432,52 @@ const ILLUS = {
   sitreach: ['<circle cx="62" cy="34" r="5"/><path d="M40 64h54M40 64L58 42M58 44L90 54"/><path class="acc" d="M96 52h14v12H96z"/>', 'Side view. Legs straight, reach forward slowly and hold.'],
   backstretch: ['<circle cx="84" cy="54" r="5"/><path d="M60 30v34M60 30L80 48M78 46L76 64"/>', 'Side view. Bend forward from the hips.'],
 };
+const miniSvg = key => ILLUS[key] ? `<svg viewBox="0 0 120 72" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[key][0]}</svg>` : '';
 const radios = [...form.querySelectorAll('input[name=test]')];
+const testName = key => radios.find(r => r.value === key)?.parentElement.querySelector('b').textContent || key;
+const selectedTest = () => form.querySelector('input[name=test]:checked').value;
 
-const FILMING = {{ filming|tojson }}, MAX_MB = {{ max_mb }}, SAMPLES = {{ samples|tojson }};
+const FILMING = {{ filming|tojson }}, MAX_MB = {{ max_mb }}, SAMPLES = {{ samples|tojson }}, CHUNK = {{ chunk }};
+// Live mode only where in-browser tracking is reliable; lying-down tests (plank, curl-ups) are often missed.
+const LIVE_TESTS = ['pushup', 'squats', 'jumpingjack'];
 function syncTest() {
   const sel = form.querySelector('input[name=test]:checked');
   $('heightField').classList.toggle('hidden', sel.dataset.height !== '1');
   const ill = ILLUS[sel.value];
-  if (!ill) return;
   $('illus').innerHTML = `<svg viewBox="0 0 120 72" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${G}${ill[0]}</svg>`;
   $('figNo').textContent = `Fig. ${radios.indexOf(sel) + 1}`;
-  $('emptyTitle').textContent = sel.parentElement.querySelector('b').textContent;
+  $('emptyTitle').textContent = testName(sel.value);
   $('emptyHint').textContent = ill[1];
   $('sampleBtn').classList.toggle('hidden', !SAMPLES.includes(sel.value));
-  $('filmTip').innerHTML = FILMING[sel.value] ? `<b>Filming tip:</b> ${FILMING[sel.value]}` : '';
+  $('liveBtn').classList.toggle('hidden', !LIVE_TESTS.includes(sel.value) || !navigator.mediaDevices?.getUserMedia);
+  $('filmTip').innerHTML = FILMING[sel.value] ? `<b>Filming tip:</b> ${esc(FILMING[sel.value])}` : '';
 }
 radios.forEach(r => {
-  const ill = ILLUS[r.value];
-  if (ill) r.parentElement.querySelector('.thumb').innerHTML =
-    `<svg viewBox="0 0 120 72" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${G}${ill[0]}</svg>`;
+  r.parentElement.querySelector('.thumb').innerHTML =
+    `<svg viewBox="0 0 120 72" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[r.value][0]}</svg>`;
   r.addEventListener('change', syncTest);
 });
 syncTest();
 
 function setFile(f) {
   $('dropText').textContent = f ? f.name : 'Choose a file or drop it here';
-  $('dropHint').textContent = f ? `${(f.size / 1048576).toFixed(1)} MB. Click to change.` : `MP4 or MOV, up to ${MAX_MB} MB`;
+  $('dropHint').textContent = f ? `${fmtSize(f.size)}. Click to change.` : `MP4 or MOV, up to ${MAX_MB} MB`;
   drop.classList.toggle('has', !!f);
   $('go').disabled = !f;
 }
 $('sampleBtn').addEventListener('click', async () => {
-  const key = form.querySelector('input[name=test]:checked').value;
+  const key = selectedTest();
   const btn = $('sampleBtn'); btn.disabled = true; btn.textContent = 'Loading sample...';
   try {
     const res = await fetch(`/static/sample-${key}.mp4`);
     if (!res.ok) throw new Error();
-    const name = `sample-${key}.mp4`;
-    const dt = new DataTransfer(); dt.items.add(new File([await res.blob()], name, { type: 'video/mp4' }));
+    const dt = new DataTransfer(); dt.items.add(new File([await res.blob()], `sample-${key}.mp4`, { type: 'video/mp4' }));
     file.files = dt.files;
     setFile(file.files[0]);
   } catch (e) { $('err').textContent = 'Could not load the sample video.'; }
   btn.disabled = false; btn.textContent = 'No video? Try a sample clip';
 });
-file.addEventListener('change', () => setFile(file.files[0]));
+file.addEventListener('change', () => { $('err').textContent = ''; setFile(file.files[0]); });
 ['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('over')));
 drop.addEventListener('drop', ev => {
@@ -421,72 +485,324 @@ drop.addEventListener('drop', ev => {
   if (ev.dataTransfer.files.length) { file.files = ev.dataTransfer.files; setFile(file.files[0]); }
 });
 
-function show(id) { ['empty', 'running', 'result'].forEach(x => $(x).classList.toggle('hidden', x !== id)); }
-$('again').addEventListener('click', () => { currentId = null; document.querySelectorAll('.saved li').forEach(li => li.classList.remove('active')); show('empty'); file.value = ''; setFile(null); });
+/* ------------------------------------------------------------------ storage
+   Everything the user keeps lives in this browser (IndexedDB):
+   - pending: analyses not finished yet, with the original video so uploads can resume
+   - history: finished analyses with results, analysed video and PDF                       */
+const DB = (() => {
+  let opening;
+  const open = () => opening ||= new Promise((res, rej) => {
+    const r = indexedDB.open('fitcheck', 1);
+    r.onupgradeneeded = () => {
+      r.result.createObjectStore('pending', { keyPath: 'key' });
+      r.result.createObjectStore('history', { keyPath: 'id' });
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+  const run = async (store, mode, fn) => {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction(store, mode), req = fn(t.objectStore(store));
+      t.oncomplete = () => res(req && req.result);
+      t.onerror = t.onabort = () => rej(t.error);
+    });
+  };
+  return {
+    put: (s, v) => run(s, 'readwrite', o => o.put(v)),
+    del: (s, k) => run(s, 'readwrite', o => o.delete(k)),
+    all: s => run(s, 'readonly', o => o.getAll()),
+  };
+})();
+const STORED = ['key', 'test_key', 'test', 'height', 'name', 'size', 'created', 'blob', 'uploadId', 'jobId', 'state', 'message'];
+const persist = rec => DB.put('pending', Object.fromEntries(STORED.map(k => [k, rec[k] ?? null]))).catch(() => {});
 
+/* -------------------------------------------------------------------- state */
+const items = new Map();   // pending analyses, by key
+let history = [];          // finished analyses (newest first)
+let selected = null;       // key of the item shown on the right
+let view = 'empty';
+
+function show(id) {
+  view = id;
+  ['empty', 'running', 'result', 'live'].forEach(x => $(x).classList.toggle('hidden', x !== id));
+}
+function goNew() {
+  selected = null; show('empty'); renderList();
+  file.value = ''; setFile(null);
+}
+document.querySelectorAll('[data-new]').forEach(b => b.addEventListener('click', goNew));
+
+async function api(url, opts = {}) {
+  let res;
+  try {
+    res = await fetch(url, { ...opts, headers: opts.json ? { 'Content-Type': 'application/json' } : undefined,
+                             body: opts.json ? JSON.stringify(opts.json) : opts.body });
+  } catch (e) { throw Object.assign(new Error('Network error'), { status: 0 }); }
+  let data = {};
+  try { data = await res.json(); } catch (e) { /* not JSON */ }
+  if (!res.ok) throw Object.assign(new Error(data.error || `Server error (${res.status})`), { status: res.status, data });
+  return data;
+}
+// Wait before retrying, but wake up early when the connection comes back.
+function waitRetry(ms) {
+  return new Promise(r => { const t = setTimeout(done, ms); function done() { clearTimeout(t); removeEventListener('online', done); r(); } addEventListener('online', done); });
+}
+
+function update(rec, patch) {
+  Object.assign(rec, patch);
+  renderList();
+  if (selected === rec.key) renderRunning(rec);
+}
+
+/* ------------------------------------------------------------------ uploads */
 form.addEventListener('submit', async ev => {
   ev.preventDefault();
   $('err').textContent = '';
-  if (!file.files.length) { $('err').textContent = 'Choose a video first.'; return; }
-  if (file.files[0].size > MAX_MB * 1048576) { $('err').textContent = `Video is over ${MAX_MB} MB. Trim it to under a minute and try again.`; return; }
-  $('go').disabled = true;
-  $('runTitle').textContent = form.querySelector('input[name=test]:checked').parentElement.querySelector('b').textContent;
-  $('preview').removeAttribute('src'); $('waiting').classList.remove('hidden');
-  $('barFill').style.width = '0'; $('pct').textContent = '';
-  $('statusText').textContent = 'Uploading';
-  show('running');
+  const f = file.files[0];
+  if (!f) { $('err').textContent = 'Choose a video first.'; return; }
+  if (f.size > MAX_MB * 1e6) { $('err').textContent = `This video is ${fmtSize(f.size)}. The limit is ${MAX_MB} MB, so trim it to under a minute and try again.`; return; }
+  const key = selectedTest(), h = form.height.value;
+  if (key === 'sitreach' && !(h >= 80 && h <= 250)) { $('err').textContent = 'Sit and reach needs your height in cm (80 to 250).'; return; }
+  const rec = { key: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), test_key: key, test: testName(key),
+                height: key === 'sitreach' ? Number(h) : null, name: f.name, size: f.size, created: Date.now() / 1000,
+                blob: f, state: 'uploading', progress: 0 };
+  items.set(rec.key, rec);
+  await persist(rec);
+  selected = rec.key; show('running'); renderList(); renderRunning(rec);
+  file.value = ''; setFile(null);            // the form is free for the next analysis
   if (matchMedia('(max-width: 900px)').matches) $('stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  try {
-    const res = await fetch('/api/analyze', { method: 'POST', body: new FormData(form) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Upload failed');
-    poll(data.job);
-  } catch (e) { $('err').textContent = e.message; show('empty'); $('go').disabled = !file.files.length; }
+  upload(rec);
 });
 
-let pollFails = 0, phaseStart = 0, phase = '';
-function slow(msg) { $('slowNote').classList.toggle('hidden', !msg); if (msg) $('slowText').textContent = msg; }
-async function poll(id) {
-  let j;
+async function upload(rec) {
+  if (rec.busy) return;
+  rec.busy = true;
+  let wait = 1000;
   try {
-    const res = await fetch(`/api/jobs/${id}`);
-    if (res.status === 404) throw Object.assign(new Error(), { gone: true });
-    j = await res.json(); pollFails = 0;
-  } catch (e) {
-    // The server may be busy or restarting: keep trying for a while before giving up.
-    if (!e.gone && ++pollFails < 30) { slow('Waiting for the server to respond...'); return setTimeout(() => poll(id), 2000); }
-    pollFails = 0; slow(''); $('bar').classList.remove('pulse');
-    $('err').textContent = 'The server restarted and this analysis was lost. Please try again, or use a shorter clip.';
-    show('empty'); $('go').disabled = !file.files.length; return;
-  }
-  if (j.status === 'rejected') {
-    phase = ''; slow(''); $('bar').classList.remove('pulse');
-    show('empty'); file.value = ''; setFile(null);
-    $('err').textContent = j.message || 'This video could not be analysed. Please upload another one.';
-    $('err').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    fetch(`/api/jobs/${id}`, { method: 'DELETE' }); return;
-  }
-  if (j.status !== phase) { phase = j.status; phaseStart = Date.now(); }
-  const secs = Math.round((Date.now() - phaseStart) / 1000);
-  $('bar').classList.toggle('pulse', j.status === 'encoding');
-  if (j.status === 'encoding') slow(`Preparing your video and report. This can take up to a minute on the free server${secs > 5 ? ` (${secs}s so far)` : ''}. Please keep this page open.`);
-  else if (j.status === 'running' && !j.frame && secs > 8) slow(`Starting up the pose model (${secs}s). The first analysis after a quiet period is slower.`);
-  else slow('');
-  if (j.status === 'queued') {
-    $('statusText').textContent = 'In line';
-    slow(`Another analysis is running on the server. Yours will start as soon as it finishes${secs > 5 ? ` (waiting ${secs}s)` : ''}.`);
-  } else if (j.status === 'running') {
-    const p = j.total ? Math.min(100, Math.round(j.frame / j.total * 100)) : 0;
-    $('barFill').style.width = p + '%'; $('pct').textContent = p ? p + '%' : '';
-    $('statusText').textContent = j.frame ? `Frame ${j.frame} of ${j.total}` : j.stage === 'checking' ? 'Checking your whole body is in frame' : 'Loading pose model';
-    if (j.frame) { $('preview').src = `/jobs/${id}/preview.jpg?t=${Date.now()}`; $('waiting').classList.add('hidden'); }
-  } else if (j.status === 'encoding') {
-    $('barFill').style.width = '100%'; $('pct').textContent = '100%';
-    $('statusText').textContent = 'Finishing up';
-  } else { phase = ''; slow(''); $('bar').classList.remove('pulse'); return finish(id, j); }
-  setTimeout(() => poll(id), 700);
+    while (items.has(rec.key) && !rec.jobId) {
+      try {
+        if (!rec.uploadId) {
+          const r = await api('/api/uploads', { method: 'POST', json: { name: rec.name, size: rec.size, test: rec.test_key, height: rec.height } });
+          rec.uploadId = r.upload; await persist(rec);
+        }
+        const st = await api(`/api/uploads/${rec.uploadId}`);
+        if (st.job) { rec.jobId = st.job; break; }
+        let offset = st.received;
+        update(rec, { state: 'uploading', progress: offset / rec.size, message: null });
+        while (offset < rec.size) {
+          const r = await fetch(`/api/uploads/${rec.uploadId}?offset=${offset}`, { method: 'PUT', body: rec.blob.slice(offset, offset + CHUNK) })
+            .catch(() => { throw Object.assign(new Error('Network error'), { status: 0 }); });
+          const data = await r.json().catch(() => ({}));
+          if (r.status === 409 && data.received != null) { offset = data.received; continue; }
+          if (!r.ok) throw Object.assign(new Error(data.error || 'Upload failed'), { status: r.status });
+          offset = data.received; wait = 1000;
+          update(rec, { state: 'uploading', progress: offset / rec.size, message: null });
+        }
+        const c = await api(`/api/uploads/${rec.uploadId}/complete`, { method: 'POST' });
+        rec.jobId = c.job;
+      } catch (e) {
+        if (e.status === 404) { rec.uploadId = null; continue; }            // server forgot the upload: start again
+        if (e.status >= 400 && e.status < 500 && e.status !== 409) { fail(rec, e.message, true); return; }
+        update(rec, { state: 'paused', message: navigator.onLine ? 'Connection problem. The upload will continue automatically.'
+                                                                 : 'You are offline. The upload will continue when you reconnect.' });
+        await waitRetry(wait); wait = Math.min(wait * 2, 20000);
+      }
+    }
+  } finally { rec.busy = false; }
+  if (rec.jobId) { rec.state = 'queued'; await persist(rec); track(rec); }
 }
 
+/* --------------------------------------------------------------------- jobs */
+async function track(rec) {
+  if (rec.tracking) return;
+  rec.tracking = true;
+  let wait = 1000;
+  while (items.has(rec.key) && rec.jobId) {
+    let j;
+    try { j = await api(`/api/jobs/${rec.jobId}`); wait = 1000; }
+    catch (e) {
+      if (e.status === 404) {                // the server no longer has this job (restart or cleanup)
+        rec.jobId = null; rec.uploadId = null;
+        fail(rec, 'The server lost this analysis, probably because it restarted. Press Try again to upload it again.');
+        break;
+      }
+      update(rec, { message: 'Reconnecting to the server…' });
+      await waitRetry(wait); wait = Math.min(wait * 2, 15000); continue;
+    }
+    if (j.status === 'done') { await keep(rec, j); break; }
+    if (j.status === 'rejected') { reject(rec, j.message); break; }
+    if (j.status === 'error') { rec.log = j.log; fail(rec, j.message || 'The analysis failed.'); break; }
+    if (rec.state !== j.status) { rec.phaseStart = Date.now(); rec.state = j.status; persist(rec); }
+    update(rec, { frame: j.frame, total: j.total, stage: j.stage, ahead: j.ahead, message: null });
+    await sleep(1000);
+  }
+  rec.tracking = false;
+}
+
+// Copy a finished analysis (results, video, PDF) into this browser's history.
+async function keep(rec, j) {
+  update(rec, { state: 'saving', message: null });
+  let video = null, pdf = null;
+  for (let i = 0; i < 8 && !video; i++) {
+    try {
+      const v = await fetch(`/jobs/${rec.jobId}/analysed.mp4`);
+      if (v.ok) video = await v.blob();
+      const p = await fetch(`/jobs/${rec.jobId}/report.pdf`);
+      if (p.ok) pdf = await p.blob();
+    } catch (e) { await waitRetry(2000); }
+  }
+  const entry = { id: rec.jobId, kind: 'upload', test: j.test, test_key: j.test_key, created: j.created,
+                  video_name: rec.name, size: rec.size, summary: j.summary, report: j.report, video, pdf };
+  await DB.put('history', entry).catch(() => {});
+  history.unshift(entry);
+  items.delete(rec.key); await DB.del('pending', rec.key).catch(() => {});
+  fetch(`/api/jobs/${rec.jobId}`, { method: 'DELETE' });     // the browser has its own copy now
+  if (selected === rec.key) { selected = entry.id; openResult(entry); }
+  renderList();
+}
+
+function fail(rec, message, final = false) {
+  update(rec, { state: final ? 'rejected' : 'failed', message });
+  persist(rec);
+}
+function reject(rec, message) {
+  rec.blob = null;                           // a new video is needed, so don't keep this one
+  update(rec, { state: 'rejected', message: message || 'This video could not be analysed. Please upload another one.' });
+  persist(rec);
+  fetch(`/api/jobs/${rec.jobId}`, { method: 'DELETE' });
+}
+
+async function retry(rec) {
+  update(rec, { state: rec.jobId ? 'queued' : 'uploading', message: null, progress: 0 });
+  if (rec.jobId) {
+    try { await api(`/api/jobs/${rec.jobId}/retry`, { method: 'POST' }); return track(rec); }
+    catch (e) { rec.jobId = null; rec.uploadId = null; }     // gone from the server: upload again
+  }
+  if (!rec.blob) return fail(rec, 'The original video is no longer available. Please choose it again.', true);
+  upload(rec);
+}
+async function removeItem(rec) {
+  items.delete(rec.key);
+  await DB.del('pending', rec.key).catch(() => {});
+  if (rec.jobId) fetch(`/api/jobs/${rec.jobId}`, { method: 'DELETE' });
+  if (selected === rec.key) goNew(); else renderList();
+}
+$('retryBtn').addEventListener('click', () => { const r = items.get(selected); if (r) retry(r); });
+$('removeBtn').addEventListener('click', () => { const r = items.get(selected); if (r) removeItem(r); });
+
+/* ------------------------------------------------------------------ display */
+function stateText(rec) {
+  const pct = rec.total ? Math.min(100, Math.round((rec.frame || 0) / rec.total * 100)) : 0;
+  switch (rec.state) {
+    case 'uploading': return [`Uploading ${Math.round((rec.progress || 0) * 100)}%`, rec.progress || 0];
+    case 'paused': return ['Upload paused', rec.progress || 0];
+    case 'queued': return [rec.ahead ? `In line (${rec.ahead} ahead)` : 'Starting soon', 0];
+    case 'running': return [rec.frame ? `Analysing ${pct}%` : rec.stage === 'checking' ? 'Checking video' : 'Preparing', pct / 100];
+    case 'encoding': return ['Finishing up', 1];
+    case 'saving': return ['Saving', 1];
+    case 'failed': return ['Failed', 0];
+    case 'rejected': return ['Needs a new video', 0];
+  }
+  return ['', 0];
+}
+
+function renderList() {
+  const pending = [...items.values()].sort((a, b) => b.created - a.created);
+  const n = pending.length + history.length;
+  $('savedEmpty').classList.toggle('hidden', n > 0);
+  $('savedCount').textContent = n || '';
+  $('saved').innerHTML = pending.map(rec => {
+    const [text, frac] = stateText(rec), bad = rec.state === 'failed' || rec.state === 'rejected';
+    return `<li data-key="${rec.key}" class="${rec.key === selected ? 'active' : ''}">
+      <button type="button" class="open"><span class="mini">${miniSvg(rec.test_key)}</span>
+        <b>${esc(rec.test)}</b><small><span class="state ${bad ? 'bad' : ''}">${esc(text)}</span> · ${esc(rec.name)}</small>
+        ${bad ? '' : `<span class="prog"><i style="width:${Math.round(frac * 100)}%"></i></span>`}</button>
+      ${rec.state === 'failed' ? '<button type="button" class="retry">Retry</button>' : ''}
+    </li>`;
+  }).join('') + history.map(h => `
+    <li data-id="${h.id}" class="${h.id === selected ? 'active' : ''}">
+      <button type="button" class="open"><span class="mini">${miniSvg(h.test_key)}</span>
+        <b>${esc(h.test)}${h.kind === 'live' ? ' · live' : ''}</b><small>${fmtDate(h.created)} · ${esc(h.video_name || '')}</small></button>
+      <button type="button" class="del" aria-label="Delete">Delete</button>
+    </li>`).join('');
+}
+
+function renderRunning(rec) {
+  if (view !== 'running') show('running');
+  $('runTitle').textContent = rec.test;
+  const [text, frac] = stateText(rec), bad = rec.state === 'failed' || rec.state === 'rejected';
+  $('runTag').textContent = bad ? (rec.state === 'failed' ? 'Failed' : 'Not analysed') : rec.state === 'uploading' || rec.state === 'paused' ? 'Uploading' : 'Analysing';
+  $('runTag').className = 'tag' + (bad ? ' err' : '');
+  $('barFill').style.width = Math.round(frac * 100) + '%';
+  $('bar').classList.toggle('pulse', rec.state === 'encoding' || rec.state === 'saving');
+  $('bar').classList.toggle('hidden', bad);
+  $('pct').textContent = !bad && frac ? Math.round(frac * 100) + '%' : '';
+  $('statusText').textContent = bad ? '' : rec.state === 'uploading' ? `Uploading ${fmtSize((rec.progress || 0) * rec.size)} of ${fmtSize(rec.size)}`
+    : rec.state === 'running' && rec.frame ? `Frame ${rec.frame} of ${rec.total}` : text;
+  const showPreview = rec.state === 'running' && rec.frame && rec.jobId;
+  if (showPreview) { $('preview').src = `/jobs/${rec.jobId}/preview.jpg?t=${Date.now()}`; $('waiting').classList.add('hidden'); }
+  else { $('preview').removeAttribute('src'); $('waiting').classList.toggle('hidden', bad); }
+  $('waitText').textContent = { uploading: 'Uploading your video…', paused: 'Upload paused', queued: 'Waiting for a free slot…',
+                                encoding: 'Finishing up…', saving: 'Saving to your analyses…' }[rec.state] || 'Preparing your video…';
+  const secs = Math.round((Date.now() - (rec.phaseStart || Date.now())) / 1000);
+  let slow = '';
+  if (rec.message && !bad) slow = rec.message;
+  else if (rec.state === 'queued' && rec.ahead) slow = `The server is busy with ${rec.ahead} other ${rec.ahead > 1 ? 'analyses' : 'analysis'}. Yours will start as soon as a slot is free. You can leave this page and come back.`;
+  else if (rec.state === 'encoding') slow = `Preparing your video and report. This can take up to a minute on the free server${secs > 5 ? ` (${secs}s so far)` : ''}.`;
+  else if (rec.state === 'running' && !rec.frame && secs > 8) slow = `Starting up the pose model (${secs}s). The first analysis after a quiet period is slower.`;
+  $('slowNote').classList.toggle('hidden', !slow); $('slowText').textContent = slow;
+  $('runMsg').textContent = bad ? rec.message || '' : '';
+  $('runActions').classList.toggle('hidden', !bad);
+  $('retryBtn').classList.toggle('hidden', rec.state !== 'failed');
+}
+
+let videoUrl = null, pdfUrl = null;
+function openResult(h) {
+  show('result');
+  $('resTitle').textContent = h.test + (h.kind === 'live' ? ' (live)' : '');
+  $('resChip').textContent = 'Saved'; $('resChip').className = 'tag';
+  [videoUrl, pdfUrl].forEach(u => u && URL.revokeObjectURL(u));
+  videoUrl = h.video ? URL.createObjectURL(h.video) : null;
+  pdfUrl = h.pdf ? URL.createObjectURL(h.pdf) : null;
+  $('video').classList.toggle('hidden', !videoUrl);
+  if (videoUrl) $('video').src = videoUrl; else $('video').removeAttribute('src');
+  const d = new Date(h.created * 1000), two = n => String(n).padStart(2, '0');
+  const base = `${h.test_key}_${d.getFullYear()}${two(d.getMonth() + 1)}${two(d.getDate())}_${two(d.getHours())}${two(d.getMinutes())}`;
+  $('dl').classList.toggle('hidden', !videoUrl); $('dl').href = videoUrl || '#';
+  $('dl').download = `${base}.${h.video?.type.includes('webm') ? 'webm' : 'mp4'}`;
+  $('dlReport').classList.toggle('hidden', !pdfUrl); $('dlReport').href = pdfUrl || '#'; $('dlReport').download = `${base}_report.pdf`;
+  $('reportView').innerHTML = renderReport(h);
+  $('reportBox').classList.add('hidden');
+  renderList();
+}
+
+$('saved').addEventListener('click', async ev => {
+  const li = ev.target.closest('li'); if (!li) return;
+  if (li.dataset.key) {
+    const rec = items.get(li.dataset.key); if (!rec) return;
+    if (ev.target.closest('.retry')) return retry(rec);
+    selected = rec.key; renderList(); renderRunning(rec);
+  } else {
+    const id = li.dataset.id, del = ev.target.closest('.del');
+    if (del) {
+      if (!del.classList.contains('confirm')) {     // first click arms, second click deletes
+        del.classList.add('confirm'); del.textContent = 'Confirm';
+        setTimeout(() => { del.classList.remove('confirm'); del.textContent = 'Delete'; }, 3000);
+        return;
+      }
+      history = history.filter(h => h.id !== id);
+      await DB.del('history', id).catch(() => {});
+      if (selected === id) goNew(); else renderList();
+      return;
+    }
+    const h = history.find(x => x.id === id); if (!h) return;
+    selected = id; openResult(h);
+  }
+  if (matchMedia('(max-width: 900px)').matches) $('stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+/* --------------------------------------------------------------- result view */
 // Plain-language explanations for each result, shown from the (i) buttons.
 const INFO = {
   'Valid push-ups': 'Push-ups that went low enough and came back up with your body in a straight line. Reps with poor form are not counted.',
@@ -496,9 +812,11 @@ const INFO = {
   'Pace': 'Valid push-ups per minute, based on the length of the video.',
   'Plank held': 'How long you held a correct plank: shoulders, hips and ankles in one line.',
   'Video length': 'The length of the recording that was analysed.',
+  'Session length': 'How long the live session lasted.',
   'Jumping jacks': 'Full reps: arms above your head with feet apart, then arms down with feet together. Reps done too fast to be full are not counted.',
   'Squats': 'Squats that went deep enough and came back to standing.',
   'Curl-ups': 'Curl-ups where you lifted your upper body far enough and lowered back down.',
+  'Reps attempted': 'Every rep FitCheck saw you start, including ones that did not count.',
   'Highest jump': 'Your best jump height, estimated from how far your body rose in the video. Treat it as approximate.',
   'Jumps recorded': 'How many jumps were detected in the video.',
   'Landing': 'How steady you were when you landed.',
@@ -520,6 +838,10 @@ const INFO = {
   'Unsteady landing': 'You wobbled or stumbled when you landed.',
   'Camera moved': 'The camera moved during the recording, which makes measurements less accurate.',
   'Excessive pause': 'You stood still for about a second in the middle of the course.',
+  'Not low enough': 'Reps where your elbows did not bend to about 90 degrees.',
+  'Not deep enough': 'Reps where your thighs did not get close to parallel with the floor.',
+  'Not a full rep': 'Reps that stopped before the full range of movement.',
+  'Out of frame': 'Time when part of your body was outside the camera view, so nothing could be counted.',
 };
 const infoBtn = label => INFO[label] ? `<button type="button" class="info" data-info="${esc(label)}" aria-label="What is ${esc(label)}?">i</button>` : '';
 document.addEventListener('click', ev => {
@@ -550,92 +872,267 @@ function renderReport(j) {
   if (r.rating) cards.push(`<div class="r-card"><b>${esc(r.rating)}</b><span>Form · ${r.form.toFixed(1)} out of 4${infoBtn('Form')}</span></div>`);
   if (cards.length) html += `<div class="r-cards">${cards.join('')}</div>`;
   if (r.main && /^0(\.0+)?( |$)/.test(r.main[1])) html += `<p class="r-zero">Nothing was counted. Check that you picked the right test above and that the clip shows the full movement, then try again.</p>`;
-  else if (!j.report) html += `<p>This test does not produce a scored report yet. Watch the video above to see your movement with the pose overlay.</p>`;
+  else if (!j.report && !r.main) html += `<p>This test does not produce a scored report yet. Watch the video above to see your movement with the pose overlay.</p>`;
   if (r.highlights && r.highlights.length) html += sec('Your session', rows(r.highlights));
   if (r.issues && r.issues.length) html += sec('What to work on', rows(r.issues, 'warn'));
-  else if (j.report) html += sec('What to work on', '<p>No form problems came up often enough to flag. Well done.</p>');
+  else if (j.report || j.kind === 'live') html += sec('What to work on', '<p>No form problems came up often enough to flag. Well done.</p>');
   if (r.tips && r.tips.length) html += sec('Tips', `<ul>${r.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`);
   if (r.filming) html += sec('For your next recording', `<p>${esc(r.filming)}</p>`);
   html += `<p class="r-note">Results are estimates from video and are not medical advice.</p>`;
   return html;
 }
 
-function stats(text) {
-  const out = [];
-  for (const line of (text || '').split('\n')) {
-    const m = line.match(/^[\s\-•*]*([A-Za-z][A-Za-z \-/()]{2,40}):\s*([\d.]+\s*(?:\/\s*[\d.]+|%|s|cm|seconds)?)\s*$/);
-    if (m && m[1] !== 'Value' && out.length < 4) out.push([m[1].trim(), m[2].trim()]);
-  }
-  return out;
-}
-const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+/* ---------------------------------------------------------------- live mode
+   Pose tracking runs in the browser (MediaPipe). Counting rules mirror the upload analysers
+   in a simplified form. The session (video with overlay, results, PDF) is saved like any other. */
+const LM = { nose: 0, lEar: 7, rEar: 8, lSh: 11, rSh: 12, lEl: 13, rEl: 14, lWr: 15, rWr: 16, lHip: 23, rHip: 24, lKn: 25, rKn: 26, lAn: 27, rAn: 28 };
+const BONES = [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28]];
+const LIVE = {
+  pushup:      { label: 'valid push-ups', start: 'Get into a push-up position, side-on to the camera.' },
+  squats:      { label: 'squats', start: 'Stand side-on to the camera with your whole body in view.' },
+  curlups:     { label: 'curl-ups', start: 'Lie down side-on to the camera with your knees bent.' },
+  jumpingjack: { label: 'jumping jacks', start: 'Face the camera with room above your hands and below your feet.' },
+  plank:       { label: 'seconds held', start: 'Get into a forearm plank, side-on to the camera.' },
+};
+let landmarker = null, cam = null, rafId = 0, recorder = null, chunks = [], session = null;
 
-let currentId = null;
-const fmtDate = t => new Date(t * 1000).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-const miniSvg = key => ILLUS[key] ? `<svg viewBox="0 0 120 72" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[key][0]}</svg>` : '';
-
-async function loadSaved() {
-  const items = await (await fetch('/api/history')).json();
-  $('savedEmpty').classList.toggle('hidden', items.length > 0);
-  $('savedCount').textContent = items.length ? items.length : '';
-  $('saved').innerHTML = items.map(it => `
-    <li data-id="${it.id}" class="${it.id === currentId ? 'active' : ''}">
-      <button type="button" class="open"><span class="mini">${miniSvg(it.test_key)}</span>
-        <b>${esc(it.test || '')}</b><small>${fmtDate(it.created)} · ${esc(it.video_name || '')}</small></button>
-      <button type="button" class="del" aria-label="Delete">Delete</button>
-    </li>`).join('');
+function angle(a, b, c) {
+  const r = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+  let d = Math.abs(r * 180 / Math.PI);
+  return d > 180 ? 360 - d : d;
 }
-$('saved').addEventListener('click', async ev => {
-  const li = ev.target.closest('li'); if (!li) return;
-  const id = li.dataset.id;
-  const del = ev.target.closest('.del');
-  if (del) {
-    if (!del.classList.contains('confirm')) {     // first click arms, second click deletes
-      del.classList.add('confirm'); del.textContent = 'Confirm';
-      setTimeout(() => { del.classList.remove('confirm'); del.textContent = 'Delete'; }, 3000);
-      return;
+function newSession(key) {
+  return { key, start: performance.now(), count: 0, attempts: 0, phase: 'up', min: 999, bad: false,
+           faults: {}, held: 0, lastT: null, outFrames: 0, frames: 0, cue: '', cueClass: '', cueUntil: 0 };
+}
+function cue(s, text, cls = '', ms = 1500) { s.cue = text; s.cueClass = cls; s.cueUntil = performance.now() + ms; }
+function fault(s, name) { s.faults[name] = (s.faults[name] || 0) + 1; }
+
+// One step of counting for the current frame. p(i) gives a landmark in pixels.
+function step(s, p, vis, now) {
+  const side = (vis(LM.lSh) + vis(LM.lHip) + vis(LM.lKn) + vis(LM.lAn)) >= (vis(LM.rSh) + vis(LM.rHip) + vis(LM.rKn) + vis(LM.rAn)) ? 'l' : 'r';
+  const P = n => p(LM[side + n]);
+  const sh = P('Sh'), el = P('El'), wr = P('Wr'), hip = P('Hip'), kn = P('Kn'), an = P('An');
+  const body = angle(sh, hip, an);
+  const dt = s.lastT ? (now - s.lastT) / 1000 : 0; s.lastT = now;
+  if (s.key === 'pushup') {
+    const e = angle(sh, el, wr);
+    if (body < 150) s.bad = true;
+    if (s.phase === 'up') {
+      s.min = Math.min(s.min, e);
+      if (e < 90) { s.phase = 'down'; }
+      else if (e > 155 && s.min < 125) {            // came back up without going low enough
+        s.attempts++; fault(s, 'Not low enough'); cue(s, 'Not counted: bend your elbows to 90°', 'warn'); s.min = 999; s.bad = false;
+      } else if (e > 155) { s.min = 999; s.bad = body < 150; }
+    } else if (e > 155) {
+      s.attempts++;
+      if (s.bad) { fault(s, 'Hips sagging or piking'); cue(s, 'Not counted: keep your body in a straight line', 'warn'); }
+      else { s.count++; cue(s, 'Good rep', 'good'); }
+      s.phase = 'up'; s.min = 999; s.bad = false;
     }
-    await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
-    if (id === currentId) { currentId = null; show('empty'); }
-    return loadSaved();
+    if (body < 150 && now > s.cueUntil) cue(s, 'Keep your hips in line with your shoulders and ankles', 'warn', 600);
+  } else if (s.key === 'squats') {
+    const k = angle(hip, kn, an);
+    if (s.phase === 'up') {
+      s.min = Math.min(s.min, k);
+      if (k < 100) s.phase = 'down';
+      else if (k > 160 && s.min < 140) { s.attempts++; fault(s, 'Not deep enough'); cue(s, 'Not counted: go deeper', 'warn'); s.min = 999; }
+      else if (k > 160) s.min = 999;
+    } else if (k > 160) { s.attempts++; s.count++; cue(s, 'Good squat', 'good'); s.phase = 'up'; s.min = 999; }
+  } else if (s.key === 'curlups') {
+    const h = angle(sh, hip, kn);
+    if (s.phase === 'up') {                          // "up" here means lying back, ready
+      s.min = Math.min(s.min, h);
+      if (h < 80) s.phase = 'down';
+      else if (h > 115 && s.min < 100) { s.attempts++; fault(s, 'Not a full rep'); cue(s, 'Not counted: curl up further', 'warn'); s.min = 999; }
+      else if (h > 115) s.min = 999;
+    } else if (h > 115) { s.attempts++; s.count++; cue(s, 'Good curl-up', 'good'); s.phase = 'up'; s.min = 999; }
+  } else if (s.key === 'jumpingjack') {
+    const lw = p(LM.lWr), rw = p(LM.rWr), la = p(LM.lAn), ra = p(LM.rAn), lh = p(LM.lHip), rh = p(LM.rHip), nose = p(LM.nose);
+    const hipW = Math.hypot(lh.x - rh.x, lh.y - rh.y) || 1, feet = Math.hypot(la.x - ra.x, la.y - ra.y);
+    const open = lw.y < nose.y && rw.y < nose.y && feet > 1.6 * hipW;
+    const closed = lw.y > p(LM.lSh).y && rw.y > p(LM.rSh).y && feet < 1.4 * hipW;
+    if (s.phase === 'up' && open) s.phase = 'down';
+    else if (s.phase === 'down' && closed) { s.attempts++; s.count++; cue(s, 'Good rep', 'good', 700); s.phase = 'up'; }
+  } else if (s.key === 'plank') {
+    const good = body >= 160;
+    if (good) { s.held += dt; if (now > s.cueUntil) cue(s, 'Hold it. Body is straight.', 'good', 400); }
+    else {
+      fault(s, hip.y > (sh.y + an.y) / 2 ? 'Hips sagging' : 'Hips too high');
+      if (now > s.cueUntil) cue(s, hip.y > (sh.y + an.y) / 2 ? 'Lift your hips into line' : 'Lower your hips into line', 'warn', 600);
+    }
+    s.count = Math.floor(s.held);
   }
-  const j = await (await fetch(`/api/jobs/${id}`)).json();
-  finish(id, j);
-  if (matchMedia('(max-width: 900px)').matches) $('stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
-$('saveBtn').addEventListener('click', async () => {
-  if (!currentId) return;
-  $('saveBtn').disabled = true;
-  const res = await fetch(`/api/jobs/${currentId}/save`, { method: 'POST' });
-  if (res.ok) { $('saveBtn').textContent = 'Saved'; loadSaved(); }
-  else { $('saveBtn').disabled = false; }
-});
-loadSaved();
-
-function finish(id, j) {
-  $('go').disabled = false;
-  currentId = id;
-  $('saveBtn').classList.toggle('hidden', j.status !== 'done');
-  $('saveBtn').disabled = !!j.saved; $('saveBtn').textContent = j.saved ? 'Saved' : 'Save';
-  $('dlReport').href = `/jobs/${id}/report.pdf?download=1`;
-
-  document.querySelectorAll('.saved li').forEach(li => li.classList.toggle('active', li.dataset.id === id));
-  $('resTitle').textContent = j.test;
-  if (j.status === 'error') {
-    $('resChip').textContent = 'Failed'; $('resChip').className = 'tag err';
-    $('video').classList.add('hidden'); $('dl').classList.add('hidden'); $('reportView').innerHTML = '';
-    $('report').textContent = j.log || 'No output.'; $('reportBox').open = true;
-    $('reportBox').classList.remove('hidden'); $('dlReport').classList.add('hidden');
-    show('result'); return;
-  }
-  $('resChip').textContent = 'Done'; $('resChip').className = 'tag';
-  $('video').classList.remove('hidden'); $('dl').classList.remove('hidden');
-  $('video').src = `/jobs/${id}/analysed.mp4`; $('dl').href = $('video').src;
-  $('reportView').innerHTML = renderReport(j);
-  $('report').textContent = j.report || j.log || 'This test does not write a report. Console output is shown instead.';
-  $('reportBox').classList.add('hidden'); $('dlReport').classList.remove('hidden');
-  show('result');
 }
+
+async function loadLandmarker() {
+  if (landmarker) return landmarker;
+  const { FilesetResolver, PoseLandmarker } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs');
+  const files = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+  const make = delegate => PoseLandmarker.createFromOptions(files, {
+    baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task', delegate },
+    runningMode: 'VIDEO', numPoses: 1,
+    // Lower than the defaults so people lying down (plank, curl-ups) are still found.
+    minPoseDetectionConfidence: 0.3, minPosePresenceConfidence: 0.3, minTrackingConfidence: 0.3 });
+  try { landmarker = await make('GPU'); } catch (e) { landmarker = await make('CPU'); }
+  return landmarker;
+}
+
+function liveCue(text, cls = '') { $('liveCue').textContent = text; $('liveCue').className = 'live-cue ' + cls; }
+function openLive() {
+  const key = selectedTest();
+  selected = null; renderList(); show('live');
+  $('liveTitle').textContent = testName(key); $('liveTag').textContent = 'Live';
+  $('liveTime').textContent = '0:00';
+  $('liveStart').disabled = false; $('liveStop').disabled = true;
+  liveCue(`${LIVE[key].start} Then press Start.`);
+  const c = $('liveCanvas').getContext('2d'); c.fillStyle = '#000'; c.fillRect(0, 0, 640, 480);
+  $('liveStart').dataset.test = key;
+}
+$('liveBtn').addEventListener('click', openLive);
+
+$('liveStart').addEventListener('click', async () => {
+  const key = $('liveStart').dataset.test;
+  $('liveStart').disabled = true;
+  try {
+    liveCue('Starting camera…');
+    cam = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 960 }, height: { ideal: 720 } }, audio: false });
+    $('cam').srcObject = cam; await $('cam').play();
+    liveCue('Loading the pose model (first time only)…');
+    await loadLandmarker();
+  } catch (e) {
+    stopCamera(); $('liveStart').disabled = false;
+    liveCue(e.name === 'NotAllowedError' ? 'Camera access was blocked. Allow it in your browser settings and try again.'
+          : e.name === 'NotFoundError' ? 'No camera was found on this device.' : 'Live mode could not start. Check your connection and try again.', 'warn');
+    return;
+  }
+  const v = $('cam'), canvas = $('liveCanvas');
+  canvas.width = v.videoWidth || 640; canvas.height = v.videoHeight || 480;
+  session = newSession(key);
+  chunks = [];
+  try {
+    const type = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9', 'video/webm'].find(t => MediaRecorder.isTypeSupported(t));
+    recorder = new MediaRecorder(canvas.captureStream(30), type ? { mimeType: type, videoBitsPerSecond: 1_500_000 } : undefined);
+    recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+    recorder.start(1000);
+  } catch (e) { recorder = null; }
+  $('liveStop').disabled = false;
+  liveCue(LIVE[key].start);
+  loop();
+});
+
+function loop() {
+  const v = $('cam'), canvas = $('liveCanvas'), c = canvas.getContext('2d'), s = session;
+  if (!s) return;
+  const W = canvas.width, H = canvas.height, now = performance.now();
+  c.drawImage(v, 0, 0, W, H);
+  let res = null;
+  try { res = landmarker.detectForVideo(v, now); } catch (e) { /* skip frame */ }
+  const lm = res?.landmarks?.[0];
+  s.frames++;
+  if (lm) {
+    const p = i => ({ x: lm[i].x * W, y: lm[i].y * H });
+    const vis = i => (lm[i].visibility ?? 1) > 0.5 && lm[i].x > -0.02 && lm[i].x < 1.02 && lm[i].y > -0.02 && lm[i].y < 1.02 ? 1 : 0;
+    const head = vis(LM.nose) || vis(LM.lEar) || vis(LM.rEar);
+    const full = head && ['Sh', 'Hip', 'Kn', 'An'].every(n => vis(LM['l' + n]) || vis(LM['r' + n]));
+    c.lineWidth = Math.max(3, W / 200); c.strokeStyle = 'rgba(198,242,78,.9)'; c.fillStyle = '#fff';
+    for (const [a, b] of BONES) if (vis(a) && vis(b)) { c.beginPath(); c.moveTo(p(a).x, p(a).y); c.lineTo(p(b).x, p(b).y); c.stroke(); }
+    for (const i of Object.values(LM)) if (vis(i)) { c.beginPath(); c.arc(p(i).x, p(i).y, W / 160, 0, 7); c.fill(); }
+    if (full) step(s, p, vis, now);
+    else { s.outFrames++; s.lastT = now; if (now > s.cueUntil) cue(s, 'Step back so your whole body is in view', 'warn', 500); }
+  } else { s.outFrames++; s.lastT = now; if (now > s.cueUntil) cue(s, 'Looking for you… make sure your whole body is in view', 'warn', 500); }
+  // The counter is drawn on the video itself, so it is also in the saved recording.
+  const u = H / 480, label = LIVE[s.key].label.toUpperCase();
+  c.font = `700 ${Math.round(11 * u)}px sans-serif`;
+  const bw = Math.max(90 * u, c.measureText(label).width + 28 * u);
+  c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect(12 * u, 12 * u, bw, 72 * u, 12 * u); c.fill();
+  c.fillStyle = '#fff'; c.font = `900 ${Math.round(42 * u)}px sans-serif`; c.fillText(String(s.count), 26 * u, 56 * u);
+  c.font = `700 ${Math.round(11 * u)}px sans-serif`; c.fillText(label, 26 * u, 74 * u);
+  const secs = Math.floor((now - s.start) / 1000);
+  $('liveTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  if (now <= s.cueUntil) liveCue(s.cue, s.cueClass);          // otherwise keep the last message
+  rafId = requestAnimationFrame(loop);
+}
+
+function stopCamera() {
+  cancelAnimationFrame(rafId);
+  cam?.getTracks().forEach(t => t.stop()); cam = null;
+}
+function liveSummary(s) {
+  const dur = (performance.now() - s.start) / 1000;
+  const issues = Object.entries(s.faults).map(([k, n]) => [k, s.key === 'plank' ? `${Math.round(n / Math.max(1, s.frames) * 100)}% of the session` : `${n} rep${n === 1 ? '' : 's'}`]);
+  if (s.frames && s.outFrames / s.frames > 0.2) issues.push(['Out of frame', `${Math.round(s.outFrames / s.frames * 100)}% of the session`]);
+  let main, form = null; const highlights = [];
+  if (s.key === 'plank') {
+    main = ['Plank held', `${s.held.toFixed(1)} s`];
+    form = dur ? Math.min(4, s.held / dur * 4) : 0;
+    highlights.push(['Session length', `${Math.round(dur)} s`]);
+  } else {
+    const label = { pushup: 'Valid push-ups', squats: 'Squats', curlups: 'Curl-ups', jumpingjack: 'Jumping jacks' }[s.key];
+    const attempts = Math.max(s.attempts, s.count);
+    main = [label, String(s.count)];
+    highlights.push([s.key === 'pushup' ? 'Push-ups attempted' : 'Reps attempted', String(attempts)]);
+    if (attempts) { highlights.push(['Counted as valid', `${Math.round(s.count / attempts * 100)}%`]); form = s.count / attempts * 4; }
+    highlights.push(['Session length', `${Math.round(dur)} s`]);
+    if (dur > 5 && s.count) highlights.push(['Pace', `${Math.round(s.count / dur * 60)} per minute`]);
+  }
+  const tips = { 'Not low enough': 'Lower until your elbows reach about 90 degrees on every rep.',
+                 'Hips sagging or piking': 'Squeeze your glutes and brace your core so your body stays in one straight line.',
+                 'Not deep enough': 'Sit back until your thighs are close to parallel with the floor.',
+                 'Not a full rep': 'Curl up until your shoulder blades clear the floor before lowering.',
+                 'Hips sagging': 'Squeeze your glutes to lift your hips into line.', 'Hips too high': 'Lower your hips until your body is straight.',
+                 'Out of frame': 'Place the camera further back so your whole body stays in view.' };
+  return { main, form, rating: rating(form), highlights, issues, duration: dur,
+           tips: Object.keys(s.faults).concat(issues.some(i => i[0] === 'Out of frame') ? ['Out of frame'] : []).map(k => tips[k]).filter(Boolean),
+           filming: FILMING[s.key] };
+}
+
+$('liveStop').addEventListener('click', async () => {
+  const s = session; if (!s) return;
+  session = null; $('liveStop').disabled = true;
+  liveCue('Saving your session…');
+  const summary = liveSummary(s);
+  let video = null;
+  if (recorder && recorder.state !== 'inactive') {
+    await new Promise(r => { recorder.onstop = r; recorder.stop(); });
+    video = chunks.length ? new Blob(chunks, { type: recorder.mimeType || 'video/webm' }) : null;
+  }
+  stopCamera();
+  const created = Date.now() / 1000;
+  let pdf = null;
+  try {
+    const r = await fetch('/api/live-report', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ test_key: s.key, created, ...summary }) });
+    if (r.ok) pdf = await r.blob();
+  } catch (e) { /* offline: saved without a PDF */ }
+  const entry = { id: 'live-' + Date.now().toString(36), kind: 'live', test: testName(s.key), test_key: s.key, created,
+                  video_name: 'Camera session', summary, report: null, video, pdf };
+  await DB.put('history', entry).catch(() => {});
+  history.unshift(entry);
+  selected = entry.id; openResult(entry);
+});
+$('liveClose').addEventListener('click', () => {
+  if (session) { session = null; if (recorder && recorder.state !== 'inactive') recorder.stop(); }
+  stopCamera(); goNew();
+});
+
+/* ------------------------------------------------------------------ startup */
+(async () => {
+  try {
+    history = (await DB.all('history')).sort((a, b) => b.created - a.created);
+    for (const rec of (await DB.all('pending')).sort((a, b) => a.created - b.created)) {
+      items.set(rec.key, rec);
+      if (rec.state === 'failed' || rec.state === 'rejected') continue;
+      if (rec.jobId) track(rec); else if (rec.blob) upload(rec);
+    }
+  } catch (e) {
+    $('savedEmpty').textContent = 'This browser is not allowing FitCheck to store analyses (private browsing?). Results will still show, but won\'t be kept.';
+  }
+  renderList();
+  // Reopen the newest analysis that is still in progress.
+  const active = [...items.values()].filter(r => !['failed', 'rejected'].includes(r.state)).sort((a, b) => b.created - a.created)[0];
+  if (active) { selected = active.key; renderRunning(active); renderList(); }
+})();
 </script>
 </body>
 </html>

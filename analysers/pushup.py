@@ -61,6 +61,7 @@ def generate_analytics_report(analytics, video_filename, output_video=None):
     avg_form_score = np.mean(analytics['form_scores']) if analytics['form_scores'] else 0
     avg_arm_angle = np.mean(analytics['avg_arm_angles']) if analytics['avg_arm_angles'] else 0
     form_consistency = (analytics['good_form_frames'] / analytics['total_frames'] * 100) if analytics['total_frames'] > 0 else 0
+    analytics['attempted_pushups'] = max(analytics['attempted_pushups'], analytics['valid_pushups'])
     success_rate = (analytics['valid_pushups'] / analytics['attempted_pushups'] * 100) if analytics['attempted_pushups'] > 0 else 0
     
     # Create report content
@@ -448,6 +449,7 @@ with mp_pose.Pose(
                     display_pos = f"Valid Pushup! (Form: {form_score}/4)"
                     push_up_counter += 1
                     session_analytics['valid_pushups'] += 1
+                    attempt_counted = False   # each attempt can produce at most one valid rep
 
                     up_pos = None
                     down_pos = None
