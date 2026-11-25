@@ -1,0 +1,8 @@
+.git
+.venv
+__pycache__
+webapp/jobs
+videos
+analysed
+placeholder
+*.mp4
