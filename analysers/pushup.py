@@ -1,3 +1,4 @@
+import sys
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -592,4 +593,5 @@ with mp_pose.Pose(
 
     # Automatically open the analyzed video after processing (Mac only)
     import subprocess
-    subprocess.run(['open', args.output])
+    if sys.platform == 'darwin' and sys.stdout.isatty():
+        subprocess.run(['open', args.output])
