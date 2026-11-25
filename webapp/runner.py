@@ -10,6 +10,7 @@ Usage: python runner.py <job_dir> <script.py> [script args...]
 import os
 import runpy
 import sys
+import time
 
 import cv2
 
@@ -31,9 +32,43 @@ def _imshow(_name, frame):
 
 overlay_text.install()
 cv2.imshow = _imshow
+
+
+# The analysers time things with time.time(), which makes results depend on how fast
+# the server processes frames. Replace it with a clock that follows the video instead:
+# each frame read advances it by 1/fps.
+class _VideoClock:
+    def __init__(self):
+        self.start, self.now = _real_time(), 0.0
+
+    def __call__(self):
+        return self.start + self.now
+
+
+_real_time = time.time
+_clock = _VideoClock()
+time.time = _clock
+
+
+class _TimedCapture(cv2.VideoCapture):
+    def read(self, *a, **k):
+        ok, frame = super().read(*a, **k)
+        if ok:
+            fps = self.get(cv2.CAP_PROP_FPS) or 30
+            _clock.now += 1.0 / fps
+        return ok, frame
+
+
+cv2.VideoCapture = _TimedCapture
 cv2.waitKey = lambda *a, **k: -1
 cv2.destroyAllWindows = lambda *a, **k: None
 cv2.namedWindow = lambda *a, **k: None
 
 sys.argv = [script, *script_args]
 runpy.run_path(script, run_name="__main__")
+
+# Exit straight away: MediaPipe sometimes segfaults while Python tears down at exit,
+# after the analysis has already finished and saved its output.
+sys.stdout.flush()
+sys.stderr.flush()
+os._exit(0)

@@ -124,6 +124,15 @@
   .dot-spin { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent-text); animation: spin .8s linear infinite; }
   .bar.pulse #barFill { animation: pulse 1.2s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: .45; } }
+  .info { display: inline-grid; place-items: center; width: 17px; height: 17px; margin-left: 7px; padding: 0; vertical-align: 1px;
+    border-radius: 50%; border: 1.5px solid currentColor; background: none; color: inherit; opacity: .6;
+    font: italic 700 11px/1 Georgia, serif; cursor: pointer; }
+  .info:hover, .info:focus-visible { opacity: 1; }
+  #infoPop { position: fixed; z-index: 50; padding: 14px 16px; border-radius: 12px; background: var(--plate, #1b1d1c);
+    border: 1px solid var(--line); box-shadow: 0 12px 32px rgba(0,0,0,.35); color: var(--ink); font-size: 14px; line-height: 1.5; }
+  #infoPop b { display: block; margin-bottom: 4px; font-weight: 800; }
+  #infoPop p { margin: 0; color: var(--muted); }
+  .r-zero { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--err); color: var(--ink); font-size: 14px; line-height: 1.5; }
   .status #pct { font: 900 20px/1 var(--display); color: var(--ink); }
 
   details { margin-top: 20px; border-top: 1px solid var(--line); }
@@ -333,6 +342,7 @@
       </div>
     </section>
   </main></form>
+  <div id="infoPop" class="hidden" role="dialog"></div>
   <footer>Videos are processed on the server to analyse your test and are not shared. Built by <a href="https://portfolio-website-theta-lilac.vercel.app/" target="_blank" rel="noopener">Saanvi Kanodia</a>.</footer>
 </div>
 
@@ -449,16 +459,26 @@ async function poll(id) {
     $('err').textContent = 'The server restarted and this analysis was lost. Please try again, or use a shorter clip.';
     show('empty'); $('go').disabled = !file.files.length; return;
   }
+  if (j.status === 'rejected') {
+    phase = ''; slow(''); $('bar').classList.remove('pulse');
+    show('empty'); file.value = ''; setFile(null);
+    $('err').textContent = j.message || 'This video could not be analysed. Please upload another one.';
+    $('err').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    fetch(`/api/jobs/${id}`, { method: 'DELETE' }); return;
+  }
   if (j.status !== phase) { phase = j.status; phaseStart = Date.now(); }
   const secs = Math.round((Date.now() - phaseStart) / 1000);
   $('bar').classList.toggle('pulse', j.status === 'encoding');
   if (j.status === 'encoding') slow(`Preparing your video and report. This can take up to a minute on the free server${secs > 5 ? ` (${secs}s so far)` : ''}. Please keep this page open.`);
   else if (j.status === 'running' && !j.frame && secs > 8) slow(`Starting up the pose model (${secs}s). The first analysis after a quiet period is slower.`);
   else slow('');
-  if (j.status === 'running') {
+  if (j.status === 'queued') {
+    $('statusText').textContent = 'In line';
+    slow(`Another analysis is running on the server. Yours will start as soon as it finishes${secs > 5 ? ` (waiting ${secs}s)` : ''}.`);
+  } else if (j.status === 'running') {
     const p = j.total ? Math.min(100, Math.round(j.frame / j.total * 100)) : 0;
     $('barFill').style.width = p + '%'; $('pct').textContent = p ? p + '%' : '';
-    $('statusText').textContent = j.frame ? `Frame ${j.frame} of ${j.total}` : 'Loading pose model';
+    $('statusText').textContent = j.frame ? `Frame ${j.frame} of ${j.total}` : j.stage === 'checking' ? 'Checking your whole body is in frame' : 'Loading pose model';
     if (j.frame) { $('preview').src = `/jobs/${id}/preview.jpg?t=${Date.now()}`; $('waiting').classList.add('hidden'); }
   } else if (j.status === 'encoding') {
     $('barFill').style.width = '100%'; $('pct').textContent = '100%';
@@ -467,16 +487,69 @@ async function poll(id) {
   setTimeout(() => poll(id), 700);
 }
 
+// Plain-language explanations for each result, shown from the (i) buttons.
+const INFO = {
+  'Valid push-ups': 'Push-ups that went low enough and came back up with your body in a straight line. Reps with poor form are not counted.',
+  'Push-ups attempted': 'Every push-up FitCheck saw you start, including ones that did not count as valid.',
+  'Counted as valid': 'The share of attempted push-ups that met the depth and body-line rules.',
+  'Time in good form': 'How much of the video your body stayed in a good push-up position, frame by frame.',
+  'Pace': 'Valid push-ups per minute, based on the length of the video.',
+  'Plank held': 'How long you held a correct plank: shoulders, hips and ankles in one line.',
+  'Video length': 'The length of the recording that was analysed.',
+  'Jumping jacks': 'Full reps: arms above your head with feet apart, then arms down with feet together. Reps done too fast to be full are not counted.',
+  'Squats': 'Squats that went deep enough and came back to standing.',
+  'Curl-ups': 'Curl-ups where you lifted your upper body far enough and lowered back down.',
+  'Highest jump': 'Your best jump height, estimated from how far your body rose in the video. Treat it as approximate.',
+  'Jumps recorded': 'How many jumps were detected in the video.',
+  'Landing': 'How steady you were when you landed.',
+  'Average speed': 'Your average speed per leg (one trip between the markers), assuming the markers are 10 m apart.',
+  'Runs recorded': 'Complete shuttles. One run is there and back, so two legs make one run.',
+  'Speed across runs': 'Whether you got faster or slower from one leg to the next.',
+  'Maximum reach': 'How far your fingertips reached forward, in cm, scaled using the height you entered.',
+  'Fingertip distance': 'How far your fingertips got during the forward bend, in cm. Estimated from video.',
+  'Form': 'A score from 0 to 4 for how clean your movement was. 3.5 or more is Excellent, 2.5 Good, 1.5 Fair, and below that Needs work. Each form problem below lowers it.',
+  'Arms moving unevenly': 'One arm bent or straightened faster than the other. Shown as the share of the video where it happened.',
+  'Hips sagging or piking': 'Your hips dropped below, or rose above, the line from your shoulders to your ankles.',
+  'Hips sagging': 'Your hips dropped below the line from your shoulders to your ankles.',
+  'Hips too high': 'Your hips rose above the line from your shoulders to your ankles.',
+  'Knees bending': 'Your knees bent when your legs should stay straight.',
+  'Head lifting or dropping': 'Your head moved out of line with your spine.',
+  'Neck arched': 'Your neck bent upwards instead of staying in line with your back.',
+  'Body shifting sideways': 'Your body moved to one side instead of staying centred.',
+  'Not enough knee bend before jumping': 'You did not dip your knees enough before take-off, so your legs could not push fully.',
+  'Unsteady landing': 'You wobbled or stumbled when you landed.',
+  'Camera moved': 'The camera moved during the recording, which makes measurements less accurate.',
+  'Excessive pause': 'You stood still for about a second in the middle of the course.',
+};
+const infoBtn = label => INFO[label] ? `<button type="button" class="info" data-info="${esc(label)}" aria-label="What is ${esc(label)}?">i</button>` : '';
+document.addEventListener('click', ev => {
+  const pop = $('infoPop'), btn = ev.target.closest('.info');
+  if (!btn) { if (!ev.target.closest('#infoPop')) pop.classList.add('hidden'); return; }
+  const label = btn.dataset.info;
+  if (!pop.classList.contains('hidden') && pop.dataset.for === label) { pop.classList.add('hidden'); return; }
+  pop.dataset.for = label;
+  pop.innerHTML = `<b>${esc(label)}</b><p>${esc(INFO[label])}</p>`;
+  pop.classList.remove('hidden');
+  const b = btn.getBoundingClientRect(), w = Math.min(300, innerWidth - 24);
+  pop.style.width = w + 'px';
+  pop.style.left = Math.max(12, Math.min(innerWidth - w - 12, b.left + b.width / 2 - w / 2)) + 'px';
+  const below = b.bottom + 8, h = pop.offsetHeight;
+  pop.style.top = (below + h > innerHeight - 8 ? b.top - h - 8 : below) + 'px';
+});
+addEventListener('scroll', () => $('infoPop').classList.add('hidden'), true);
+addEventListener('keydown', ev => { if (ev.key === 'Escape') $('infoPop').classList.add('hidden'); });
+
 function renderReport(j) {
   const r = j.summary || {};
   const rows = (items, cls = '') => items.map(([a, b]) =>
-    `<div class="r-row ${cls}"><span>${esc(a)}</span><span>${esc(String(b))}</span></div>`).join('');
+    `<div class="r-row ${cls}"><span>${esc(a)}${infoBtn(a)}</span><span>${esc(String(b))}</span></div>`).join('');
   const sec = (title, body) => `<section class="r-sec"><p class="label"><span>${title}</span></p>${body}</section>`;
   let html = '';
   const cards = [];
-  if (r.main) cards.push(`<div class="r-card main"><b>${esc(r.main[1])}</b><span>${esc(r.main[0])}</span></div>`);
-  if (r.rating) cards.push(`<div class="r-card"><b>${esc(r.rating)}</b><span>Form · ${r.form.toFixed(1)} out of 4</span></div>`);
+  if (r.main) cards.push(`<div class="r-card main"><b>${esc(r.main[1])}</b><span>${esc(r.main[0])}${infoBtn(r.main[0])}</span></div>`);
+  if (r.rating) cards.push(`<div class="r-card"><b>${esc(r.rating)}</b><span>Form · ${r.form.toFixed(1)} out of 4${infoBtn('Form')}</span></div>`);
   if (cards.length) html += `<div class="r-cards">${cards.join('')}</div>`;
+  if (r.main && /^0(\.0+)?( |$)/.test(r.main[1])) html += `<p class="r-zero">Nothing was counted. Check that you picked the right test above and that the clip shows the full movement, then try again.</p>`;
   else if (!j.report) html += `<p>This test does not produce a scored report yet. Watch the video above to see your movement with the pose overlay.</p>`;
   if (r.highlights && r.highlights.length) html += sec('Your session', rows(r.highlights));
   if (r.issues && r.issues.length) html += sec('What to work on', rows(r.issues, 'warn'));

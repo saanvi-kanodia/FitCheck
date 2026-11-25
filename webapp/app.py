@@ -69,7 +69,23 @@ def load_saved():
 load_saved()
 
 
+# One analysis at a time: two at once can exceed a small server's memory (512 MB on Render free).
+RUN_SLOT = threading.Semaphore(1)
+
+
 def run_job(job_id, test_key, video_path, height):
+    job = jobs[job_id]
+    job["status"] = "queued"
+    with RUN_SLOT:
+        job["status"] = "running"
+        try:
+            _run_job(job_id, test_key, video_path, height)
+        except Exception as e:  # never leave a job stuck in "running"
+            job["status"] = "error"
+            job["log"] = (job.get("log") or "") + f"\nInternal error: {e}"
+
+
+def _run_job(job_id, test_key, video_path, height):
     job = jobs[job_id]
     job_dir = os.path.join(JOBS_DIR, job_id)
     test = TESTS[test_key]
@@ -83,6 +99,21 @@ def run_job(job_id, test_key, video_path, height):
                     "-an", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "20", "-threads", "1", small], check=False)
     if os.path.exists(small) and os.path.getsize(small) > 0:
         video_path = small
+
+    # Refuse videos that don't show the whole body: the analysers give nonsense otherwise.
+    job["stage"] = "checking"
+    check = subprocess.run([sys.executable, os.path.join(APP_DIR, "body_check.py"), video_path],
+                           capture_output=True, text=True,
+                           env=dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1"))
+    try:
+        verdict = json.loads(check.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        verdict = {"ok": True}
+    job.pop("stage", None)
+    if not verdict.get("ok"):
+        job["status"] = "rejected"
+        job["message"] = verdict.get("message")
+        return
 
     cap = cv2.VideoCapture(video_path)
     job["total"] = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
@@ -187,7 +218,7 @@ def save_job(job_id):
 def delete_job(job_id):
     if job_id not in jobs or not re.fullmatch(r"[0-9a-f]{12}", job_id):
         abort(404)
-    if jobs[job_id]["status"] in ("running", "encoding"):
+    if jobs[job_id]["status"] in ("queued", "running", "encoding"):
         return jsonify(error="Wait for the analysis to finish."), 400
     jobs.pop(job_id)
     shutil.rmtree(os.path.join(JOBS_DIR, job_id), ignore_errors=True)
