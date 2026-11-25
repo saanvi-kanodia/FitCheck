@@ -17,9 +17,6 @@ python3.10 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python webapp/app.py
 ```
-
-Then open http://127.0.0.1:5050.
-
 ## Project layout
 
 - `webapp/`: Flask app (`app.py`), job runner, PDF report builder, and the HTML template
