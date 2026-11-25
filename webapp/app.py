@@ -41,7 +41,9 @@ TESTS = {
 }
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024
+MAX_MB = 50
+MAX_SIDE = 640   # longest side of the video passed to the analysers
+app.config["MAX_CONTENT_LENGTH"] = MAX_MB * 1024 * 1024
 jobs = {}
 SAVED_KEYS = ("status", "test", "test_key", "created", "report", "log", "saved", "video_name")
 
@@ -73,6 +75,15 @@ def run_job(job_id, test_key, video_path, height):
     test = TESTS[test_key]
     raw_out = os.path.join(job_dir, "analysed_raw.mp4")
 
+    # Shrink large videos first: pose tracking doesn't need more than this, and it keeps
+    # memory within small servers (Render's free plan has 512 MB).
+    small = os.path.join(job_dir, "input_small.mp4")
+    subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-loglevel", "error", "-i", video_path,
+                    "-vf", f"scale='if(gt(iw,ih),min({MAX_SIDE},iw),-2)':'if(gt(iw,ih),-2,min({MAX_SIDE},ih))'",
+                    "-an", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "20", "-threads", "1", small], check=False)
+    if os.path.exists(small) and os.path.getsize(small) > 0:
+        video_path = small
+
     cap = cv2.VideoCapture(video_path)
     job["total"] = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
     cap.release()
@@ -84,7 +95,7 @@ def run_job(job_id, test_key, video_path, height):
         cmd += ["--height", str(height)]
 
     # Reports are written to ~/Downloads; point HOME at the job dir to capture them.
-    env = dict(os.environ, HOME=job_dir)
+    env = dict(os.environ, HOME=job_dir, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1")
     os.makedirs(os.path.join(job_dir, "Downloads"), exist_ok=True)
 
     log = []
@@ -106,7 +117,7 @@ def run_job(job_id, test_key, video_path, height):
     # Re-encode to H.264 so browsers can play it.
     job["status"] = "encoding"
     subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-loglevel", "error", "-i", raw_out,
-                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+                    "-c:v", "libx264", "-preset", "veryfast", "-threads", "1", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
                     os.path.join(job_dir, "analysed.mp4")], check=False)
 
     reports = glob.glob(os.path.join(job_dir, "Downloads", "*.txt"))
@@ -119,7 +130,13 @@ def run_job(job_id, test_key, video_path, height):
 
 @app.get("/")
 def index():
-    return render_template("index.html", tests=TESTS)
+    samples = [k for k in TESTS if os.path.exists(os.path.join(APP_DIR, "static", f"sample-{k}.mp4"))]
+    return render_template("index.html", tests=TESTS, filming=FILMING, max_mb=MAX_MB, samples=samples)
+
+
+@app.errorhandler(413)
+def too_large(_e):
+    return jsonify(error=f"Video is over {MAX_MB} MB. Trim it to under a minute and try again."), 413
 
 
 @app.post("/api/analyze")

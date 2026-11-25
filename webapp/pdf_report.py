@@ -13,6 +13,20 @@ from collections import OrderedDict
 from fpdf import FPDF
 
 FONT_DIR = "/System/Library/Fonts/Supplemental"
+
+
+def _fonts():
+    """macOS fonts when available, otherwise the DejaVu fonts bundled with matplotlib (servers)."""
+    mac = [("Sans", "", "Arial Unicode.ttf"), ("Sans", "B", "Arial Bold.ttf"), ("Serif", "", "Georgia.ttf")]
+    if all(os.path.exists(os.path.join(FONT_DIR, f)) for _, _, f in mac):
+        return [(fam, st, os.path.join(FONT_DIR, f)) for fam, st, f in mac]
+    import matplotlib
+    d = os.path.join(matplotlib.get_data_path(), "fonts", "ttf")
+    return [("Sans", "", os.path.join(d, "DejaVuSans.ttf")), ("Sans", "B", os.path.join(d, "DejaVuSans-Bold.ttf")),
+            ("Serif", "", os.path.join(d, "DejaVuSerif.ttf"))]
+
+
+FONTS = _fonts()
 INK = (29, 33, 31)
 MUTED = (107, 111, 106)
 LINE = (226, 221, 211)
@@ -30,6 +44,15 @@ RESULT = {
     "plank": ("Plank held", "{:.1f}", " s"),
     "verticaljump": ("Highest jump", "{:.0f}", " cm"),   # report gives metres; converted below
     "shuttlerun": ("Average speed", "{:.2f}", " m/s"),
+}
+
+# Tests whose scripts only print a final line instead of writing a report.
+LOG_RESULT = {
+    "jumpingjack": ("Jumping jacks", r"Total Reps:\s*(\d+)", "{:.0f}", ""),
+    "curlups": ("Curl-ups", r"Total Reps:\s*(\d+)", "{:.0f}", ""),
+    "squats": ("Squats", r"Total Squats:\s*(\d+)", "{:.0f}", ""),
+    "sitreach": ("Maximum reach", r"Maximum Reach:\s*(-?[\d.]+)", "{:.1f}", " cm"),
+    "backstretch": ("Fingertip distance", r"Final Score:\s*(-?[\d.]+)", "{:.1f}", " cm"),
 }
 
 FILMING = {
@@ -122,6 +145,11 @@ def _summarise(job):
         if key == "verticaljump":
             value *= 100
         out["main"] = (label, fmt.format(value) + unit)
+    elif key in LOG_RESULT:
+        label, pattern, fmt, unit = LOG_RESULT[key]
+        found = re.findall(pattern, job.get("log") or "")
+        if found:
+            out["main"] = (label, fmt.format(float(found[-1])) + unit)
 
     # Highlights: a few plain-language figures per test
     if key == "pushup":
@@ -216,9 +244,8 @@ def build_pdf(job, job_dir, out_path):
     pdf = Report(format="A4", unit="mm")
     pdf.set_margins(20, 20, 20)
     pdf.set_auto_page_break(True, margin=22)
-    pdf.add_font("Sans", "", os.path.join(FONT_DIR, "Arial Unicode.ttf"))
-    pdf.add_font("Sans", "B", os.path.join(FONT_DIR, "Arial Bold.ttf"))
-    pdf.add_font("Serif", "", os.path.join(FONT_DIR, "Georgia.ttf"))
+    for family, style, name in FONTS:
+        pdf.add_font(family, style, name)
     pdf.alias_nb_pages()
     pdf.add_page()
     w = pdf.epw

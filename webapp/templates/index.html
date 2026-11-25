@@ -72,6 +72,10 @@
   .drop input { display: none; }
   .drop strong { display: block; font: 800 16px/1.3 var(--display); word-break: break-all; margin-bottom: 4px; }
   .drop small { color: var(--muted); font-size: 13px; }
+  .drop .film { display: block; max-width: 420px; margin: 14px auto 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .drop .film b { color: var(--accent-text); font-weight: 700; }
+  .drop.has .film { display: none; }
+  footer a { color: inherit; }
 
   .field input { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--plate); font-size: 16px; }
   .field input:focus { outline: none; border-color: var(--accent); }
@@ -81,6 +85,8 @@
          transition: transform .12s, box-shadow .2s; }
   .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(198, 242, 78, .3); }
   .btn:disabled { opacity: .45; cursor: default; }
+  .note { margin-top: 10px; font-size: 13px; color: var(--muted); text-align: center; }
+  .link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent-text, var(--accent)); text-decoration: underline; cursor: pointer; }
   .error { color: var(--err); margin-top: 12px; font-size: 14px; font-weight: 600; }
   .error:empty { display: none; }
 
@@ -114,6 +120,10 @@
   .bar { height: 8px; background: var(--plate); margin-top: 18px; border-radius: 999px; overflow: hidden; }
   .bar div { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width .4s; box-shadow: 0 0 12px var(--accent); }
   .status { margin-top: 10px; color: var(--muted); font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+  .slow { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+  .dot-spin { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent-text); animation: spin .8s linear infinite; }
+  .bar.pulse #barFill { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
   .status #pct { font: 900 20px/1 var(--display); color: var(--ink); }
 
   details { margin-top: 20px; border-top: 1px solid var(--line); }
@@ -125,9 +135,9 @@
   .report { margin-top: 22px; }
   .report:empty { display: none; }
   .r-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .r-card { background: var(--plate); padding: 20px 22px; border-radius: var(--r); border: 1px solid var(--line); }
+  .r-card { min-width: 0;  background: var(--plate); padding: 20px 22px; border-radius: var(--r); border: 1px solid var(--line); }
   .r-card.main { background: var(--accent); border-color: var(--accent); }
-  .r-card b { display: block; overflow-wrap: anywhere; font: 900 46px/1 var(--display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
+  .r-card b { display: block; overflow-wrap: normal; font: 900 clamp(24px, 6.4vw, 46px)/1 var(--display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
   .r-card.main b, .r-card.main span { color: var(--accent-ink); }
   .r-card span { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
   .r-sec { margin-top: 26px; }
@@ -166,6 +176,7 @@
   .ghost { padding: 11px 18px; border-radius: 999px; border: 1px solid var(--line); background: none; font-size: 13px;
            font-weight: 700; text-decoration: none; color: var(--ink); cursor: pointer; }
   .ghost:hover { border-color: var(--ink); }
+  .new-btn { margin-left: auto; padding: 8px 14px; white-space: nowrap; cursor: pointer; color: var(--ink); }
   .hidden { display: none !important; }
   footer { padding: 18px 0 32px; color: var(--muted); font-size: 13px; }
 
@@ -173,9 +184,9 @@
   @media (min-width: 901px) and (min-height: 560px) {
     .wrap { height: 100vh; display: flex; flex-direction: column; }
     header { padding: 16px 0 6px; flex: none; }
-    .intro { padding: 10px 0 20px; flex: none; max-width: none; display: flex; align-items: flex-end; gap: 32px; }
-    .intro h1 { font-size: clamp(30px, 3.4vw, 44px); margin: 0; white-space: nowrap; }
-    .intro p { font-size: 14.5px; max-width: 520px; }
+    .intro { padding: 10px 0 20px; flex: none; max-width: none; }
+    .intro h1 { font-size: clamp(30px, 3.4vw, 44px); margin: 0 0 8px; white-space: nowrap; }
+    .intro p { font-size: 15px; max-width: none; }
     #form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
     main { flex: 1; min-height: 0; padding-bottom: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
     .picker, .stage { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
@@ -220,7 +231,8 @@
     figure { grid-template-columns: 120px 1fr; gap: 14px; }
     figcaption h3, .stage-head h2 { font-size: 22px; }
     .media { aspect-ratio: 4/3; }
-    .r-card b { font-size: 36px; }
+    .r-card b { font-size: clamp(24px, 7vw, 36px); }
+    .r-card { padding: 16px; }
     .actions .ghost, .actions .btn-sm { flex: 1; text-align: center; }
   }
 </style>
@@ -234,7 +246,7 @@
 
   <section class="intro">
     <h1>Analyse your <em>fitness test.</em></h1>
-    <p>Upload a recording of one of the tests below. FitCheck tracks your pose frame by frame, counts reps or times the hold, and marks form problems on the video.</p>
+    <p>Upload a video of a fitness test. FitCheck counts your reps and flags form problems.</p>
   </section>
 
   {% set hints = {
@@ -277,7 +289,8 @@
         <label class="drop" id="drop">
           <input type="file" name="video" accept="video/*" id="file">
           <strong id="dropText">Choose a file or drop it here</strong>
-          <small id="dropHint">MP4 or MOV, whole body in frame</small>
+          <small id="dropHint">MP4 or MOV, up to {{ max_mb }} MB</small>
+          <span class="film" id="filmTip"></span>
         </label>
       </div>
 
@@ -286,7 +299,8 @@
         <input type="number" name="height" min="80" max="250" step="0.5" placeholder="cm">
       </div>
 
-      <button class="btn" id="go" type="submit">Analyse video</button>
+      <button class="btn" id="go" type="submit" disabled>Analyse video</button>
+      <p class="note">Analysis takes about 1&ndash;2 minutes. <button type="button" class="link" id="sampleBtn">No video? Try a sample clip</button></p>
       <div class="error" id="err"></div>
       </div>
       </div>
@@ -297,12 +311,14 @@
           <img class="media" id="preview" alt="Live analysis preview">
           <div class="waiting" id="waiting"><div><span class="spinner" aria-hidden="true"></span>Loading pose model…</div></div>
         </div>
-        <div class="bar"><div id="barFill"></div></div>
+        <div class="bar" id="bar"><div id="barFill"></div></div>
         <div class="status"><span id="statusText">Starting</span><span id="pct"></span></div>
+        <p class="slow hidden" id="slowNote"><span class="dot-spin" aria-hidden="true"></span><span id="slowText"></span></p>
       </div>
 
       <div id="result" class="hidden">
-        <div class="stage-head"><h2 id="resTitle">Results</h2><span class="tag" id="resChip">Done</span></div>
+        <div class="stage-head"><h2 id="resTitle">Results</h2><span class="tag" id="resChip">Done</span>
+          <button class="ghost new-btn" type="button" id="again">&larr; New analysis</button></div>
         <video class="media" id="video" controls playsinline></video>
         <div class="report" id="reportView"></div>
         <details id="reportBox" class="hidden">
@@ -313,12 +329,11 @@
           <button class="btn-sm" type="button" id="saveBtn">Save</button>
           <a class="ghost" id="dl" download>Download video</a>
           <a class="ghost" id="dlReport">Download PDF</a>
-          <button class="ghost" type="button" id="again">New analysis</button>
         </div>
       </div>
     </section>
   </main></form>
-  <footer>Videos are processed on the server to analyse your test and are not shared.</footer>
+  <footer>Videos are processed on the server to analyse your test and are not shared. Built by <a href="https://portfolio-website-theta-lilac.vercel.app/" target="_blank" rel="noopener">Saanvi Kanodia</a>.</footer>
 </div>
 
 <script>
@@ -348,6 +363,7 @@ const ILLUS = {
 };
 const radios = [...form.querySelectorAll('input[name=test]')];
 
+const FILMING = {{ filming|tojson }}, MAX_MB = {{ max_mb }}, SAMPLES = {{ samples|tojson }};
 function syncTest() {
   const sel = form.querySelector('input[name=test]:checked');
   $('heightField').classList.toggle('hidden', sel.dataset.height !== '1');
@@ -357,6 +373,8 @@ function syncTest() {
   $('figNo').textContent = `Fig. ${radios.indexOf(sel) + 1}`;
   $('emptyTitle').textContent = sel.parentElement.querySelector('b').textContent;
   $('emptyHint').textContent = ill[1];
+  $('sampleBtn').classList.toggle('hidden', !SAMPLES.includes(sel.value));
+  $('filmTip').innerHTML = FILMING[sel.value] ? `<b>Filming tip:</b> ${FILMING[sel.value]}` : '';
 }
 radios.forEach(r => {
   const ill = ILLUS[r.value];
@@ -368,9 +386,23 @@ syncTest();
 
 function setFile(f) {
   $('dropText').textContent = f ? f.name : 'Choose a file or drop it here';
-  $('dropHint').textContent = f ? `${(f.size / 1048576).toFixed(1)} MB. Click to change.` : 'MP4 or MOV, whole body in frame';
+  $('dropHint').textContent = f ? `${(f.size / 1048576).toFixed(1)} MB. Click to change.` : `MP4 or MOV, up to ${MAX_MB} MB`;
   drop.classList.toggle('has', !!f);
+  $('go').disabled = !f;
 }
+$('sampleBtn').addEventListener('click', async () => {
+  const key = form.querySelector('input[name=test]:checked').value;
+  const btn = $('sampleBtn'); btn.disabled = true; btn.textContent = 'Loading sample...';
+  try {
+    const res = await fetch(`/static/sample-${key}.mp4`);
+    if (!res.ok) throw new Error();
+    const name = `sample-${key}.mp4`;
+    const dt = new DataTransfer(); dt.items.add(new File([await res.blob()], name, { type: 'video/mp4' }));
+    file.files = dt.files;
+    setFile(file.files[0]);
+  } catch (e) { $('err').textContent = 'Could not load the sample video.'; }
+  btn.disabled = false; btn.textContent = 'No video? Try a sample clip';
+});
 file.addEventListener('change', () => setFile(file.files[0]));
 ['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('over')));
@@ -386,6 +418,7 @@ form.addEventListener('submit', async ev => {
   ev.preventDefault();
   $('err').textContent = '';
   if (!file.files.length) { $('err').textContent = 'Choose a video first.'; return; }
+  if (file.files[0].size > MAX_MB * 1048576) { $('err').textContent = `Video is over ${MAX_MB} MB. Trim it to under a minute and try again.`; return; }
   $('go').disabled = true;
   $('runTitle').textContent = form.querySelector('input[name=test]:checked').parentElement.querySelector('b').textContent;
   $('preview').removeAttribute('src'); $('waiting').classList.remove('hidden');
@@ -398,11 +431,30 @@ form.addEventListener('submit', async ev => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Upload failed');
     poll(data.job);
-  } catch (e) { $('err').textContent = e.message; show('empty'); $('go').disabled = false; }
+  } catch (e) { $('err').textContent = e.message; show('empty'); $('go').disabled = !file.files.length; }
 });
 
+let pollFails = 0, phaseStart = 0, phase = '';
+function slow(msg) { $('slowNote').classList.toggle('hidden', !msg); if (msg) $('slowText').textContent = msg; }
 async function poll(id) {
-  const j = await (await fetch(`/api/jobs/${id}`)).json();
+  let j;
+  try {
+    const res = await fetch(`/api/jobs/${id}`);
+    if (res.status === 404) throw Object.assign(new Error(), { gone: true });
+    j = await res.json(); pollFails = 0;
+  } catch (e) {
+    // The server may be busy or restarting: keep trying for a while before giving up.
+    if (!e.gone && ++pollFails < 30) { slow('Waiting for the server to respond...'); return setTimeout(() => poll(id), 2000); }
+    pollFails = 0; slow(''); $('bar').classList.remove('pulse');
+    $('err').textContent = 'The server restarted and this analysis was lost. Please try again, or use a shorter clip.';
+    show('empty'); $('go').disabled = !file.files.length; return;
+  }
+  if (j.status !== phase) { phase = j.status; phaseStart = Date.now(); }
+  const secs = Math.round((Date.now() - phaseStart) / 1000);
+  $('bar').classList.toggle('pulse', j.status === 'encoding');
+  if (j.status === 'encoding') slow(`Preparing your video and report. This can take up to a minute on the free server${secs > 5 ? ` (${secs}s so far)` : ''}. Please keep this page open.`);
+  else if (j.status === 'running' && !j.frame && secs > 8) slow(`Starting up the pose model (${secs}s). The first analysis after a quiet period is slower.`);
+  else slow('');
   if (j.status === 'running') {
     const p = j.total ? Math.min(100, Math.round(j.frame / j.total * 100)) : 0;
     $('barFill').style.width = p + '%'; $('pct').textContent = p ? p + '%' : '';
@@ -410,8 +462,8 @@ async function poll(id) {
     if (j.frame) { $('preview').src = `/jobs/${id}/preview.jpg?t=${Date.now()}`; $('waiting').classList.add('hidden'); }
   } else if (j.status === 'encoding') {
     $('barFill').style.width = '100%'; $('pct').textContent = '100%';
-    $('statusText').textContent = 'Encoding video';
-  } else { return finish(id, j); }
+    $('statusText').textContent = 'Finishing up';
+  } else { phase = ''; slow(''); $('bar').classList.remove('pulse'); return finish(id, j); }
   setTimeout(() => poll(id), 700);
 }
 
