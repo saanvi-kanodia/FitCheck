@@ -19,9 +19,24 @@ python3.10 -m venv .venv
 ```
 ## Project layout
 
-- `webapp/`: Flask app (`app.py`), job runner, PDF report builder, and the HTML template
-- `*_analysis.py`: one analyser per fitness test, run on each uploaded video
-- `posture_analyzer.py`, `metric.py`, `gym_code.py`: shared pose and metric helpers
+```
+FitCheck/
+├── analysers/            one script per fitness test, run on each uploaded video
+│   ├── pushup.py         squats.py, curl_ups.py, plank_hold.py, jumping_jack.py,
+│   └── ...               vertical_jump.py, shuttle_run.py, sit_reach.py, back_stretch.py
+├── tools/                standalone helpers, not used by the web app
+│   ├── pose_viewer.py        general pose overlay on a video
+│   ├── posture_analyzer.py   posture checks and suggestions
+│   └── fitness_metrics.py    domain charts (strength, power, agility) from results
+├── webapp/
+│   ├── app.py            Flask server (port 5050)
+│   ├── runner.py         runs an analyser headlessly for a job
+│   ├── pdf_report.py     builds the downloadable PDF report
+│   └── templates/        the single-page UI
+└── requirements.txt
+```
+
+Each analyser can also be run on its own: `python analysers/pushup.py -v video.mp4`.
 
 ## Stack
 

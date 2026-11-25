@@ -1,4 +1,4 @@
-"""Run an existing *_analysis.py script headlessly.
+"""Run an analyser script from analysers/ headlessly.
 
 Usage: python runner.py <job_dir> <script.py> [script args...]
 

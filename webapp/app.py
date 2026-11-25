@@ -24,19 +24,20 @@ from pdf_report import FILMING, _rating, _summarise, build_pdf
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(APP_DIR)
+ANALYSERS_DIR = os.path.join(PROJECT_DIR, "analysers")
 JOBS_DIR = os.path.join(APP_DIR, "jobs")
 os.makedirs(JOBS_DIR, exist_ok=True)
 
 TESTS = {
-    "pushup": {"name": "Push-ups", "script": "Pushup_analysis.py", "extra": ["-wt", "PushUp"]},
-    "squats": {"name": "Squats", "script": "Squats_analysis.py"},
-    "curlups": {"name": "Curl-ups", "script": "CurlUps_analysis.py"},
-    "plank": {"name": "Plank hold", "script": "plankHold_analysis.py"},
-    "jumpingjack": {"name": "Jumping jacks", "script": "jumpingJack_analysis.py"},
-    "verticaljump": {"name": "Vertical jump", "script": "verticalJump_analysis.py"},
-    "shuttlerun": {"name": "Shuttle run", "script": "shuttleRun_analysis.py"},
-    "sitreach": {"name": "Sit and reach", "script": "SitReach_analysis.py", "needs_height": True},
-    "backstretch": {"name": "Back stretch", "script": "backStretch_analysis.py"},
+    "pushup": {"name": "Push-ups", "script": "pushup.py", "extra": ["-wt", "PushUp"]},
+    "squats": {"name": "Squats", "script": "squats.py"},
+    "curlups": {"name": "Curl-ups", "script": "curl_ups.py"},
+    "plank": {"name": "Plank hold", "script": "plank_hold.py"},
+    "jumpingjack": {"name": "Jumping jacks", "script": "jumping_jack.py"},
+    "verticaljump": {"name": "Vertical jump", "script": "vertical_jump.py"},
+    "shuttlerun": {"name": "Shuttle run", "script": "shuttle_run.py"},
+    "sitreach": {"name": "Sit and reach", "script": "sit_reach.py", "needs_height": True},
+    "backstretch": {"name": "Back stretch", "script": "back_stretch.py"},
 }
 
 app = Flask(__name__)
@@ -77,7 +78,7 @@ def run_job(job_id, test_key, video_path, height):
     cap.release()
 
     cmd = [sys.executable, "-u", os.path.join(APP_DIR, "runner.py"), job_dir,
-           os.path.join(PROJECT_DIR, test["script"]), "-v", video_path, "-o", raw_out,
+           os.path.join(ANALYSERS_DIR, test["script"]), "-v", video_path, "-o", raw_out,
            *test.get("extra", [])]
     if test.get("needs_height"):
         cmd += ["--height", str(height)]
