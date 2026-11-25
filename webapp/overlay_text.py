@@ -51,21 +51,39 @@ def put_text(img, text, org, fontFace, fontScale, color, thickness=1, lineType=N
         return _orig_put_text(img, text, org, fontFace, fontScale, color, thickness,
                               lineType or cv2.LINE_8, bottomLeftOrigin)
 
-    size = max(8, int(round(fontScale * _PX_PER_SCALE)))
+    h, w = img.shape[:2]
+    # Keep sizes consistent across analysers: clamp to a range set by the frame's
+    # shorter side, so portrait phone videos don't get oversized text.
+    short = min(h, w)
+    size = int(round(fontScale * _PX_PER_SCALE))
+    size = max(int(short * 0.026), min(size, int(short * 0.036)), 10)
     font = _font(size, heavy=thickness >= 2)
+    text = str(text)
     x, y = int(org[0]), int(org[1])
 
-    # Draw only on the patch of the frame the text covers, which keeps it fast.
-    left, top, right, bottom = font.getbbox(str(text), anchor="ls")
-    h, w = img.shape[:2]
-    x0, y0 = max(0, x + left - 2), max(0, y + top - 2)
-    x1, y1 = min(w, x + right + 2), min(h, y + bottom + 2)
+    pad = max(4, size // 4)
+    left, top, right, bottom = font.getbbox(text, anchor="ls")
+    x0, y0 = max(0, x + left - pad), max(0, y + top - pad)
+    x1, y1 = min(w, x + right + pad), min(h, y + bottom + pad)
     if x0 >= x1 or y0 >= y1:
         return img
 
-    patch = Image.fromarray(img[y0:y1, x0:x1][:, :, ::-1])
-    rgb = tuple(int(c) for c in (color[2], color[1], color[0])) if len(color) >= 3 else (255, 255, 255)
-    ImageDraw.Draw(patch).text((x - x0, y - y0), str(text), font=font, fill=rgb, anchor="ls")
+    region = img[y0:y1, x0:x1]
+    # Put a dark pill behind the text so it reads on any footage. Skip it where the
+    # analyser already drew a plain backing (the push-up bar), i.e. the area is flat.
+    if region.std() >= 12 or region.mean() > 90:
+        pill = Image.new("L", (x1 - x0, y1 - y0), 0)
+        ImageDraw.Draw(pill).rounded_rectangle((0, 0, x1 - x0 - 1, y1 - y0 - 1), radius=pad + 2, fill=200)
+        a = (np.asarray(pill, dtype=np.float32) / 255.0)[:, :, None]
+        region[:] = (region * (1 - a) + np.array([18, 16, 14], np.float32) * a).astype(np.uint8)
+
+    # Dark text colours (pure blue/red) are unreadable on a dark backing: lighten them.
+    b, g, r = (int(c) for c in color[:3]) if len(color) >= 3 else (255, 255, 255)
+    if 0.299 * r + 0.587 * g + 0.114 * b < 150:
+        r, g, b = (int(c + (255 - c) * 0.45) for c in (r, g, b))
+
+    patch = Image.fromarray(region[:, :, ::-1])
+    ImageDraw.Draw(patch).text((x - x0, y - y0), text, font=font, fill=(r, g, b), anchor="ls")
     img[y0:y1, x0:x1] = np.asarray(patch)[:, :, ::-1]
     return img
 
