@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FitCheck: fitness test analysis</title>
+<script>
+  const saved = localStorage.getItem('theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+</script>
+<style>
+  :root {
+    --bg: #faf8f4; --plate: #f1ede5; --ink: #1d211f; --muted: #6b6f6a; --line: #e2ddd3;
+    --accent: #2f5d46; --accent-ink: #fff; --tint: #e9efe9; --err: #a3402f;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme=light]) {
+      --bg: #151715; --plate: #1d201d; --ink: #e8e6e0; --muted: #9a9d97; --line: #2c302c;
+      --accent: #8fc4a5; --accent-ink: #10201a; --tint: #1f2a23; --err: #e48a77;
+    }
+  }
+  :root[data-theme=dark] {
+    --bg: #151715; --plate: #1d201d; --ink: #e8e6e0; --muted: #9a9d97; --line: #2c302c;
+    --accent: #8fc4a5; --accent-ink: #10201a; --tint: #1f2a23; --err: #e48a77;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+  button, input { font: inherit; color: inherit; }
+
+  header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--line); }
+  .wordmark { font: 600 21px/1 var(--serif); letter-spacing: -.01em; }
+  .theme-btn { background: none; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .theme-btn:hover { color: var(--ink); border-color: var(--muted); }
+
+  .intro { padding: 40px 0 32px; max-width: 620px; }
+  .intro h1 { font: 500 36px/1.15 var(--serif); margin: 0 0 10px; letter-spacing: -.015em; }
+  .intro p { margin: 0; color: var(--muted); font-size: 16px; }
+
+  main { display: grid; grid-template-columns: minmax(320px, 400px) 1fr; gap: 56px; align-items: start; padding-bottom: 48px; }
+
+  .label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; letter-spacing: .04em;
+           text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  .group + .group { margin-top: 28px; }
+
+  /* Test tiles */
+  .tests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tests label { display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 10px; border: 1px solid var(--line);
+                 border-radius: 8px; cursor: pointer; position: relative; background: var(--bg); }
+  .tests input { position: absolute; opacity: 0; pointer-events: none; }
+  .thumb { aspect-ratio: 5/3; background: var(--plate); border-radius: 4px; display: grid; place-items: center; }
+  .thumb svg { width: 86%; height: auto; stroke: var(--muted); }
+  .thumb .acc { stroke-dasharray: 3 3; }
+  .tests b { font-weight: 500; font-size: 13.5px; line-height: 1.25; }
+  .tests small { color: var(--muted); font-size: 12px; margin-top: -4px; }
+  .tests label:hover { border-color: var(--muted); }
+  .tests label:has(input:checked) { border-color: var(--accent); background: var(--tint); box-shadow: inset 0 0 0 1px var(--accent); }
+  .tests label:has(input:checked) .thumb svg { stroke: var(--accent); }
+  .tests label:has(input:checked) b { font-weight: 650; }
+  .tests label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Upload */
+  .drop { display: block; border: 1px dashed var(--muted); border-radius: 8px; padding: 18px; cursor: pointer; }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--plate); }
+  .drop.has { border-style: solid; border-color: var(--accent); }
+  .drop input { display: none; }
+  .drop strong { display: block; font-weight: 600; word-break: break-all; }
+  .drop small { color: var(--muted); font-size: 13px; }
+
+  .field input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font-size: 16px; }
+  .field input:focus { outline: none; border-color: var(--accent); }
+
+  .btn { margin-top: 28px; width: 100%; padding: 13px; border: 0; border-radius: 6px; background: var(--accent);
+         color: var(--accent-ink); font-weight: 600; cursor: pointer; }
+  .btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .error { color: var(--err); margin-top: 10px; font-size: 14px; }
+  .error:empty { display: none; }
+
+  /* Right column */
+  .stage { min-width: 0; }
+  figure { margin: 0; display: grid; grid-template-columns: 180px 1fr; gap: 20px; align-items: center; }
+  .plate { background: var(--plate); border-radius: 4px; aspect-ratio: 5/3; display: grid; place-items: center; }
+  .plate svg { width: 84%; height: auto; stroke: var(--ink); }
+  .plate .ground, .plate .acc { stroke: var(--muted); }
+  .plate .acc { stroke-dasharray: 3 3; }
+  figcaption { font-size: 14px; }
+  figcaption .fig { font: italic 13px var(--serif); color: var(--muted); }
+  figcaption h3 { margin: 2px 0 4px; font: 500 20px/1.3 var(--serif); }
+  figcaption p { margin: 0; color: var(--muted); }
+
+  .stage-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; gap: 12px; }
+  .stage-head h2 { margin: 0; font: 500 24px/1.2 var(--serif); }
+  .tag { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .tag.err { color: var(--err); }
+
+  .media { width: 100%; aspect-ratio: 16/10; border-radius: 4px; background: var(--plate); display: block; object-fit: contain; }
+  img.media:not([src]) { visibility: hidden; }
+  .media-box { position: relative; }
+  .spinner { display: block; width: 28px; height: 28px; margin: 0 auto 12px; border-radius: 50%;
+             border: 2.5px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+  .media-box .waiting { text-align: center;  position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; }
+
+  .bar { height: 2px; background: var(--line); margin-top: 16px; }
+  .bar div { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+  .status { margin-top: 8px; color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin: 20px 0 0;
+           border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .stats:empty { display: none; }
+  .stat { padding: 14px 16px 14px 0; }
+  .stat + .stat { padding-left: 16px; border-left: 1px solid var(--line); }
+  .stat b { display: block; font: 500 28px/1.1 var(--serif); font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 13px; }
+
+  details { margin-top: 20px; border-bottom: 1px solid var(--line); }
+  summary { cursor: pointer; padding: 10px 0; font-weight: 600; font-size: 14px; }
+  pre { white-space: pre-wrap; margin: 0 0 14px; max-height: 380px; overflow: auto; font: 12.5px/1.6 ui-monospace, Menlo, monospace; color: var(--muted); }
+
+  /* In-page report */
+  .report { margin-top: 24px; }
+  .report:empty { display: none; }
+  .r-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .r-card { background: var(--plate); padding: 16px 18px; border-radius: 4px; }
+  .r-card.main { background: var(--tint); }
+  .r-card b { display: block; font: 500 30px/1.1 var(--serif); }
+  .r-card.main b { color: var(--accent); }
+  .r-card span { color: var(--muted); font-size: 13px; }
+  .r-sec { margin-top: 24px; }
+  .r-sec .label { border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-bottom: 4px; }
+  .r-row { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 14.5px; }
+  .r-row span:first-child { color: var(--muted); }
+  .r-row.warn span:last-child { color: var(--err); }
+  .r-sec ul { margin: 6px 0 0; padding-left: 18px; }
+  .r-sec li { margin: 4px 0; }
+  .r-sec p { margin: 6px 0 0; }
+  .r-note { color: var(--muted); font-size: 12.5px; margin-top: 20px; }
+  .report-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 24px; }
+  .report-head .label { margin-bottom: 8px; }
+  .link { font-size: 13px; color: var(--accent); text-decoration: none; }
+  .link:hover { text-decoration: underline; }
+  .pdf { width: 100%; height: 640px; border: 1px solid var(--line); border-radius: 4px; background: var(--plate); display: block; }
+  @media (max-width: 560px) { .pdf { height: 70vh; } }
+  .actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .btn-sm { padding: 9px 16px; border-radius: 6px; border: 0; background: var(--accent); color: var(--accent-ink);
+            font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-sm:disabled { background: var(--tint); color: var(--accent); cursor: default; }
+
+  /* Saved analyses */
+  .saved { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .saved li { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); }
+  .saved li.active { background: var(--tint); }
+  .saved .open { flex: 1; min-width: 0; display: grid; grid-template-columns: 64px 1fr; gap: 2px 12px; align-items: center;
+                 padding: 8px 4px; background: none; border: 0; text-align: left; cursor: pointer; }
+  .saved .open:hover b { color: var(--accent); }
+  .saved .mini { grid-row: span 2; aspect-ratio: 5/3; background: var(--plate); border-radius: 3px; display: grid; place-items: center; }
+  .saved .mini svg { width: 84%; stroke: var(--muted); }
+  .saved b { font-weight: 600; font-size: 14px; }
+  .saved small { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .saved .del { background: none; border: 0; color: var(--muted); font-size: 13px; padding: 6px 8px; cursor: pointer; border-radius: 4px; }
+  .saved .del:hover { color: var(--err); }
+  .saved .del.confirm { color: var(--err); font-weight: 600; }
+  .saved-empty { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .ghost { padding: 9px 14px; border-radius: 6px; border: 1px solid var(--line); background: none; font-size: 14px;
+           font-weight: 500; text-decoration: none; color: var(--ink); cursor: pointer; }
+  .ghost:hover { border-color: var(--muted); }
+  .hidden { display: none !important; }
+  footer { border-top: 1px solid var(--line); padding: 18px 0 28px; color: var(--muted); font-size: 13px; }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; gap: 36px; }
+    .stage { position: static; }
+
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 18px; }
+    header { padding: 14px 0; }
+    .intro { padding: 26px 0 22px; }
+    .intro h1 { font-size: 28px; }
+    .intro p { font-size: 15px; }
+    .tests { gap: 6px; }
+    .tests label { padding: 6px 6px 8px; }
+    .tests b { font-size: 12.5px; }
+    .tests small { display: none; }
+    figure { grid-template-columns: 120px 1fr; gap: 14px; }
+    figcaption h3 { font-size: 18px; }
+    .media { aspect-ratio: 4/3; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stat:nth-child(odd) { padding-left: 0; border-left: 0; }
+    .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .stat b { font-size: 24px; }
+    .actions .ghost { flex: 1; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="wordmark">FitCheck</span>
+    <button class="theme-btn" id="themeBtn" type="button">Dark</button>
+  </header>
+
+  <section class="intro">
+    <h1>Fitness test analysis</h1>
+    <p>Upload a recording of one of the tests below. FitCheck tracks your pose frame by frame, counts reps or times the hold, and marks form problems on the video.</p>
+  </section>
+
+  {% set hints = {
+    "pushup": "Upper body", "squats": "Lower body", "curlups": "Core",
+    "plank": "Core", "jumpingjack": "Endurance", "verticaljump": "Power",
+    "shuttlerun": "Agility", "sitreach": "Flexibility", "backstretch": "Mobility"} %}
+
+  <form id="form"><main>
+    <div class="picker">
+      <div class="group">
+        <p class="label"><span>Test</span></p>
+        <div class="tests">
+          {% for key, t in tests.items() %}
+          <label><input type="radio" name="test" value="{{ key }}" {% if loop.first %}checked{% endif %}
+                 data-height="{{ 1 if t.needs_height else 0 }}"><span class="thumb" aria-hidden="true"></span><b>{{ t.name }}</b><small>{{ hints.get(key, '') }}</small></label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="group" id="savedGroup">
+        <p class="label"><span>Saved analyses</span><span id="savedCount"></span></p>
+        <ul class="saved" id="saved"></ul>
+        <p class="saved-empty" id="savedEmpty">Nothing saved yet. Press Save on a result to keep it here.</p>
+      </div>
+    </div>
+
+    <section class="stage" id="stage">
+      <div id="empty">
+      <figure>
+        <div class="plate" id="illus" aria-hidden="true"></div>
+        <figcaption>
+          <span class="fig" id="figNo">Fig. 1</span>
+          <h3 id="emptyTitle"></h3>
+          <p id="emptyHint"></p>
+        </figcaption>
+      </figure>
+      <div class="upload">
+      <div class="group">
+        <p class="label"><span>Video</span></p>
+        <label class="drop" id="drop">
+          <input type="file" name="video" accept="video/*" id="file">
+          <strong id="dropText">Choose a file or drop it here</strong>
+          <small id="dropHint">MP4 or MOV, whole body in frame</small>
+        </label>
+      </div>
+
+      <div class="group field hidden" id="heightField">
+        <p class="label"><span>Height</span><span>needed for this test</span></p>
+        <input type="number" name="height" min="80" max="250" step="0.5" placeholder="cm">
+      </div>
+
+      <button class="btn" id="go" type="submit">Analyse video</button>
+      <div class="error" id="err"></div>
+      </div>
+      </div>
+
+      <div id="running" class="hidden">
+        <div class="stage-head"><h2 id="runTitle">Analysing</h2><span class="tag">Analysing</span></div>
+        <div class="media-box">
+          <img class="media" id="preview" alt="Live analysis preview">
+          <div class="waiting" id="waiting"><div><span class="spinner" aria-hidden="true"></span>Loading pose model…</div></div>
+        </div>
+        <div class="bar"><div id="barFill"></div></div>
+        <div class="status"><span id="statusText">Starting</span><span id="pct"></span></div>
+      </div>
+
+      <div id="result" class="hidden">
+        <div class="stage-head"><h2 id="resTitle">Results</h2><span class="tag" id="resChip">Done</span></div>
+        <video class="media" id="video" controls playsinline></video>
+        <div class="report" id="reportView"></div>
+        <details id="reportBox" class="hidden">
+          <summary>Console output</summary>
+          <pre id="report"></pre>
+        </details>
+        <div class="actions">
+          <button class="btn-sm" type="button" id="saveBtn">Save</button>
+          <a class="ghost" id="dl" download>Download video</a>
+          <a class="ghost" id="dlReport">Download PDF</a>
+          <button class="ghost" type="button" id="again">New analysis</button>
+        </div>
+      </div>
+    </section>
+  </main></form>
+  <footer>Runs on this computer. Videos are not uploaded anywhere else.</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const form = $('form'), file = $('file'), drop = $('drop');
+const root = document.documentElement;
+const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+const syncThemeLabel = () => { $('themeBtn').textContent = isDark() ? 'Light' : 'Dark'; };
+$('themeBtn').addEventListener('click', () => {
+  root.dataset.theme = isDark() ? 'light' : 'dark';
+  localStorage.setItem('theme', root.dataset.theme);
+  syncThemeLabel();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeLabel);
+syncThemeLabel();
+
+const G = '<path class="ground" d="M6 66h108"/>';
+const ILLUS = {
+  pushup: ['<circle cx="22" cy="40" r="5"/><path d="M28 44L66 50L104 64M32 45v19"/>', 'Side view. Head, hips and heels should stay in one line.'],
+  squats: ['<circle cx="56" cy="12" r="5"/><path d="M56 18L50 40L72 42L68 64M56 24L82 28"/>', 'Side view, whole body in frame. Hips back, chest up.'],
+  curlups: ['<circle cx="26" cy="44" r="5"/><path d="M31 48L56 64L74 46L90 64M33 50L56 56"/>', 'Side view. Knees bent, feet flat on the floor.'],
+  plank: ['<circle cx="22" cy="44" r="5"/><path d="M28 48L104 62M30 50v14h14"/>', 'Side view, on forearms. The timer runs while your body stays straight.'],
+  jumpingjack: ['<circle cx="60" cy="10" r="5"/><path d="M60 16v24M60 22L40 4M60 22L80 4M60 40L44 64M60 40L76 64"/>', 'Front view. Leave room above your hands and below your feet.'],
+  verticaljump: ['<circle cx="56" cy="10" r="5"/><path d="M56 16v22M56 22L46 4M56 22L66 4M56 38L50 52M56 38L62 52"/><path class="acc" d="M92 56V18M86 24l6-6 6 6"/>', 'Side view. Keep your feet in frame for the whole jump.'],
+  shuttlerun: ['<circle cx="64" cy="16" r="5"/><path d="M62 22L56 40M61 27L72 35M61 27L50 22M56 40L68 50L66 64M56 40L46 52L38 58"/><path class="acc" d="M10 64l4-10 4 10zM102 64l4-10 4 10z"/>', 'Side view, wide enough to show both markers.'],
+  sitreach: ['<circle cx="62" cy="34" r="5"/><path d="M40 64h54M40 64L58 42M58 44L90 54"/><path class="acc" d="M96 52h14v12H96z"/>', 'Side view. Legs straight, reach forward slowly and hold.'],
+  backstretch: ['<circle cx="84" cy="54" r="5"/><path d="M60 30v34M60 30L80 48M78 46L76 64"/>', 'Side view. Bend forward from the hips.'],
+};
+const radios = [...form.querySelectorAll('input[name=test]')];
+
+function syncTest() {
+  const sel = form.querySelector('input[name=test]:checked');
+  $('heightField').classList.toggle('hidden', sel.dataset.height !== '1');
+  const ill = ILLUS[sel.value];
+  if (!ill) return;
+  $('illus').innerHTML = `<svg viewBox="0 0 120 72" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${G}${ill[0]}</svg>`;
+  $('figNo').textContent = `Fig. ${radios.indexOf(sel) + 1}`;
+  $('emptyTitle').textContent = sel.parentElement.querySelector('b').textContent;
+  $('emptyHint').textContent = ill[1];
+}
+radios.forEach(r => {
+  const ill = ILLUS[r.value];
+  if (ill) r.parentElement.querySelector('.thumb').innerHTML =
+    `<svg viewBox="0 0 120 72" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${G}${ill[0]}</svg>`;
+  r.addEventListener('change', syncTest);
+});
+syncTest();
+
+function setFile(f) {
+  $('dropText').textContent = f ? f.name : 'Choose a file or drop it here';
+  $('dropHint').textContent = f ? `${(f.size / 1048576).toFixed(1)} MB. Click to change.` : 'MP4 or MOV, whole body in frame';
+  drop.classList.toggle('has', !!f);
+}
+file.addEventListener('change', () => setFile(file.files[0]));
+['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('over')));
+drop.addEventListener('drop', ev => {
+  ev.preventDefault();
+  if (ev.dataTransfer.files.length) { file.files = ev.dataTransfer.files; setFile(file.files[0]); }
+});
+
+function show(id) { ['empty', 'running', 'result'].forEach(x => $(x).classList.toggle('hidden', x !== id)); }
+$('again').addEventListener('click', () => { currentId = null; document.querySelectorAll('.saved li').forEach(li => li.classList.remove('active')); show('empty'); file.value = ''; setFile(null); });
+
+form.addEventListener('submit', async ev => {
+  ev.preventDefault();
+  $('err').textContent = '';
+  if (!file.files.length) { $('err').textContent = 'Choose a video first.'; return; }
+  $('go').disabled = true;
+  $('runTitle').textContent = form.querySelector('input[name=test]:checked').parentElement.querySelector('b').textContent;
+  $('preview').removeAttribute('src'); $('waiting').classList.remove('hidden');
+  $('barFill').style.width = '0'; $('pct').textContent = '';
+  $('statusText').textContent = 'Uploading';
+  show('running');
+  if (matchMedia('(max-width: 900px)').matches) $('stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    const res = await fetch('/api/analyze', { method: 'POST', body: new FormData(form) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    poll(data.job);
+  } catch (e) { $('err').textContent = e.message; show('empty'); $('go').disabled = false; }
+});
+
+async function poll(id) {
+  const j = await (await fetch(`/api/jobs/${id}`)).json();
+  if (j.status === 'running') {
+    const p = j.total ? Math.min(100, Math.round(j.frame / j.total * 100)) : 0;
+    $('barFill').style.width = p + '%'; $('pct').textContent = p ? p + '%' : '';
+    $('statusText').textContent = j.frame ? `Frame ${j.frame} of ${j.total}` : 'Loading pose model';
+    if (j.frame) { $('preview').src = `/jobs/${id}/preview.jpg?t=${Date.now()}`; $('waiting').classList.add('hidden'); }
+  } else if (j.status === 'encoding') {
+    $('barFill').style.width = '100%'; $('pct').textContent = '100%';
+    $('statusText').textContent = 'Encoding video';
+  } else { return finish(id, j); }
+  setTimeout(() => poll(id), 700);
+}
+
+function renderReport(j) {
+  const r = j.summary || {};
+  const rows = (items, cls = '') => items.map(([a, b]) =>
+    `<div class="r-row ${cls}"><span>${esc(a)}</span><span>${esc(String(b))}</span></div>`).join('');
+  const sec = (title, body) => `<section class="r-sec"><p class="label"><span>${title}</span></p>${body}</section>`;
+  let html = '';
+  const cards = [];
+  if (r.main) cards.push(`<div class="r-card main"><b>${esc(r.main[1])}</b><span>${esc(r.main[0])}</span></div>`);
+  if (r.rating) cards.push(`<div class="r-card"><b>${esc(r.rating)}</b><span>Form · ${r.form.toFixed(1)} out of 4</span></div>`);
+  if (cards.length) html += `<div class="r-cards">${cards.join('')}</div>`;
+  else if (!j.report) html += `<p>This test does not produce a scored report yet. Watch the video above to see your movement with the pose overlay.</p>`;
+  if (r.highlights && r.highlights.length) html += sec('Your session', rows(r.highlights));
+  if (r.issues && r.issues.length) html += sec('What to work on', rows(r.issues, 'warn'));
+  else if (j.report) html += sec('What to work on', '<p>No form problems came up often enough to flag. Well done.</p>');
+  if (r.tips && r.tips.length) html += sec('Tips', `<ul>${r.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`);
+  if (r.filming) html += sec('For your next recording', `<p>${esc(r.filming)}</p>`);
+  html += `<p class="r-note">Results are estimates from video and are not medical advice.</p>`;
+  return html;
+}
+
+function stats(text) {
+  const out = [];
+  for (const line of (text || '').split('\n')) {
+    const m = line.match(/^[\s\-•*]*([A-Za-z][A-Za-z \-/()]{2,40}):\s*([\d.]+\s*(?:\/\s*[\d.]+|%|s|cm|seconds)?)\s*$/);
+    if (m && m[1] !== 'Value' && out.length < 4) out.push([m[1].trim(), m[2].trim()]);
+  }
+  return out;
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+let currentId = null;
+const fmtDate = t => new Date(t * 1000).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const miniSvg = key => ILLUS[key] ? `<svg viewBox="0 0 120 72" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[key][0]}</svg>` : '';
+
+async function loadSaved() {
+  const items = await (await fetch('/api/history')).json();
+  $('savedEmpty').classList.toggle('hidden', items.length > 0);
+  $('savedCount').textContent = items.length ? items.length : '';
+  $('saved').innerHTML = items.map(it => `
+    <li data-id="${it.id}" class="${it.id === currentId ? 'active' : ''}">
+      <button type="button" class="open"><span class="mini">${miniSvg(it.test_key)}</span>
+        <b>${esc(it.test || '')}</b><small>${fmtDate(it.created)} · ${esc(it.video_name || '')}</small></button>
+      <button type="button" class="del" aria-label="Delete">Delete</button>
+    </li>`).join('');
+}
+$('saved').addEventListener('click', async ev => {
+  const li = ev.target.closest('li'); if (!li) return;
+  const id = li.dataset.id;
+  const del = ev.target.closest('.del');
+  if (del) {
+    if (!del.classList.contains('confirm')) {     // first click arms, second click deletes
+      del.classList.add('confirm'); del.textContent = 'Confirm';
+      setTimeout(() => { del.classList.remove('confirm'); del.textContent = 'Delete'; }, 3000);
+      return;
+    }
+    await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+    if (id === currentId) { currentId = null; show('empty'); }
+    return loadSaved();
+  }
+  const j = await (await fetch(`/api/jobs/${id}`)).json();
+  finish(id, j);
+  if (matchMedia('(max-width: 900px)').matches) $('stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+$('saveBtn').addEventListener('click', async () => {
+  if (!currentId) return;
+  $('saveBtn').disabled = true;
+  const res = await fetch(`/api/jobs/${currentId}/save`, { method: 'POST' });
+  if (res.ok) { $('saveBtn').textContent = 'Saved'; loadSaved(); }
+  else { $('saveBtn').disabled = false; }
+});
+loadSaved();
+
+function finish(id, j) {
+  $('go').disabled = false;
+  currentId = id;
+  $('saveBtn').classList.toggle('hidden', j.status !== 'done');
+  $('saveBtn').disabled = !!j.saved; $('saveBtn').textContent = j.saved ? 'Saved' : 'Save';
+  $('dlReport').href = `/jobs/${id}/report.pdf?download=1`;
+
+  document.querySelectorAll('.saved li').forEach(li => li.classList.toggle('active', li.dataset.id === id));
+  $('resTitle').textContent = j.test;
+  if (j.status === 'error') {
+    $('resChip').textContent = 'Failed'; $('resChip').className = 'tag err';
+    $('video').classList.add('hidden'); $('dl').classList.add('hidden'); $('reportView').innerHTML = '';
+    $('report').textContent = j.log || 'No output.'; $('reportBox').open = true;
+    $('reportBox').classList.remove('hidden'); $('dlReport').classList.add('hidden');
+    show('result'); return;
+  }
+  $('resChip').textContent = 'Done'; $('resChip').className = 'tag';
+  $('video').classList.remove('hidden'); $('dl').classList.remove('hidden');
+  $('video').src = `/jobs/${id}/analysed.mp4`; $('dl').href = $('video').src;
+  $('reportView').innerHTML = renderReport(j);
+  $('report').textContent = j.report || j.log || 'This test does not write a report. Console output is shown instead.';
+  $('reportBox').classList.add('hidden'); $('dlReport').classList.remove('hidden');
+  show('result');
+}
+</script>
+</body>
+</html>
