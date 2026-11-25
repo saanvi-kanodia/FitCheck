@@ -6,3 +6,4 @@ placeholder/
 analysed/
 videos/
 *.mp4
+!webapp/static/*.mp4
