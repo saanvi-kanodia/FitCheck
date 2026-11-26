@@ -55,7 +55,7 @@
   .live-note { margin: 0; font-size: 14px; color: var(--muted); }
 
   /* Main: the test list, then the stage */
-  main { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 40px; align-items: start; padding: 32px 0 56px; }
+  main { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 40px; align-items: start; padding: 32px 0 56px; }
   .picker, .stage { min-width: 0; }
   .label { display: flex; justify-content: space-between; align-items: center; margin: 0 0 16px; font-size: 15px; font-weight: 600; color: var(--muted); }
   .group + .group { margin-top: 36px; }
@@ -83,6 +83,15 @@
   .tests input { position: absolute; opacity: 0; pointer-events: none; }
   .thumb { grid-row: span 2; width: 72px; height: 44px; display: grid; place-items: center; }
   .thumb svg { width: 100%; height: auto; stroke: var(--muted); }
+  svg.icon .ground { stroke: var(--line); stroke-width: 2; }
+  .sil { display: block; width: 100%; height: 100%; background: var(--muted);
+         -webkit-mask: var(--sil) center / contain no-repeat; mask: var(--sil) center / contain no-repeat; }
+  .tests label:has(input:checked) .sil, .saved li.active .sil { background: var(--accent-text); }
+  .plate .credit { display: block; margin-top: 6px; padding-inline: var(--pad); font-size: 11.5px; color: var(--muted); text-align: right; }
+  .plate .credit a { color: inherit; }
+  .plate:has(.sil-big) { place-items: center; grid-template-rows: 1fr auto; }
+  .plate .sil-big { width: 100%; height: 240px; max-width: 420px; background: var(--accent-text); }
+  .plate svg.icon { max-width: 360px; }
   .tests b { font-weight: 600; font-size: 16px; line-height: 1.25; align-self: end; }
   .tests small { font-size: 13px; color: var(--muted); align-self: start; }
   .tests label:hover { border-color: var(--edge); }
@@ -95,11 +104,6 @@
   #empty:not(.hidden) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: stretch; }
   /* Line the panels up with the first test, below the "Choose a test" label (15px at 1.5 line height, plus its 16px margin). */
   /* ...and end them level with the last test: nine 64px rows with 6px gaps. */
-  @media (min-width: 901px) {
-    #empty:not(.hidden) { margin-top: calc(15px * 1.5 + 16px); height: calc(9 * 64px + 8 * 6px); }
-    .test-panel { min-height: 0; }
-    .drop { min-height: 0; }
-  }
   .test-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 560px; --pad: 32px; padding: var(--pad);
                 background: var(--plate); border: 1px solid var(--line); border-radius: var(--r); }
   .plate { flex: 1; display: grid; place-items: center; min-height: 240px; }
@@ -110,7 +114,7 @@
   /* Edge to edge and flush with the panel's top, its corners following the panel's. */
   .plate:has(img.big) { place-items: start stretch; margin: calc(-1px - var(--pad)) calc(-1px - var(--pad)) 0; }
   .plate picture:has(img.big) { overflow: hidden; border-radius: var(--r) var(--r) 0 0; }
-  .plate img.big { width: 100%; max-width: none; height: min(280px, 64vw);    max-height: none; object-fit: cover; transform: translateY(var(--shift, 0px)) scale(var(--zoom, 1)); }
+  .plate img.big { width: 100%; max-width: none; height: min(280px, 64vw);    max-height: none; object-fit: contain;   /* never trimmed or zoomed, so nobody is cut off at any window size or browser zoom */ }
   .plate img.big.whole { object-fit: contain; }
   /* Two frames of one rep, top and bottom, alternating; it holds on the top frame under reduced motion or on hover. */
   /* One rep cut out of the push-up sample clip; under reduced motion the still frame shows instead. */
@@ -263,8 +267,29 @@
   footer { padding: 20px 0 32px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
   footer a { color: var(--soft); }
 
+  @media (min-width: 901px) {
+    /* Fit the window's height: the nine test rows shrink (64px down to 44px) so the list and the
+       panels beside it end above the bottom of the screen. 196px = header, top padding, the
+       "Choose a test" label and a bottom margin. */
+    :root { --rowh: clamp(44px, calc((100vh - 196px - 48px) / 9), 64px); --panelh: calc(9 * var(--rowh) + 48px); }
+    main { padding-bottom: 24px; }
+    .tests label { min-height: var(--rowh); padding-block: 2px; }
+    .thumb { height: min(44px, calc(var(--rowh) - 10px)); }
+    .tests label small { line-height: 1.25; }
+    #empty:not(.hidden) { margin-top: calc(15px * 1.5 + 16px); height: var(--panelh); }
+    .test-panel { min-height: 0; gap: 16px; }
+    .plate { min-height: 0; }
+    .plate img { max-height: max(140px, calc(var(--panelh) - 330px)); }
+    /* The picture fills whatever height the panel has left after the name and the instruction. */
+    .plate:has(img.big) { display: flex; flex-direction: column; align-items: stretch; min-height: 150px; }
+    .plate picture:has(img.big) { flex: 1; min-height: 0; display: block; }
+    .plate img.big { height: 100%; min-height: 150px; }
+    .test-panel h1 { font-size: clamp(44px, min(6.4vw, calc(var(--panelh) * .15)), 96px); }
+    .test-panel p { font-size: clamp(15px, calc(var(--panelh) * .029), 18px); }
+    .drop { min-height: 0; }
+  }
   @media (max-width: 1100px) {
-    #empty:not(.hidden) { grid-template-columns: minmax(0, 1fr); }
+    #empty:not(.hidden) { grid-template-columns: minmax(0, 1fr); height: auto; }   /* stacked panels grow with their content */
     .test-panel { min-height: 0; }
     .plate { min-height: 180px; }
   }
@@ -422,7 +447,6 @@
     </section>
   </main></form>
   <div id="infoPop" class="hidden" role="dialog"></div>
-  <footer>Uploaded videos are processed on the server and are not shared. Built by <a href="https://portfolio-website-theta-lilac.vercel.app/" target="_blank" rel="noopener">Saanvi Kanodia</a>.</footer>
 </div>
 
 <script>
@@ -465,7 +489,23 @@ const ILLUS = {
   sitreach: ['<circle cx="64" cy="29" r="3.5"/><path d="M28 61h66M28 61L50 38M52 41L88 52M104 46v15"/>', 'Sit with your legs straight and feet against a box. Reach forward slowly as far as you can and hold for two seconds.'],
   backstretch: ['<circle cx="89" cy="47" r="3.5"/><path d="M48 34v27M48 34L76 42M75 45L73 61"/>', 'Stand with your feet together and knees straight. Bend forward slowly from the hips and reach towards the floor.'],
 };
-const miniSvg = key => ILLUS[key] ? `<svg viewBox="0 0 120 72" fill="none" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[key][0]}</svg>` : '';
+// Line icons: one even, thin outline, outlined heads, feet on a faint ground line (viewBox 120 x 72).
+const ICON_GROUND = '<path class="ground" d="M6 66h108"/>';
+const ICONS = {
+  pushup:       '<circle cx="97" cy="38" r="6"/><path d="M14 63L50 54L86 44M86 45L88 63"/>',
+  squats:       '<circle cx="60" cy="11" r="6"/><path d="M58 21L46 42L68 45L66 63H75M58 26L84 30"/>',
+  curlups:      '<circle cx="30" cy="35" r="6"/><path d="M38 42L60 59L78 41L94 63H101M39 46L61 47"/>',
+  plank:        '<circle cx="99" cy="45" r="6"/><path d="M14 63L52 57L88 51M88 52V63H102"/>',
+  jumpingjack:  '<circle cx="60" cy="10" r="6"/><path d="M60 20V41M60 25L44 9M60 25L76 9M60 41L47 63M60 41L73 63"/>',
+  verticaljump: '<circle cx="50" cy="12" r="6"/><path d="M50 22V40M50 27L40 9M50 27L60 9M50 40L44 50L48 58M50 40L57 50L59 58M96 58V20M88 28L96 20L104 28"/>',
+  shuttlerun:   '<circle cx="70" cy="12" r="6"/><path d="M68 21L58 39M58 39L72 47L68 63M58 39L47 50L36 54M66 26L77 33L84 27M66 26L54 30L49 24M8 63L13 53L18 63ZM102 63L107 53L112 63Z"/>',
+  sitreach:     '<circle cx="70" cy="33" r="6"/><path d="M40 61H88M40 61L62 42M62 44L90 53M94 49H108V63H94Z"/>',
+  backstretch:  '<circle cx="91" cy="46" r="6"/><path d="M50 63V34M50 34L80 40M80 42L80 62"/>',
+};
+const iconSvg = (key, sw) => ICONS[key] ? `<svg class="icon" viewBox="0 0 120 72" fill="none" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_GROUND}${ICONS[key]}</svg>` : '';
+// Silhouettes cut from the exercise GIFs and photos (webapp/static/sil-*.png), tinted by CSS through a mask.
+const silhouette = (key, cls = '') => `<span class="sil ${cls}" style="--sil: url('/static/sil-${key}.png')" aria-hidden="true"></span>`;
+const miniSvg = key => silhouette(key);
 const radios = [...form.querySelectorAll('input[name=test]')];
 const testName = key => radios.find(r => r.value === key)?.parentElement.querySelector('b').textContent || key;
 const selectedTest = () => form.querySelector('input[name=test]:checked').value;
@@ -486,14 +526,21 @@ PANEL_PICS.pushup = { anim: '/static/pushup.gif', still: '/static/pushup-gif-sti
 PANEL_PICS.curlups = { anim: '/static/curlups.gif', still: '/static/curlups-gif-still.png', w: 1200, h: 795 };
 // Vertical jump: the owner's GIF, shown as it is.
 PANEL_PICS.verticaljump = { anim: '/static/verticaljump.gif', still: '/static/verticaljump-gif-still.png', w: 1080, h: 720 };
+// Back stretch: the owner's GIF, shown as it is.
+PANEL_PICS.backstretch = { anim: '/static/backstretch.gif', still: '/static/backstretch-gif-still.png', w: 400, h: 400 };
+// Sit and reach: the owner's animation, shown as it is.
+PANEL_PICS.sitreach = { anim: '/static/sitreach.webp', still: '/static/sitreach-still.png', w: 760, h: 700 };
+// Credits for the openly licensed photos behind a test's picture or silhouette.
+const PIC_CREDITS = {
+};
 // Shown larger, running to the panel edges.
 // How far each is zoomed in on its person (the GIFs carry wide white margins).
-const BIG_PICS = { verticaljump: 1.35, jumpingjack: 1, plank: 1.1, pushup: 1, curlups: 1 };
+const BIG_PICS = { verticaljump: 1, jumpingjack: 1, plank: 1, pushup: 1, curlups: 1, sitreach: 1, backstretch: 1, squats: 1, shuttlerun: 1 };   // all fill the space above the name, shown whole
 // Pixels to move a picture down inside its box (jumping jacks' hands reach the top edge).
 const PIC_SHIFT = {};
 // Always shown whole, never trimmed at any screen width (her hands and feet reach the GIF's edges).
 // Jumping jacks fills the box's full height instead; only the empty white at the sides is trimmed.
-const WHOLE_PICS = [];
+const WHOLE_PICS = ['backstretch'];   // square GIF: trimming to fill the box would cut her feet off
 // Why live mode can't run here, or '' when it can.
 const liveBlocker = () => !window.isSecureContext ? 'Live mode needs a secure (https) connection.'
   : !navigator.mediaDevices?.getUserMedia ? 'This browser does not support camera access.'
@@ -506,7 +553,8 @@ function syncTest() {
   const ill = ILLUS[sel.value];
   $('illus').innerHTML = PANEL_PICS[sel.value]
     ? `<picture><source srcset="${PANEL_PICS[sel.value].still}" media="(prefers-reduced-motion: reduce)"><img class="${BIG_PICS[sel.value] ? 'big' : ''}${WHOLE_PICS.includes(sel.value) ? ' whole' : ''}" style="--zoom: ${BIG_PICS[sel.value] || 1}; --shift: ${PIC_SHIFT[sel.value] || 0}px" src="${PANEL_PICS[sel.value].anim}" alt="" width="${PANEL_PICS[sel.value].w}" height="${PANEL_PICS[sel.value].h}"></picture>`
-    : `<svg viewBox="0 0 120 72" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">${G}${ill[0]}</svg>`;
+    : silhouette(sel.value, 'sil-big');
+  if (PIC_CREDITS[sel.value]) $('illus').insertAdjacentHTML('beforeend', `<small class="credit">${PIC_CREDITS[sel.value]}</small>`);
   $('figNo').textContent = `Fig. ${radios.indexOf(sel) + 1}`;
   $('emptyTitle').innerHTML = testName(sel.value).split(' ').map(w => `<span class="nw">${esc(w)}</span>`).join(' ');
   $('emptyHint').innerHTML = `<b>Instruction:</b> ${esc(ill[1])}`;
@@ -518,8 +566,7 @@ function syncTest() {
   $('filmTip').innerHTML = FILMING[sel.value] ? `<b>Filming tip:</b> ${esc(FILMING[sel.value])}` : '';
 }
 radios.forEach(r => {
-  r.parentElement.querySelector('.thumb').innerHTML =
-    `<svg viewBox="0 0 120 72" fill="none" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[r.value][0]}</svg>`;
+  r.parentElement.querySelector('.thumb').innerHTML = silhouette(r.value);
   r.addEventListener('change', syncTest);
 });
 syncTest();
