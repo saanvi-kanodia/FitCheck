@@ -1133,14 +1133,14 @@ async function renderEnter(h) {
 function fitAnnounce() { const a = $('announce'); document.documentElement.style.setProperty('--ann', (a.hidden ? 0 : a.offsetHeight + parseFloat(getComputedStyle(a).marginTop)) + 'px'); }
 // "Challenges are live" bar: shown until dismissed; names this week's challenge when it's known.
 (() => {
-  let gone = false; try { gone = localStorage.getItem('fc_announce') === 'challenges-1'; } catch (e) {}
+  let gone = false; try { gone = localStorage.getItem('fc_announce') === 'challenges-2'; } catch (e) {}
   if (gone) return;
   $('announce').hidden = false;
   fitAnnounce(); addEventListener('resize', fitAnnounce);
   fetch('/api/leaderboard').then(r => r.ok ? r.json() : null).then(d => {
     const w = d?.challenges?.find(c => c.kind === 'weekly'); if (w) $('announceWeek').textContent = `This week: ${w.title.replace(/^This week:\s*/i, '')}. Can you top the board?`; fitAnnounce();
   }).catch(() => {});
-  $('announceX').addEventListener('click', () => { $('announce').hidden = true; fitAnnounce(); try { localStorage.setItem('fc_announce', 'challenges-1'); } catch (e) {} });
+  $('announceX').addEventListener('click', () => { $('announce').hidden = true; fitAnnounce(); try { localStorage.setItem('fc_announce', 'challenges-2'); } catch (e) {} });
 })();
 
 // The analyses page lives at #analyses; any other address shows the test picker and stage.
