@@ -8,3 +8,4 @@ videos/
 *.mp4
 !webapp/static/*.mp4
 webapp/uploads/
+tests/eval/clips/

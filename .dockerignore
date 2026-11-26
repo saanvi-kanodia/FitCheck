@@ -7,3 +7,4 @@ analysed
 placeholder
 *.mp4
 webapp/uploads
+tests/eval/clips

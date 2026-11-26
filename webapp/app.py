@@ -29,8 +29,11 @@ from pdf_report import FILMING, _rating, _summarise, build_pdf
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(APP_DIR)
 ANALYSERS_DIR = os.path.join(PROJECT_DIR, "analysers")
-JOBS_DIR = os.path.join(APP_DIR, "jobs")
-UPLOADS_DIR = os.path.join(APP_DIR, "uploads")
+# Where jobs/ and uploads/ are kept. tests/eval points this at a temporary folder so that
+# measuring accuracy never touches real jobs.
+DATA_DIR = os.environ.get("FITCHECK_DATA_DIR") or APP_DIR
+JOBS_DIR = os.path.join(DATA_DIR, "jobs")
+UPLOADS_DIR = os.path.join(DATA_DIR, "uploads")
 for d in (JOBS_DIR, UPLOADS_DIR):
     os.makedirs(d, exist_ok=True)
 
