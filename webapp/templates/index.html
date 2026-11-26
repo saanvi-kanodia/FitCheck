@@ -60,6 +60,21 @@
   .label { display: flex; justify-content: space-between; align-items: center; margin: 0 0 16px; font-size: 15px; font-weight: 600; color: var(--muted); }
   .group + .group { margin-top: 36px; }
 
+  /* Your analyses is its own page (#analyses): the test picker and stage step aside for the list. */
+  body:not(.page-analyses) #savedGroup { display: none; }
+  body.page-analyses main { grid-template-columns: minmax(0, 1fr); }
+  body.page-analyses .picker > .group:first-child, body.page-analyses #stage { display: none; }
+  body.page-analyses #savedGroup { margin-top: 0; max-width: 880px; }
+  body.page-analyses #analysesLink { color: var(--accent-text); }
+  .page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .page-head h1 { margin: 0; font: 800 clamp(48px, 6vw, 80px)/.9 var(--display); text-transform: uppercase; }
+  .page-head #savedCount { color: var(--muted); }
+  body.page-analyses .saved li { min-height: 72px; }
+  body.page-analyses .saved .open { grid-template-columns: 96px minmax(0, 1fr); padding: 12px 16px; }
+  body.page-analyses .saved .mini { height: 56px; }
+  body.page-analyses .saved b { font-size: 17px; }
+  body.page-analyses .saved small { font-size: 14px; }
+
   /* Test list */
   .tests { display: flex; flex-direction: column; gap: 6px; }
   .tests label { position: relative; display: grid; grid-template-columns: 72px minmax(0, 1fr); column-gap: 14px; align-items: center; min-height: 64px;
@@ -85,18 +100,25 @@
     .test-panel { min-height: 0; }
     .drop { min-height: 0; }
   }
-  .test-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 560px; padding: 32px;
+  .test-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 560px; --pad: 32px; padding: var(--pad);
                 background: var(--plate); border: 1px solid var(--line); border-radius: var(--r); }
   .plate { flex: 1; display: grid; place-items: center; min-height: 240px; }
   .plate svg { width: 100%; height: auto; stroke: var(--accent-text); }
   .plate .ground { stroke: var(--edge); }
   .plate img { display: block; width: auto; height: auto; max-width: 100%; max-height: 320px; }
+  /* Larger pictures run to the panel's edges and fill a taller box; the GIF's white margins are trimmed on screen, the file is unchanged. */
+  /* Edge to edge and flush with the panel's top, its corners following the panel's. */
+  .plate:has(img.big) { place-items: start stretch; margin: calc(-1px - var(--pad)) calc(-1px - var(--pad)) 0; }
+  .plate picture:has(img.big) { overflow: hidden; border-radius: var(--r) var(--r) 0 0; }
+  .plate img.big { width: 100%; max-width: none; height: min(280px, 64vw);    max-height: none; object-fit: cover; transform: translateY(var(--shift, 0px)) scale(var(--zoom, 1)); }
+  .plate img.big.whole { object-fit: contain; }
   /* Two frames of one rep, top and bottom, alternating; it holds on the top frame under reduced motion or on hover. */
   /* One rep cut out of the push-up sample clip; under reduced motion the still frame shows instead. */
   .test-panel h1 { margin: 0 0 12px; font: 800 clamp(56px, 6.4vw, 96px)/.9 var(--display); text-transform: uppercase; overflow-wrap: break-word; min-width: 0; }
   /* A word never breaks at its hyphen, so "Push-ups" stays on one line. */
   .test-panel h1 .nw { white-space: nowrap; }
   .test-panel p { margin: 0; font-size: 18px; color: var(--soft); max-width: 44ch; }
+  .test-panel p b { color: var(--accent-text); font-weight: 600; }
 
   .upload { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
   .drop { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 300px;
@@ -232,7 +254,7 @@
   /* Live camera */
   .live-box { position: relative; overflow: hidden; }
   .live-box video { display: none; }
-  .live-box canvas { width: 100%; max-height: 62vh; aspect-ratio: 4/3; border-radius: var(--r); background: var(--media); display: block; object-fit: contain; }
+  .live-box canvas { width: 100%; max-height: max(260px, calc(100vh - 420px));   /* leaves the cue and the Start button in view */ aspect-ratio: 4/3; border-radius: var(--r); background: var(--media); display: block; object-fit: contain; }
   .live-time { position: absolute; top: 12px; right: 12px; padding: 6px 10px; border-radius: 999px; background: var(--scrim); color: var(--on-media); font: 600 13px/1 var(--sans); font-variant-numeric: tabular-nums; }
   .live-cue { margin: 16px 0 0; padding: 12px 14px; min-height: 46px; border-radius: 12px; background: var(--plate); font-weight: 600; }
   .live-cue.good { color: var(--accent-text); }
@@ -248,15 +270,21 @@
   }
   @media (max-width: 900px) {
     main { grid-template-columns: minmax(0, 1fr); gap: 32px; }
-    .stage { order: -1; }   /* the upload comes first on a phone */
+    /* On a phone the tests become one swipeable row above the panel; a result, a run or live mode comes first. */
+    main:not(:has(#empty:not(.hidden))) .stage { order: -1; }
+    .tests { flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; margin: 0 -16px; padding-inline: 16px; scrollbar-width: none; }
+    .tests label { flex: none; width: 196px; scroll-snap-align: start; }
+    .picker .label { margin-bottom: 10px; }
     #result:not(.hidden) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "video" "report" "actions" "box"; }
     #result .report { margin-top: 24px; }
   }
   @media (max-width: 560px) {
     .wrap { padding: 0 16px; }
     header { padding: 16px 0; }
-    .nav-link { padding: 0 8px; }
-    .test-panel { padding: 24px; }
+    .nav-link { padding: 0 8px; white-space: nowrap; }
+    header nav { gap: 4px; }
+    header nav a[href*="github.com"] { display: none; }   /* room for the wordmark and Your analyses on one line */
+    .test-panel { --pad: 24px; }
     .stage-head { flex-wrap: wrap; }
     .stage-head h2 { font-size: 34px; }
     .r-card.main span, .r-card:not(.main) b { font-size: 32px; }
@@ -276,7 +304,7 @@
   <header>
     <a class="wordmark" href="/">FitCheck</a>
     <nav aria-label="Main">
-      <a class="nav-link" href="#savedGroup">Your analyses</a>
+      <a class="nav-link" href="#analyses" id="analysesLink">Your analyses</a>
       <a class="nav-link" href="https://github.com/saanvi-kanodia/FitCheck" target="_blank" rel="noopener">GitHub</a>
       <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
     </nav>
@@ -300,7 +328,10 @@
       </div>
 
       <div class="group" id="savedGroup">
-        <p class="label"><span>Your analyses</span><span id="savedCount"></span></p>
+        <div class="page-head">
+          <h1>Your analyses <span id="savedCount"></span></h1>
+          <a class="ghost" href="#">New analysis</a>
+        </div>
         <ul class="saved" id="saved"></ul>
         <p class="saved-empty" id="savedEmpty">Your analyses appear here automatically, with the video and PDF.</p>
         <p class="store-note">Kept privately in this browser on this device.</p>
@@ -424,15 +455,15 @@ const rating = f => f == null ? null : f >= 3.5 ? 'Excellent' : f >= 2.5 ? 'Good
 // limbs kept apart so they don't merge, feet just above a thin ground line.
 const G = '<path class="ground" d="M4 69h112" stroke-width="3"/>';
 const ILLUS = {
-  pushup: ['<circle cx="17" cy="35" r="3.5"/><path d="M31 41L70 49L105 58M31 42v18"/>', 'Side view. Head, hips and heels should stay in one line.'],
-  squats: ['<circle cx="53" cy="9" r="3.5"/><path d="M54 22L46 42L69 45L65 61M55 27L82 29"/>', 'Side view, whole body in frame. Hips back, chest up.'],
-  curlups: ['<circle cx="25" cy="38" r="3.5"/><path d="M36 45L58 60L75 41L92 60"/>', 'Side view. Knees bent, feet flat on the floor.'],
-  plank: ['<circle cx="16" cy="37" r="3.5"/><path d="M30 42L106 58M30 44v16h15"/>', 'Side view, on forearms. The timer runs while your body stays straight.'],
-  jumpingjack: ['<circle cx="60" cy="9" r="3.5"/><path d="M60 22v18M60 27L39 10M60 27L81 10M60 40L44 61M60 40L76 61"/>', 'Front view. Leave room above your hands and below your feet.'],
-  verticaljump: ['<circle cx="48" cy="12" r="3.5"/><path d="M48 25v15M48 30L29 17M48 30L67 17M48 40L41 54M48 40L55 54M96 58V22M87 31l9-9 9 9"/>', 'Side view. Keep your feet in frame for the whole jump.'],
-  shuttlerun: ['<circle cx="67" cy="10" r="3.5"/><path d="M65 23L57 40M64 28L77 35M64 28L50 23M57 40L71 48L68 61M57 40L46 51L35 55M8 61l5-9 5 9zM102 61l5-9 5 9z"/>', 'Side view, wide enough to show both markers.'],
-  sitreach: ['<circle cx="64" cy="29" r="3.5"/><path d="M28 61h66M28 61L50 38M52 41L88 52M104 46v15"/>', 'Side view. Legs straight, reach forward slowly and hold.'],
-  backstretch: ['<circle cx="89" cy="47" r="3.5"/><path d="M48 34v27M48 34L76 42M75 45L73 61"/>', 'Side view. Bend forward from the hips.'],
+  pushup: ['<circle cx="17" cy="35" r="3.5"/><path d="M31 41L70 49L105 58M31 42v18"/>', 'Hands under your shoulders, body straight from head to heels. Lower until your elbows reach 90°, then push back up.'],
+  squats: ['<circle cx="53" cy="9" r="3.5"/><path d="M54 22L46 42L69 45L65 61M55 27L82 29"/>', 'Feet shoulder-width apart. Push your hips back and bend your knees until your thighs are level with the floor, then stand up.'],
+  curlups: ['<circle cx="25" cy="38" r="3.5"/><path d="M36 45L58 60L75 41L92 60"/>', 'Lie on your back, knees bent and feet flat. Curl your shoulders off the floor towards your knees, then lower slowly.'],
+  plank: ['<circle cx="16" cy="37" r="3.5"/><path d="M30 42L106 58M30 44v16h15"/>', 'Rest on your forearms and toes, elbows under your shoulders. Keep your body in one straight line and hold.'],
+  jumpingjack: ['<circle cx="60" cy="9" r="3.5"/><path d="M60 22v18M60 27L39 10M60 27L81 10M60 40L44 61M60 40L76 61"/>', 'Jump your feet wide while raising your arms overhead, then jump back to feet together, arms at your sides.'],
+  verticaljump: ['<circle cx="48" cy="12" r="3.5"/><path d="M48 25v15M48 30L29 17M48 30L67 17M48 40L41 54M48 40L55 54M96 58V22M87 31l9-9 9 9"/>', 'Stand tall, dip into a quick half squat, swing your arms and jump straight up as high as you can. Land softly.'],
+  shuttlerun: ['<circle cx="67" cy="10" r="3.5"/><path d="M65 23L57 40M64 28L77 35M64 28L50 23M57 40L71 48L68 61M57 40L46 51L35 55M8 61l5-9 5 9zM102 61l5-9 5 9z"/>', 'Sprint to the far marker, touch the line, turn and sprint back. Keep going for the set number of laps.'],
+  sitreach: ['<circle cx="64" cy="29" r="3.5"/><path d="M28 61h66M28 61L50 38M52 41L88 52M104 46v15"/>', 'Sit with your legs straight and feet against a box. Reach forward slowly as far as you can and hold for two seconds.'],
+  backstretch: ['<circle cx="89" cy="47" r="3.5"/><path d="M48 34v27M48 34L76 42M75 45L73 61"/>', 'Stand with your feet together and knees straight. Bend forward slowly from the hips and reach towards the floor.'],
 };
 const miniSvg = key => ILLUS[key] ? `<svg viewBox="0 0 120 72" fill="none" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[key][0]}</svg>` : '';
 const radios = [...form.querySelectorAll('input[name=test]')];
@@ -443,6 +474,26 @@ const FILMING = {{ filming|tojson }}, MAX_MB = {{ max_mb }}, SAMPLES = {{ sample
 // Real people: one stretch of each sample clip, cut out of its background (webapp/static/sample-*.mp4).
 const PANEL_PICS = Object.fromEntries([['pushup', 623, 414], ['plank', 439, 138], ['jumpingjack', 398, 600], ['verticaljump', 279, 600], ['shuttlerun', 650, 318]]
   .map(([k, w, h]) => [k, { anim: `/static/${k}-rep.webp`, still: `/static/${k}-still.png`, w, h }]));
+// Jumping jacks: the Sworkit GIF from the owner, shown as it is (white background, no crop).
+PANEL_PICS.jumpingjack = { anim: '/static/jumpingjack-sworkit.gif', still: '/static/jumpingjack-sworkit-still.png', w: 600, h: 338 };
+// Squats: the owner's GIF, shown as it is.
+PANEL_PICS.squats = { anim: '/static/squats.gif', still: '/static/squats-gif-still.png', w: 900, h: 900 };
+// Plank hold: the owner's GIF, shown as it is.
+PANEL_PICS.plank = { anim: '/static/plank.gif', still: '/static/plank-gif-still.png', w: 460, h: 460 };
+// Push-ups: the owner's GIF, shown as it is.
+PANEL_PICS.pushup = { anim: '/static/pushup.gif', still: '/static/pushup-gif-still.png', w: 1200, h: 795 };
+// Curl-ups: the owner's GIF, shown as it is.
+PANEL_PICS.curlups = { anim: '/static/curlups.gif', still: '/static/curlups-gif-still.png', w: 1200, h: 795 };
+// Vertical jump: the owner's GIF, shown as it is.
+PANEL_PICS.verticaljump = { anim: '/static/verticaljump.gif', still: '/static/verticaljump-gif-still.png', w: 1080, h: 720 };
+// Shown larger, running to the panel edges.
+// How far each is zoomed in on its person (the GIFs carry wide white margins).
+const BIG_PICS = { verticaljump: 1.35, jumpingjack: 1, plank: 1.1, pushup: 1, curlups: 1 };
+// Pixels to move a picture down inside its box (jumping jacks' hands reach the top edge).
+const PIC_SHIFT = {};
+// Always shown whole, never trimmed at any screen width (her hands and feet reach the GIF's edges).
+// Jumping jacks fills the box's full height instead; only the empty white at the sides is trimmed.
+const WHOLE_PICS = [];
 // Why live mode can't run here, or '' when it can.
 const liveBlocker = () => !window.isSecureContext ? 'Live mode needs a secure (https) connection.'
   : !navigator.mediaDevices?.getUserMedia ? 'This browser does not support camera access.'
@@ -454,11 +505,11 @@ function syncTest() {
   $('heightNeed').textContent = sel.dataset.height === '1' ? 'needed for this test' : 'optional, for live jump height in cm';
   const ill = ILLUS[sel.value];
   $('illus').innerHTML = PANEL_PICS[sel.value]
-    ? `<picture><source srcset="${PANEL_PICS[sel.value].still}" media="(prefers-reduced-motion: reduce)"><img src="${PANEL_PICS[sel.value].anim}" alt="" width="${PANEL_PICS[sel.value].w}" height="${PANEL_PICS[sel.value].h}"></picture>`
+    ? `<picture><source srcset="${PANEL_PICS[sel.value].still}" media="(prefers-reduced-motion: reduce)"><img class="${BIG_PICS[sel.value] ? 'big' : ''}${WHOLE_PICS.includes(sel.value) ? ' whole' : ''}" style="--zoom: ${BIG_PICS[sel.value] || 1}; --shift: ${PIC_SHIFT[sel.value] || 0}px" src="${PANEL_PICS[sel.value].anim}" alt="" width="${PANEL_PICS[sel.value].w}" height="${PANEL_PICS[sel.value].h}"></picture>`
     : `<svg viewBox="0 0 120 72" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">${G}${ill[0]}</svg>`;
   $('figNo').textContent = `Fig. ${radios.indexOf(sel) + 1}`;
   $('emptyTitle').innerHTML = testName(sel.value).split(' ').map(w => `<span class="nw">${esc(w)}</span>`).join(' ');
-  $('emptyHint').textContent = ill[1];
+  $('emptyHint').innerHTML = `<b>Instruction:</b> ${esc(ill[1])}`;
   $('sampleBtn').classList.toggle('hidden', !SAMPLES.includes(sel.value));
   const blocked = liveBlocker();
   $('liveBtnText').textContent = `${testName(sel.value)} with your camera`;
@@ -791,8 +842,16 @@ function openResult(h) {
   renderList();
 }
 
+// The analyses page lives at #analyses; any other address shows the test picker and stage.
+// (window.history, because this script's own `history` is the saved-analyses list.)
+const syncPage = () => { document.body.classList.toggle('page-analyses', location.hash === '#analyses'); scrollTo(0, 0); };
+addEventListener('hashchange', syncPage);
+syncPage();
+const leaveAnalysesPage = () => { if (location.hash) { window.history.pushState(null, '', location.pathname + location.search); syncPage(); } };
+
 $('saved').addEventListener('click', async ev => {
   const li = ev.target.closest('li'); if (!li) return;
+  if (!ev.target.closest('.del, .retry')) leaveAnalysesPage();   // opening an analysis shows it on the main screen
   if (li.dataset.key) {
     const rec = items.get(li.dataset.key); if (!rec) return;
     if (ev.target.closest('.retry')) return retry(rec);
