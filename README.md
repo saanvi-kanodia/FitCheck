@@ -49,22 +49,6 @@ Every test can also be done live. Pick a test and press **Analyse [test] live wi
 
 Live results are estimates and less precise than an uploaded analysis. Live mode needs HTTPS (or localhost) and a browser that can record video, such as Chrome, Edge or Safari.
 
-## Project structure
-
-```
-analysers/      one MediaPipe + OpenCV script per fitness test
-webapp/
-  app.py        Flask app: chunked uploads, job queue, results, PDF download
-  runner.py     runs an analyser headlessly and reports progress
-  pdf_report.py builds the PDF report
-  body_check.py, overlay_text.py   helpers for input checks and on-video text
-  templates/    the single-page UI
-  static/       sample videos you can try
-tools/          standalone scripts for pose viewing, posture analysis and fitness metrics
-Dockerfile      container used for deployment
-render.yaml     Render deployment config
-```
-
 ## Run locally
 
 Requires Python 3.11.
