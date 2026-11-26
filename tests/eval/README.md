@@ -11,12 +11,28 @@ memory the heaviest step used.
 .venv/bin/python tests/eval/run.py --clip plank-1       # clips whose path contains this
 .venv/bin/python tests/eval/run.py --save baseline      # keep the results (full runs only)
 .venv/bin/python tests/eval/run.py --against baseline   # show what changed since then
+.venv/bin/python tests/eval/run.py --fast               # quick re-test (see below)
 ```
 
 Run it before and after any change to an analyser. A change to one test should leave the
 rows for the other eight unchanged; `--against` lists every clip whose result moved.
 
 It works in a temporary folder and never touches `webapp/jobs`.
+
+`--fast` keeps each clip's pose tracking in `tests/eval/cache/` the first time and reuses it
+afterwards, so a re-test skips the pose model. The results are exactly the same as a normal
+run; the timings are not, so use a normal run to measure speed. The cache is only reused for
+the same video and the same pose settings, and it can be deleted at any time.
+
+The four tests with no clip of their own yet (squats, curl-ups, sit and reach, back stretch)
+are each run on a clip of another exercise. Those rows are marked `smoke`: there is no right
+answer, they only show a crash or a result that changed when it should not have.
+
+The quick checks of the shared pose code (no videos needed) are separate:
+
+```
+.venv/bin/python -m unittest discover -s tests/unit
+```
 
 Setting up on an Intel Mac: `pip install --only-binary=:all: -r requirements.txt pillow`
 (without `--only-binary`, pip tries to compile `sentencepiece` and fails).
@@ -29,7 +45,7 @@ Setting up on an Intel Mac: `pip install --only-binary=:all: -r requirements.txt
 | result | `ok` if within the tolerance, `WRONG` (with how far off) if not, `-` if the clip has no answer |
 | other figures | further numbers from the report that have an answer, such as reps attempted |
 | form problems | `ok`, or how many form problems were missed or flagged without reason |
-| answer | `confirmed` once a person has checked the answer, `proposed` until then |
+| answer | `confirmed` once a person has checked the answer, `proposed` until then, `smoke` for a run with no right answer |
 | time | processing time, and video length divided by it (above 1x is faster than real time) |
 
 Only clips with a confirmed answer, and crashes, make the command exit with an error.
@@ -52,6 +68,7 @@ Only clips with a confirmed answer, and crashes, make the command exit with an e
 | `verified` | `true` once a person has watched the clip and confirmed the answers |
 | `height` | sit and reach only: the person's height in cm |
 | `skip` | optional: a reason. The clip is left out unless it is named with `--clip` |
+| `smoke` | optional: `true` for a clip of another exercise, run only to catch crashes and changes |
 | `notes` | camera angle, lighting, which way the person faces, when each rep happens, anything unusual |
 
 A good set for each test has 3 to 5 clips covering: clean reps, some deliberately incomplete

@@ -9,6 +9,7 @@ by watching the clip.
     .venv/bin/python tests/eval/run.py --against baseline   # show what changed since then
     .venv/bin/python tests/eval/run.py --test squats        # one test only
     .venv/bin/python tests/eval/run.py --clip plank-1       # clips whose path contains this
+    .venv/bin/python tests/eval/run.py --fast               # reuse saved pose tracking (results only, no timing)
 
 Exit code is 1 if an analysis crashed, or a clip whose answer has been confirmed came out wrong.
 """
@@ -26,6 +27,7 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 RESULTS = os.path.join(HERE, "results")
+CACHE = os.path.join(HERE, "cache")
 EPS = 1e-9
 STAGES = ("preparing", "checking", "analysing", "encoding")
 
@@ -45,6 +47,11 @@ def number(text):
 
 def fmt(v):
     return "-" if v is None else f"{v:g}"
+
+
+def key(entry):
+    """A clip can be listed under more than one test, so results are kept per test and clip."""
+    return f"{entry['test']}:{entry['clip']}"
 
 
 def peak_child_mb():
@@ -159,6 +166,9 @@ def main():
     ap.add_argument("--clip", help="only clips whose path contains this text")
     ap.add_argument("--save", metavar="NAME", help="keep results as results/NAME.json (full runs only)")
     ap.add_argument("--against", metavar="NAME", help="compare with results/NAME.json")
+    ap.add_argument("--fast", action="store_true",
+                    help="reuse pose tracking saved by an earlier --fast run: same results, much quicker, "
+                         "but the timings say nothing about real speed")
     args = ap.parse_args()
 
     with open(os.path.join(HERE, "manifest.json"), encoding="utf-8") as f:
@@ -176,8 +186,9 @@ def main():
     if not clips:
         sys.exit("No clips to run.\n  " + "\n  ".join(left_out))
     partial = bool(args.test or args.clip or any("NOT FOUND" in x for x in left_out))
-    if args.save and partial:
-        sys.exit("--save keeps a full run only: drop --test/--clip and make sure every clip file exists.")
+    if args.save and (partial or args.fast):
+        sys.exit("--save keeps a full, normally timed run only: drop --test/--clip/--fast and make sure "
+                 "every clip file exists.")
 
     before = None
     if args.against:
@@ -188,6 +199,8 @@ def main():
     # real jobs in webapp/jobs are never touched.
     work = tempfile.mkdtemp(prefix="fitcheck-eval-")
     os.environ["FITCHECK_DATA_DIR"] = work
+    if args.fast:
+        os.environ["FITCHECK_POSE_CACHE"] = CACHE     # read by analysers/core/pose.py
     sys.path.insert(0, os.path.join(ROOT, "webapp"))
     import app
     import pdf_report
@@ -200,19 +213,20 @@ def main():
             result, err = judge(c, got)
             confirmed = bool(c.get("verified"))
             failed += result == "wrong" and (confirmed or got["status"] == "error")
-            results[c["clip"]] = dict(got, test=c["test"], result=result, error=err, confirmed=confirmed,
-                                      extras=extras(c, got), issue_score=issue_score(c, got))
+            results[key(c)] = dict(got, test=c["test"], clip=c["clip"], result=result, error=err,
+                                   confirmed=confirmed, smoke=bool(c.get("smoke")),
+                                   extras=extras(c, got), issue_score=issue_score(c, got))
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
     # ---- table: one row per clip
-    by_clip = {c["clip"]: c for c in clips}
+    by_key = {key(c): c for c in clips}
     head = ["test", "clip", "expected", "got", "result", "other figures", "form problems", "answer", "time"]
     if before:
         head.append("change")
     rows = []
-    for clip, r in results.items():
-        c = by_clip[clip]
+    for k, r in results.items():
+        c, clip = by_key[k], r["clip"]
         if c.get("expect_status", "done") != "done":
             want = {"rejected": "refuse"}.get(c["expect_status"], c["expect_status"])
         else:
@@ -228,9 +242,10 @@ def main():
             x for x in (f"{sc[1]} missed" if sc[1] else "", f"{sc[2]} false alarm{'s' * (sc[2] != 1)}" if sc[2] else "") if x)
         speed = r["video_seconds"] / r["seconds"] if r["seconds"] else 0
         row = [r["test"], os.path.basename(clip), want, shown, verdict, other, form,
-               "confirmed" if r["confirmed"] else "proposed", f"{r['seconds']:.0f}s ({speed:.2f}x)"]
+               "smoke" if r["smoke"] else "confirmed" if r["confirmed"] else "proposed",
+               f"{r['seconds']:.0f}s ({speed:.2f}x)"]
         if before:
-            old = before["clips"].get(clip)
+            old = before["clips"].get(k)
             row.append("new clip" if old is None else changes(old, r))
         rows.append(row)
     widths = [max(len(str(r[i])) for r in rows + [head]) for i in range(len(head))]
@@ -247,6 +262,8 @@ def main():
             errs = [abs(r["error"]) for r in scored if r["error"] is not None]
             if errs:
                 line += f", mean error {sum(errs) / len(errs):.2f}"
+        elif all(r["smoke"] for r in rs):
+            line = f"{test}: no clip of this test yet ({len(rs)} smoke run, only to catch crashes and changes)"
         else:
             line = f"{test}: no answers to compare with"
         ex = [e for r in rs for e in r["extras"]]
@@ -269,14 +286,16 @@ def main():
              "peak_subprocess_mb": round(peak_child_mb())}
     print()
     line = f"speed: {video:.0f}s of video took {took:.0f}s ({video / took:.2f}x real time)" if took else "speed: -"
-    if before and not partial and before.get("speed", {}).get("seconds"):
+    if args.fast:
+        line += "  [--fast: saved pose tracking was reused, so this is not the real speed]"
+    elif before and not partial and before.get("speed", {}).get("seconds"):
         b = before["speed"]
         line += f"; before: {b['seconds']:.0f}s ({b['video_seconds'] / b['seconds']:.2f}x)"
     print(line)
     print("  of which " + ", ".join(f"{s} {stage_totals[s]:.0f}s" for s in STAGES))
     print(f"memory: the largest subprocess peaked at {speed['peak_subprocess_mb']} MB")
     if before:
-        moved = sum(1 for clip, r in results.items() if clip in before["clips"] and changes(before["clips"][clip], r))
+        moved = sum(1 for k, r in results.items() if k in before["clips"] and changes(before["clips"][k], r))
         print(f"compared with '{args.against}' ({before.get('saved')}): {moved} of {len(results)} clips changed")
     if left_out:
         print("\nnot run:\n  " + "\n  ".join(left_out))

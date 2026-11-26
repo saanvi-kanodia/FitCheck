@@ -5,9 +5,11 @@
       "test": "pushup",
       "expected": 4,
       "tolerance": 0,
-      "expected_extra": {"Push-ups attempted": 4},
+      "expected_extra": {
+        "Push-ups attempted": 4
+      },
       "expected_issues": [],
-      "verified": false,
+      "verified": true,
       "notes": "Studio demo, landscape, three camera shots: wide from a front-side angle (0-3.3 s), closer side view (3.5-10.3 s), wide again (10.5 s on). 4 full, clean push-ups; lowest points near 2.1, 5.5, 8.9 and 11.9 s."
     },
     {
@@ -15,16 +17,18 @@
       "test": "pushup",
       "expected": 5,
       "tolerance": 0,
-      "expected_extra": {"Push-ups attempted": 5},
-      "verified": false,
-      "notes": "Portrait, side view from far away, backlit against a bright sky (person is a small dark shape). Slow reps to the floor. The clip starts at the bottom of a rep: 5 press-ups reach the top (near 2.0, 6.0, 9.8, 13.5, 17.3 s), 4 of them with the lowering also in the clip. TO DECIDE: count the first one (5) or only reps seen from the top (4)."
+      "expected_extra": {
+        "Push-ups attempted": 5
+      },
+      "verified": true,
+      "notes": "Portrait, side view from far away, backlit against a bright sky (person is a small dark shape). Slow reps to the floor. The clip starts at the bottom of a rep: 5 press-ups reach the top (near 2.0, 6.0, 9.8, 13.5, 17.3 s), 4 of them with the lowering also in the clip. Decided 2026-11-26: the first press-up counts, so the answer is 5."
     },
     {
       "clip": "tests/eval/clips/pushup-4.mp4",
       "test": "pushup",
       "expect_status": "rejected",
-      "verified": false,
-      "notes": "Portrait, 58 fps, filmed head-on from above: the legs and feet are hidden behind the body, so depth and body line cannot be judged. Proposed correct behaviour: refuse and ask for a side view. For reference the person does 5 press-ups (tops near 1.3, 5.0, 9.3, 13.0, 16.8 s), starting at the bottom like pushup-3. TO DECIDE: refuse, or count anyway."
+      "verified": true,
+      "notes": "Portrait, 58 fps, filmed head-on from above: the legs and feet are hidden behind the body, so depth and body line cannot be judged. Decided 2026-11-26: a wrong camera angle is refused, with a message asking for a side view. For reference the person does 5 press-ups (tops near 1.3, 5.0, 9.3, 13.0, 16.8 s), starting at the bottom like pushup-3."
     },
     {
       "clip": "tests/eval/clips/pushup-1.mp4",
@@ -39,15 +43,15 @@
       "expected": 17,
       "tolerance": 0,
       "expected_issues": [],
-      "verified": false,
+      "verified": true,
       "notes": "Portrait, 60 fps, front view, indoors, whole body in frame. 17 full jumping jacks at a steady pace (about one every 0.87 s), arms overhead near 0.45, 1.3, 2.2 ... 14.3 s. Stands still from 14.8 s."
     },
     {
       "clip": "tests/eval/clips/jumpingjack-1.mp4",
       "test": "jumpingjack",
       "expect_status": "rejected",
-      "verified": false,
-      "notes": "Portrait, 56 fps, filmed from the SIDE: the legs overlap, so feet apart / together cannot be seen. Proposed correct behaviour: refuse and ask for a front view. For reference the person does 18 jumping jacks (first three quick, near 0.2, 0.7, 1.3 s, then one every 0.9 s until 14.8 s). TO DECIDE: refuse, or count from the arms alone."
+      "verified": true,
+      "notes": "Portrait, 56 fps, filmed from the SIDE: the legs overlap, so feet apart / together cannot be seen. Decided 2026-11-26: a wrong camera angle is refused, with a message asking for a front view. For reference the person does 18 jumping jacks (first three quick, near 0.2, 0.7, 1.3 s, then one every 0.9 s until 14.8 s)."
     },
     {
       "clip": "webapp/static/sample-plank.mp4",
@@ -55,7 +59,7 @@
       "expected": 12.9,
       "tolerance": 1.0,
       "expected_issues": [],
-      "verified": false,
+      "verified": true,
       "notes": "Portrait, side view, head to the right, backlit, person fairly small in frame. Already in a straight forearm plank at the first frame; holds it until about 12.9 s, then drops the knees."
     },
     {
@@ -64,7 +68,7 @@
       "expected": 4.7,
       "tolerance": 0.75,
       "expected_issues": [],
-      "verified": false,
+      "verified": true,
       "notes": "Studio demo, landscape, side view, head to the left, white background. Lies face down (0-3 s), props up on forearms with hips and legs still on the floor (3.5-9 s), then lifts into a straight forearm plank at about 9.5 s and holds to the end (14.2 s). Only the last 4.7 s is a plank. The video itself draws a line from shoulder to ankle from 9.8 s."
     },
     {
@@ -72,8 +76,10 @@
       "test": "verticaljump",
       "expected": 47,
       "tolerance": 10,
-      "expected_extra": {"Jumps recorded": 6},
-      "verified": false,
+      "expected_extra": {
+        "Jumps recorded": 6
+      },
+      "verified": true,
       "notes": "Landscape, side view, steady camera. Reaches up without leaving the ground at about 1 s, then 6 squat jumps (in the air near 2.4, 3.9, 5.4, 6.8, 8.0, 9.3 s), then walks off. Height is an ESTIMATE: at the top of the first (highest) jump the head is about 119 px above standing and the toes about 110 px off the ground; standing height is about 442 px. If the person is 1.78 m tall that is 44 to 48 cm. Cannot be confirmed without knowing his real height, hence the wide tolerance."
     },
     {
@@ -81,9 +87,40 @@
       "test": "shuttlerun",
       "expected": 4.3,
       "tolerance": 0.3,
-      "expected_extra": {"Runs recorded": 3},
-      "verified": false,
+      "expected_extra": {
+        "Runs recorded": 3
+      },
+      "verified": true,
       "notes": "Landscape, wide shot of a dim gym, a second person standing still in the background. Starts at the right marker at about 1.15 s, turns at about 3.45, 5.65, 8.05, 10.45, 12.7 s, finishes at the right at about 15.0 s: 6 legs = 3 runs, about 2.3 s per leg. Speed assumes the markers are 10 m apart, as the app does; the real distance is unknown."
+    },
+    {
+      "clip": "webapp/static/sample-verticaljump.mp4",
+      "test": "squats",
+      "smoke": true,
+      "verified": false,
+      "notes": "No clip of this test exists yet, so it is run on a clip of another exercise. There is no right answer: this only catches crashes and results that change unexpectedly. (Six squat jumps, side view.)"
+    },
+    {
+      "clip": "tests/eval/clips/plank-1.mp4",
+      "test": "curlups",
+      "smoke": true,
+      "verified": false,
+      "notes": "No clip of this test exists yet, so it is run on a clip of another exercise. There is no right answer: this only catches crashes and results that change unexpectedly. (Lying down, then a forearm plank, side view.)"
+    },
+    {
+      "clip": "webapp/static/sample-plank.mp4",
+      "test": "sitreach",
+      "height": 170,
+      "smoke": true,
+      "verified": false,
+      "notes": "No clip of this test exists yet, so it is run on a clip of another exercise. There is no right answer: this only catches crashes and results that change unexpectedly. (Forearm plank, side view, legs straight.)"
+    },
+    {
+      "clip": "webapp/static/sample-jumpingjack.mp4",
+      "test": "backstretch",
+      "smoke": true,
+      "verified": false,
+      "notes": "No clip of this test exists yet, so it is run on a clip of another exercise. There is no right answer: this only catches crashes and results that change unexpectedly. (Jumping jacks, front view.)"
     }
   ]
 }

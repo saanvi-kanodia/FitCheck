@@ -15,6 +15,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import uuid
@@ -34,7 +35,12 @@ ANALYSERS_DIR = os.path.join(PROJECT_DIR, "analysers")
 DATA_DIR = os.environ.get("FITCHECK_DATA_DIR") or APP_DIR
 JOBS_DIR = os.path.join(DATA_DIR, "jobs")
 UPLOADS_DIR = os.path.join(DATA_DIR, "uploads")
-for d in (JOBS_DIR, UPLOADS_DIR):
+# MediaPipe imports matplotlib, which lists every font on the machine the first time it is used
+# and keeps that list in its settings folder. The analysers run with HOME pointed at the job
+# folder, so the list used to be rebuilt for every single analysis (15 seconds on a Mac).
+# One fixed folder means it is built once.
+MPL_DIR = os.environ.get("MPLCONFIGDIR") or os.path.join(tempfile.gettempdir(), "fitcheck-matplotlib")
+for d in (JOBS_DIR, UPLOADS_DIR, MPL_DIR):
     os.makedirs(d, exist_ok=True)
 
 TESTS = {
@@ -203,7 +209,7 @@ def _run_job(job_id, video_path):
     test = TESTS[job["test_key"]]
     raw_out = os.path.join(job_dir, "analysed_raw.mp4")
     ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
-    threads1 = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1")
+    child_env = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MPLCONFIGDIR=MPL_DIR)
 
     # Shrink large videos first: pose tracking doesn't need more than this, and it keeps
     # memory within small servers (Render's free plan has 512 MB).
@@ -215,10 +221,11 @@ def _run_job(job_id, video_path):
     if os.path.exists(small) and os.path.getsize(small) > 0:
         video_path = small
 
-    # Refuse videos that don't show the whole body: the analysers give nonsense otherwise.
+    # Refuse videos that don't show the whole body, or are filmed from the wrong side for the
+    # test: the analysers give nonsense otherwise.
     job["stage"] = "checking"
-    check = subprocess.run([sys.executable, os.path.join(APP_DIR, "body_check.py"), video_path],
-                           capture_output=True, text=True, env=threads1)
+    check = subprocess.run([sys.executable, os.path.join(APP_DIR, "body_check.py"), video_path, job["test_key"]],
+                           capture_output=True, text=True, env=child_env)
     try:
         verdict = json.loads(check.stdout.strip().splitlines()[-1])
     except (ValueError, IndexError):
@@ -244,7 +251,7 @@ def _run_job(job_id, video_path):
         os.remove(old)
     os.makedirs(os.path.join(job_dir, "Downloads"), exist_ok=True)
     log = []
-    proc = subprocess.Popen(cmd, cwd=PROJECT_DIR, env=dict(threads1, HOME=job_dir), stdout=subprocess.PIPE,
+    proc = subprocess.Popen(cmd, cwd=PROJECT_DIR, env=dict(child_env, HOME=job_dir), stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, text=True, bufsize=1)
     for line in proc.stdout:
         m = re.match(r"@@PROGRESS (\d+)", line)

@@ -65,7 +65,13 @@ cv2.destroyAllWindows = lambda *a, **k: None
 cv2.namedWindow = lambda *a, **k: None
 
 sys.argv = [script, *script_args]
+# As when a script is run directly: its own folder is importable, so it can use analysers/core.
+sys.path.insert(0, os.path.dirname(os.path.abspath(script)))
 runpy.run_path(script, run_name="__main__")
+
+# Keep this run's pose tracking for next time, where a cache is in use (tests/eval --fast).
+if "core.pose" in sys.modules:
+    sys.modules["core.pose"].save_all()
 
 # Exit straight away: MediaPipe sometimes segfaults while Python tears down at exit,
 # after the analysis has already finished and saved its output.

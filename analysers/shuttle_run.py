@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+from core.pose import Tracker
 import numpy as np
 import argparse
 import time
@@ -110,7 +111,7 @@ def main():
     print(f"📹 Saving analyzed video as: {args.output}")
 
     out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
-    pose = mp_pose.Pose(static_image_mode=False, model_complexity=args.complexity,
+    pose = Tracker(video=args.video, static_image_mode=False, model_complexity=args.complexity,
                         min_detection_confidence=args.det, min_tracking_confidence=args.track)
 
     analytics = {'speeds': [], 'run_count': 0, 'legs': 0, 'duration': 0.0, 'cheats': []}

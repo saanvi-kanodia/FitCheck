@@ -1,27 +1,27 @@
 {
- "saved": "2026-11-26 22:31",
+ "saved": "2026-11-26 23:04",
  "speed": {
-  "video_seconds": 137.5,
-  "seconds": 362.4,
+  "video_seconds": 192.3,
+  "seconds": 488.8,
   "stages": {
-   "preparing": 10.9,
-   "checking": 35.8,
-   "analysing": 295.1,
-   "encoding": 20.6
+   "preparing": 14.0,
+   "checking": 50.3,
+   "analysing": 394.9,
+   "encoding": 29.7
   },
-  "peak_subprocess_mb": 297
+  "peak_subprocess_mb": 303
  },
  "clips": {
-  "webapp/static/sample-pushup.mp4": {
+  "pushup:webapp/static/sample-pushup.mp4": {
    "status": "done",
    "message": null,
-   "seconds": 32.7,
+   "seconds": 28.3,
    "video_seconds": 13.6,
    "stages": {
-    "analysing": 26.5,
-    "preparing": 0.9,
-    "checking": 3.9,
-    "encoding": 1.5
+    "analysing": 23.2,
+    "preparing": 0.6,
+    "checking": 3.2,
+    "encoding": 1.3
    },
    "value": 4.0,
    "form": 3.8,
@@ -35,9 +35,11 @@
     "Arms moving unevenly"
    ],
    "test": "pushup",
+   "clip": "webapp/static/sample-pushup.mp4",
    "result": "ok",
    "error": 0.0,
-   "confirmed": false,
+   "confirmed": true,
+   "smoke": false,
    "extras": [
     [
      "Push-ups attempted",
@@ -52,16 +54,16 @@
     1
    ]
   },
-  "tests/eval/clips/pushup-3.mp4": {
+  "pushup:tests/eval/clips/pushup-3.mp4": {
    "status": "done",
    "message": null,
-   "seconds": 40.1,
+   "seconds": 35.4,
    "video_seconds": 18.8,
    "stages": {
-    "preparing": 0.9,
-    "checking": 4.1,
-    "analysing": 32.3,
-    "encoding": 2.7
+    "preparing": 0.8,
+    "checking": 3.5,
+    "analysing": 28.6,
+    "encoding": 2.5
    },
    "value": 0.0,
    "form": 3.6,
@@ -74,9 +76,11 @@
     "Arms moving unevenly"
    ],
    "test": "pushup",
+   "clip": "tests/eval/clips/pushup-3.mp4",
    "result": "wrong",
    "error": -5.0,
-   "confirmed": false,
+   "confirmed": true,
+   "smoke": false,
    "extras": [
     [
      "Push-ups attempted",
@@ -87,45 +91,49 @@
    ],
    "issue_score": null
   },
-  "tests/eval/clips/pushup-4.mp4": {
+  "pushup:tests/eval/clips/pushup-4.mp4": {
    "status": "rejected",
    "message": "Your whole body needs to be in the video, from head to feet. Your knees and ankles were out of frame in much of this clip. Step back or move the camera, then upload a new video.",
-   "seconds": 5.1,
+   "seconds": 4.8,
    "video_seconds": 17.6,
    "stages": {
     "preparing": 1.4,
-    "checking": 3.7
+    "checking": 3.4
    },
    "value": null,
    "form": null,
    "figures": {},
    "issues": null,
    "test": "pushup",
+   "clip": "tests/eval/clips/pushup-4.mp4",
    "result": "ok",
    "error": null,
-   "confirmed": false,
+   "confirmed": true,
+   "smoke": false,
    "extras": [],
    "issue_score": null
   },
-  "webapp/static/sample-jumpingjack.mp4": {
+  "jumpingjack:webapp/static/sample-jumpingjack.mp4": {
    "status": "done",
    "message": null,
-   "seconds": 50.0,
+   "seconds": 48.2,
    "video_seconds": 15.5,
    "stages": {
-    "preparing": 1.5,
-    "checking": 3.7,
-    "analysing": 40.9,
-    "encoding": 3.9
+    "preparing": 1.4,
+    "checking": 3.5,
+    "analysing": 39.4,
+    "encoding": 3.8
    },
    "value": 14.0,
    "form": null,
    "figures": {},
    "issues": [],
    "test": "jumpingjack",
+   "clip": "webapp/static/sample-jumpingjack.mp4",
    "result": "wrong",
    "error": -3.0,
-   "confirmed": false,
+   "confirmed": true,
+   "smoke": false,
    "extras": [],
    "issue_score": [
     0,
@@ -133,38 +141,40 @@
     0
    ]
   },
-  "tests/eval/clips/jumpingjack-1.mp4": {
+  "jumpingjack:tests/eval/clips/jumpingjack-1.mp4": {
    "status": "done",
    "message": null,
-   "seconds": 47.9,
+   "seconds": 51.6,
    "video_seconds": 16.2,
    "stages": {
     "preparing": 1.3,
-    "checking": 3.6,
-    "analysing": 39.5,
-    "encoding": 3.5
+    "checking": 3.5,
+    "analysing": 43.0,
+    "encoding": 3.9
    },
    "value": 1.0,
    "form": null,
    "figures": {},
    "issues": [],
    "test": "jumpingjack",
+   "clip": "tests/eval/clips/jumpingjack-1.mp4",
    "result": "wrong",
    "error": null,
-   "confirmed": false,
+   "confirmed": true,
+   "smoke": false,
    "extras": [],
    "issue_score": null
   },
-  "webapp/static/sample-plank.mp4": {
+  "plank:webapp/static/sample-plank.mp4": {
    "status": "done",
    "message": null,
-   "seconds": 46.5,
+   "seconds": 36.4,
    "video_seconds": 13.2,
    "stages": {
     "preparing": 0.6,
-    "checking": 3.8,
-    "analysing": 38.6,
-    "encoding": 3.5
+    "checking": 3.9,
+    "analysing": 29.7,
+    "encoding": 2.2
    },
    "value": 12.9,
    "form": 3.0,
@@ -177,9 +187,11 @@
     "Neck arched"
    ],
    "test": "plank",
+   "clip": "webapp/static/sample-plank.mp4",
    "result": "ok",
    "error": 0.0,
-   "confirmed": false,
+   "confirmed": true,
+   "smoke": false,
    "extras": [],
    "issue_score": [
     0,
@@ -187,16 +199,16 @@
     3
    ]
   },
-  "tests/eval/clips/plank-1.mp4": {
+  "plank:tests/eval/clips/plank-1.mp4": {
    "status": "done",
    "message": null,
-   "seconds": 47.0,
+   "seconds": 35.7,
    "video_seconds": 14.2,
    "stages": {
-    "preparing": 2.4,
-    "checking": 5.4,
-    "analysing": 36.7,
-    "encoding": 2.4
+    "preparing": 1.1,
+    "checking": 3.8,
+    "analysing": 29.2,
+    "encoding": 1.6
    },
    "value": 2.2,
    "form": 2.0,
@@ -209,9 +221,11 @@
     "Neck arched"
    ],
    "test": "plank",
+   "clip": "tests/eval/clips/plank-1.mp4",
    "result": "wrong",
    "error": -2.5,
-   "confirmed": false,
+   "confirmed": true,
+   "smoke": false,
    "extras": [],
    "issue_score": [
     0,
@@ -219,16 +233,16 @@
     3
    ]
   },
-  "webapp/static/sample-verticaljump.mp4": {
+  "verticaljump:webapp/static/sample-verticaljump.mp4": {
    "status": "done",
    "message": null,
-   "seconds": 36.3,
+   "seconds": 34.3,
    "video_seconds": 11.9,
    "stages": {
-    "preparing": 1.0,
-    "checking": 4.0,
-    "analysing": 29.8,
-    "encoding": 1.5
+    "preparing": 0.8,
+    "checking": 3.6,
+    "analysing": 28.5,
+    "encoding": 1.4
    },
    "value": 18.0,
    "form": 2.0,
@@ -240,9 +254,11 @@
     "Unsteady landing"
    ],
    "test": "verticaljump",
+   "clip": "webapp/static/sample-verticaljump.mp4",
    "result": "wrong",
    "error": -29.0,
-   "confirmed": false,
+   "confirmed": true,
+   "smoke": false,
    "extras": [
     [
      "Jumps recorded",
@@ -253,16 +269,16 @@
    ],
    "issue_score": null
   },
-  "webapp/static/sample-shuttlerun.mp4": {
+  "shuttlerun:webapp/static/sample-shuttlerun.mp4": {
    "status": "done",
    "message": null,
-   "seconds": 56.8,
+   "seconds": 33.3,
    "video_seconds": 16.5,
    "stages": {
     "preparing": 0.9,
-    "checking": 3.6,
-    "analysing": 50.8,
-    "encoding": 1.6
+    "checking": 3.4,
+    "analysing": 27.4,
+    "encoding": 1.5
    },
    "value": 4.26,
    "form": 4.0,
@@ -271,9 +287,11 @@
    },
    "issues": [],
    "test": "shuttlerun",
+   "clip": "webapp/static/sample-shuttlerun.mp4",
    "result": "ok",
    "error": -0.040000000000000036,
-   "confirmed": false,
+   "confirmed": true,
+   "smoke": false,
    "extras": [
     [
      "Runs recorded",
@@ -282,6 +300,102 @@
      true
     ]
    ],
+   "issue_score": null
+  },
+  "squats:webapp/static/sample-verticaljump.mp4": {
+   "status": "done",
+   "message": null,
+   "seconds": 40.3,
+   "video_seconds": 11.9,
+   "stages": {
+    "preparing": 0.7,
+    "checking": 5.2,
+    "analysing": 32.4,
+    "encoding": 2.0
+   },
+   "value": 0.0,
+   "form": null,
+   "figures": {},
+   "issues": [],
+   "test": "squats",
+   "clip": "webapp/static/sample-verticaljump.mp4",
+   "result": null,
+   "error": null,
+   "confirmed": false,
+   "smoke": true,
+   "extras": [],
+   "issue_score": null
+  },
+  "curlups:tests/eval/clips/plank-1.mp4": {
+   "status": "done",
+   "message": null,
+   "seconds": 40.4,
+   "video_seconds": 14.2,
+   "stages": {
+    "preparing": 1.0,
+    "checking": 3.9,
+    "analysing": 33.6,
+    "encoding": 2.0
+   },
+   "value": 0.0,
+   "form": null,
+   "figures": {},
+   "issues": [],
+   "test": "curlups",
+   "clip": "tests/eval/clips/plank-1.mp4",
+   "result": null,
+   "error": null,
+   "confirmed": false,
+   "smoke": true,
+   "extras": [],
+   "issue_score": null
+  },
+  "sitreach:webapp/static/sample-plank.mp4": {
+   "status": "done",
+   "message": null,
+   "seconds": 42.0,
+   "video_seconds": 13.2,
+   "stages": {
+    "preparing": 1.0,
+    "checking": 4.8,
+    "analysing": 33.1,
+    "encoding": 3.2
+   },
+   "value": 0.0,
+   "form": null,
+   "figures": {},
+   "issues": [],
+   "test": "sitreach",
+   "clip": "webapp/static/sample-plank.mp4",
+   "result": null,
+   "error": null,
+   "confirmed": false,
+   "smoke": true,
+   "extras": [],
+   "issue_score": null
+  },
+  "backstretch:webapp/static/sample-jumpingjack.mp4": {
+   "status": "done",
+   "message": null,
+   "seconds": 58.1,
+   "video_seconds": 15.5,
+   "stages": {
+    "preparing": 2.4,
+    "checking": 4.6,
+    "analysing": 46.8,
+    "encoding": 4.3
+   },
+   "value": 2.6,
+   "form": null,
+   "figures": {},
+   "issues": [],
+   "test": "backstretch",
+   "clip": "webapp/static/sample-jumpingjack.mp4",
+   "result": null,
+   "error": null,
+   "confirmed": false,
+   "smoke": true,
+   "extras": [],
    "issue_score": null
   }
  }

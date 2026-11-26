@@ -1,6 +1,7 @@
 import sys
 import cv2
 import mediapipe as mp
+from core.pose import Tracker
 import numpy as np
 import argparse
 import numpy as np
@@ -39,19 +40,6 @@ start_time = time.time()
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
-
-def calculate_angle(a,b,c):
-    a = np.array(a)
-    b = np.array(b)
-    c = np.array(c)
-
-    radians = np.arctan2(c[1]-b[1],c[0]-b[0]) - np.arctan2(a[1]-b[1],a[0]-b[0])
-    angle = np.abs(radians *180.0/np.pi)
-
-    if angle > 180.0:
-        angle = 360-angle
-
-    return angle
 
 def generate_analytics_report(analytics, video_filename, output_video=None):
     """Generate a comprehensive analytics report"""
@@ -204,7 +192,7 @@ vid = cv2.VideoCapture(args.video)
 
 width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-fps = int(vid.get(cv2.CAP_PROP_FPS))
+fps = vid.get(cv2.CAP_PROP_FPS) or 30   # the true rate, so the saved video keeps time with the original
 
 # Auto-generate output filename with timestamp if not specified
 if args.output is None:
@@ -219,7 +207,7 @@ print(f"📹 Saving analyzed video as: {args.output}")
 codec = cv2.VideoWriter_fourcc(*'mp4v')
 out = cv2.VideoWriter(args.output, codec, fps, (width, height))
 
-with mp_pose.Pose(
+with Tracker(video=args.video,
     min_detection_confidence=detection_confidence,
     min_tracking_confidence=tracking_confidence,
     model_complexity=complexity,smooth_landmarks = True ) as pose:
@@ -315,12 +303,12 @@ with mp_pose.Pose(
 
             #print('Hip',left_hip)
 
-            #angles 
-            left_arm_angle = int(calculate_angle(shoulder, elbow, wrist))
-            right_arm_angle = int(calculate_angle(shoulder_r, elbow_r, wrist_r))
-            left_leg_angle = int(calculate_angle(left_hip, left_knee, left_ankle))
-
-            right_leg_angle = int(calculate_angle(right_hip, right_knee, right_ankle))
+            # Angles are true angles, taken in pixels (see analysers/core/geometry.py).
+            body = pose.body
+            left_arm_angle = int(body.angle("shoulder", "elbow", "wrist", side="left"))
+            right_arm_angle = int(body.angle("shoulder", "elbow", "wrist", side="right"))
+            left_leg_angle = int(body.angle("hip", "knee", "ankle", side="left"))
+            right_leg_angle = int(body.angle("hip", "knee", "ankle", side="right"))
             
             left_arm_length = np.linalg.norm(np.array(shoulder) - np.array(elbow))
 
@@ -343,24 +331,26 @@ with mp_pose.Pose(
             if workout_type == 'PushUp':
                 # ROBUST PUSHUP DETECTION - Multiple criteria for proper form
                 
-                # 1. ARM ANGLES - Both arms should be similar
-                avg_arm_angle = (left_arm_angle + right_arm_angle) / 2
-                arm_symmetry = abs(left_arm_angle - right_arm_angle) < 30  # Arms should be within 30° of each other
+                # Filmed from the side, the camera sees one arm and one leg. MediaPipe only guesses
+                # where the others are, and the guess is often far off (a straight arm read as
+                # 130 degrees), so everything is measured on the side facing the camera.
+                far_side = "right" if body.side == "left" else "left"
+
+                # 1. ARM ANGLE - the arm the camera can see
+                arm_angle = body.angle("shoulder", "elbow", "wrist")
+                # The two arms can only be compared when the far one is really in view.
+                if body.seen("shoulder", "elbow", "wrist", side=far_side):
+                    arm_symmetry = abs(arm_angle - body.angle("shoulder", "elbow", "wrist", side=far_side)) < 30
+                else:
+                    arm_symmetry = True
                 
                 # 2. BODY ALIGNMENT - Check if body is straight (plank position)
                 # Calculate angle between shoulder-hip-knee line
-                body_angle_left = int(calculate_angle([shoulder[0], shoulder[1]], 
-                                                    [left_hip[0], left_hip[1]], 
-                                                    [left_knee[0], left_knee[1]]))
-                body_angle_right = int(calculate_angle([shoulder_r[0], shoulder_r[1]], 
-                                                     [right_hip[0], right_hip[1]], 
-                                                     [right_knee[0], right_knee[1]]))
-                
                 # Body should be relatively straight (140-180°)
-                body_straight = (140 < body_angle_left < 180) and (140 < body_angle_right < 180)
+                body_straight = body.angle("shoulder", "hip", "knee") > 140
                 
                 # 3. LEG POSITION - Legs should be relatively straight in pushup
-                legs_straight = (left_leg_angle > 140) and (right_leg_angle > 140)
+                legs_straight = body.angle("hip", "knee", "ankle") > 140
                 
                 # 4. HEAD POSITION - Nose should be forward/down, not looking up
                 nose_hip_y_diff = abs(nose[1] - ((left_hip[1] + right_hip[1]) / 2))
@@ -406,7 +396,7 @@ with mp_pose.Pose(
                 # Track analytics
                 session_analytics['total_frames'] += 1
                 session_analytics['form_scores'].append(form_score)
-                session_analytics['avg_arm_angles'].append(avg_arm_angle)
+                session_analytics['avg_arm_angles'].append(arm_angle)
                 
                 if form_score >= 3:
                     session_analytics['good_form_frames'] += 1
@@ -419,7 +409,7 @@ with mp_pose.Pose(
                 
                 # STRICT ATTEMPT DETECTION
                 in_plank = body_straight and legs_straight and arm_symmetry
-                if avg_arm_angle > ATTEMPT_UP_ANGLE and in_plank:
+                if arm_angle > ATTEMPT_UP_ANGLE and in_plank:
                     plank_up_frames += 1
                     descent_frames = 0
                     if plank_up_frames >= ATTEMPT_HOLD_FRAMES:
@@ -427,7 +417,7 @@ with mp_pose.Pose(
                         attempt_counted = False
                 else:
                     plank_up_frames = 0
-                    if ready_for_attempt and not attempt_counted and avg_arm_angle < ATTEMPT_DESCENT_ANGLE and in_plank:
+                    if ready_for_attempt and not attempt_counted and arm_angle < ATTEMPT_DESCENT_ANGLE and in_plank:
                         descent_frames += 1
                         if descent_frames >= ATTEMPT_HOLD_FRAMES:
                             session_analytics['attempted_pushups'] += 1
@@ -436,15 +426,15 @@ with mp_pose.Pose(
                     else:
                         descent_frames = 0
 
-                if avg_arm_angle > 160 and good_form:
+                if arm_angle > 160 and good_form:
                     up_pos = 'Up'
                     display_pos = f'Up (Form: {form_score}/4)'
 
-                if avg_arm_angle < 90 and up_pos == 'Up' and good_form and attempt_counted:
+                if arm_angle < 90 and up_pos == 'Up' and good_form and attempt_counted:
                     down_pos = 'Down'
                     display_pos = f'Down (Form: {form_score}/4)'
 
-                if avg_arm_angle > 160 and down_pos == 'Down' and good_form:
+                if arm_angle > 160 and down_pos == 'Down' and good_form:
                     pushup_pos = "up"
                     display_pos = f"Valid Pushup! (Form: {form_score}/4)"
                     push_up_counter += 1
@@ -542,7 +532,7 @@ with mp_pose.Pose(
             if 'form_score' in locals():
                 score_color = (0,255,0) if form_score >= 3 else (0,165,255) if form_score >= 2 else (0,0,255)
                 cv2.putText(image, f'FORM: {form_score}/4', (image_width-150, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, score_color, 2)
-                cv2.putText(image, f'ANGLE: {int(avg_arm_angle)}°', (image_width-150, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                cv2.putText(image, f'ANGLE: {int(arm_angle)}°', (image_width-150, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
         except:
             cv2.putText(image, 'DETECTING POSE...', (image_width-200, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
 

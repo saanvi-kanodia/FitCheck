@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+from core.pose import Tracker
 import numpy as np
 import argparse
 import time
@@ -29,7 +30,7 @@ def main():
 
     width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(vid.get(cv2.CAP_PROP_FPS))
+    fps = vid.get(cv2.CAP_PROP_FPS) or 30   # the true rate, so the saved video keeps time with the original
 
     if args.output is None:
         timestamp = time.strftime('%Y%m%d_%H%M%S')
@@ -42,7 +43,7 @@ def main():
     codec = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(args.output, codec, fps, (width, height))
 
-    pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=args.det, min_tracking_confidence=args.track)
+    pose = Tracker(video=args.video, static_image_mode=False, min_detection_confidence=args.det, min_tracking_confidence=args.track)
 
     rep_count = 0
     in_up_phase = False
