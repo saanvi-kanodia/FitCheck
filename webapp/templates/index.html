@@ -7,7 +7,7 @@
 <meta name="description" content="Upload a video of a fitness test. FitCheck counts your reps and flags form problems.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Inter:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;1,700;1,800&family=Inter:wght@400;600;700&display=swap">
 <script>
   const saved = localStorage.getItem('theme');
   if (saved) document.documentElement.dataset.theme = saved;
@@ -43,7 +43,10 @@
 
   /* Header */
   header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 24px 0; border-bottom: 1px solid var(--line); }
-  .wordmark { font: 800 30px/1 var(--display); text-transform: uppercase; color: var(--ink); text-decoration: none; }
+  /* Stays at the top while the page scrolls, on a plain background (no track lines) that runs the full window width. */
+  header { position: sticky; top: 0; z-index: 40; background: var(--bg); box-shadow: 0 0 0 100vmax var(--bg); clip-path: inset(0 -100vmax); }
+  .wordmark { font: italic 800 30px/1 var(--display); text-transform: uppercase; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
+  .wordmark::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: #c6f24e;   /* lime in both themes */ flex: none; }
   header nav { display: flex; align-items: center; gap: 12px; }
   .nav-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px; }
   .nav-link:hover { color: var(--accent-text); }
@@ -67,7 +70,7 @@
   body.page-analyses #savedGroup { margin-top: 0; max-width: 880px; }
   body.page-analyses #analysesLink { color: var(--accent-text); }
   .page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
-  .page-head h1 { margin: 0; font: 800 clamp(48px, 6vw, 80px)/.9 var(--display); text-transform: uppercase; }
+  .page-head h1 { margin: 0; font: italic 800 clamp(48px, 6vw, 80px)/.9 var(--display); text-transform: uppercase; }
   .page-head #savedCount { color: var(--muted); }
   body.page-analyses .saved li { min-height: 72px; }
   body.page-analyses .saved .open { grid-template-columns: 96px minmax(0, 1fr); padding: 12px 16px; }
@@ -118,7 +121,7 @@
   .plate img.big.whole { object-fit: contain; }
   /* Two frames of one rep, top and bottom, alternating; it holds on the top frame under reduced motion or on hover. */
   /* One rep cut out of the push-up sample clip; under reduced motion the still frame shows instead. */
-  .test-panel h1 { margin: 0 0 12px; font: 800 clamp(56px, 6.4vw, 96px)/.9 var(--display); text-transform: uppercase; overflow-wrap: break-word; min-width: 0; }
+  .test-panel h1 { margin: 0 0 12px; font: italic 800 clamp(56px, 6.4vw, 96px)/.9 var(--display); text-transform: uppercase; overflow-wrap: break-word; min-width: 0; }
   /* A word never breaks at its hyphen, so "Push-ups" stays on one line. */
   .test-panel h1 .nw { white-space: nowrap; }
   .test-panel p { margin: 0; font-size: 18px; color: var(--soft); max-width: 44ch; }
@@ -133,7 +136,7 @@
   .drop:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
   /* Kept in the tab order (not display: none) so the file chooser opens from the keyboard. */
   .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-  .drop strong { font: 800 28px/1.1 var(--display); text-transform: uppercase; word-break: break-word; }
+  .drop strong { font: italic 800 28px/1.1 var(--display); text-transform: uppercase; word-break: break-word; }
   .drop small { font-size: 14px; color: var(--muted); }
   .drop .film { margin-top: 14px; max-width: 34ch; font-size: 14px; color: var(--soft); }
   .drop .film b { color: var(--accent-text); font-weight: 600; }
@@ -144,7 +147,7 @@
   .field input { min-height: 48px; padding: 0 14px; border: 1px solid var(--edge); border-radius: 12px; background: var(--plate); font-size: 16px; }
 
   .btn { min-height: 56px; width: 100%; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
-         font: 800 22px/1 var(--display); text-transform: uppercase; cursor: pointer; transition: background-color .15s, transform .12s; }
+         font: italic 800 22px/1 var(--display); text-transform: uppercase; cursor: pointer; transition: background-color .15s, transform .12s; }
   .btn:hover:not(:disabled) { background: var(--accent-hover); }
   .btn:disabled { background: var(--plate); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); cursor: not-allowed; }
   .btn:active:not(:disabled), .btn-sm:active:not(:disabled), .ghost:active:not(:disabled), .theme-btn:active, .saved .retry:active { transform: translateY(1px); }
@@ -159,7 +162,7 @@
 
   /* Running, result and live share the stage */
   .stage-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-  .stage-head h2 { margin: 0; font: 800 44px/1 var(--display); text-transform: uppercase; }
+  .stage-head h2 { margin: 0; font: italic 800 44px/1 var(--display); text-transform: uppercase; }
   .tag { padding: 6px 12px; border-radius: 999px; background: var(--tint); color: var(--accent-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
   .tag.err { color: var(--err); background: var(--err-tint); }
   .ghost { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid var(--edge); border-radius: 999px; background: none;
@@ -168,7 +171,7 @@
   .ghost:disabled { color: var(--muted); border-style: dashed; cursor: not-allowed; }
   .new-btn { margin-left: auto; white-space: nowrap; }
   .btn-sm { min-height: 52px; padding: 0 26px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
-            font: 800 20px/1 var(--display); text-transform: uppercase; text-decoration: none; display: inline-flex; align-items: center; cursor: pointer; }
+            font: italic 800 20px/1 var(--display); text-transform: uppercase; text-decoration: none; display: inline-flex; align-items: center; cursor: pointer; }
   .btn-sm:hover:not(:disabled) { background: var(--accent-hover); }
   .btn-sm:disabled { background: var(--tint); color: var(--accent-text); cursor: not-allowed; }
   .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
@@ -185,7 +188,7 @@
   .bar.pulse #barFill { animation: pulse 1.2s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: .45; } }
   .status { display: flex; justify-content: space-between; margin-top: 10px; color: var(--muted); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .status #pct { font: 800 28px/1 var(--display); color: var(--ink); }
+  .status #pct { font: italic 800 28px/1 var(--display); color: var(--ink); }
   .slow { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; }
   .dot-spin { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent-text); animation: spin .8s linear infinite; }
   .msg { margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--err); border-radius: 12px; font-size: 14px; }
@@ -193,22 +196,23 @@
 
   /* Result: the score on the left, the video and coaching on the right */
   #result:not(.hidden) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); column-gap: 48px; align-items: start;
-                         grid-template-areas: "head head" "report video" "report actions" "report box"; }
+                         grid-template-areas: "head head" "report video" "report actions" "report enter" "report box" "report ."; grid-template-rows: auto auto auto auto auto 1fr; }
   #result .stage-head { grid-area: head; }
   #result .media { grid-area: video; }
   #result .report { grid-area: report; }
   #result .actions { grid-area: actions; }
   #result details { grid-area: box; }
+  #result .enter { grid-area: enter; }   /* Enter a challenge sits under the video, not at the end of the report */
   .report:empty { display: none; }
   .r-cards { display: flex; flex-direction: column; }
   .r-card { min-width: 0; }
-  .r-card.main b { display: block; font: 800 clamp(120px, 14vw, 220px)/.82 var(--display); color: var(--accent-text); font-variant-numeric: tabular-nums; }
-  .r-card.main span { display: block; margin-top: 8px; font: 800 40px/1 var(--display); text-transform: uppercase; }
+  .r-card.main b { display: block; font: italic 800 clamp(120px, 14vw, 220px)/.82 var(--display); color: var(--accent-text); font-variant-numeric: tabular-nums; }
+  .r-card.main span { display: block; margin-top: 8px; font: italic 800 40px/1 var(--display); text-transform: uppercase; }
   .r-card:not(.main) { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 24px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  .r-card:not(.main) b { font: 800 40px/1 var(--display); text-transform: uppercase; }
+  .r-card:not(.main) b { font: italic 800 40px/1 var(--display); text-transform: uppercase; }
   .r-card:not(.main) span { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .r-sec { margin-top: 28px; }
-  .r-sec .label { margin-bottom: 6px; font: 800 26px/1.05 var(--display); text-transform: uppercase; color: var(--ink); }
+  .r-sec .label { margin-bottom: 6px; font: italic 800 26px/1.05 var(--display); text-transform: uppercase; color: var(--ink); }
   .r-row { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
   .r-row span:first-child { color: var(--soft); }
   .r-row span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
@@ -300,7 +304,7 @@
     .tests { flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; margin: 0 -16px; padding-inline: 16px; scrollbar-width: none; }
     .tests label { flex: none; width: 196px; scroll-snap-align: start; }
     .picker .label { margin-bottom: 10px; }
-    #result:not(.hidden) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "video" "report" "actions" "box"; }
+    #result:not(.hidden) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "video" "actions" "enter" "report" "box"; grid-template-rows: none; }
     #result .report { margin-top: 24px; }
   }
   @media (max-width: 560px) {
@@ -309,11 +313,78 @@
     .nav-link { padding: 0 8px; white-space: nowrap; }
     header nav { gap: 4px; }
     header nav a[href*="github.com"] { display: none; }   /* room for the wordmark and Your analyses on one line */
+    .hide-sm { display: none; }   /* "Analyses" instead of "Your analyses" so the theme button stays on screen */
+    .cap-sm { text-transform: capitalize; }
+    .nav-link { font-size: 14px; padding: 0 6px; }
+    .wordmark { font-size: 26px; }
     .test-panel { --pad: 24px; }
     .stage-head { flex-wrap: wrap; }
     .stage-head h2 { font-size: 34px; }
     .r-card.main span, .r-card:not(.main) b { font-size: 32px; }
   }
+
+  /* Sport: slanted italic display type (above), angled buttons, a lime "start line" over each test name,
+     and faint diagonal track lines across the page. */
+  body { background-image: repeating-linear-gradient(-62deg, transparent 0 26px, color-mix(in srgb, var(--ink) 2.5%, transparent) 26px 28px); }
+  .btn, .btn-sm { border-radius: 4px; clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%); padding-inline: 34px; }
+  .btn:focus-visible, .btn-sm:focus-visible { clip-path: none; border-radius: 6px; }   /* keep the focus ring visible */
+  .test-panel h1::before { content: ""; display: block; width: 56px; height: 7px; margin: 0 0 14px 3px; background: var(--accent); transform: skewX(-24deg); }
+  .tag { border-radius: 3px; transform: skewX(-10deg); }
+  .tests label:has(input:checked) { box-shadow: inset 4px 0 0 var(--accent-text); }
+  .stage-head h2, .page-head h1, .r-card.main span, .r-card:not(.main) b, .r-sec .label { letter-spacing: .01em; }
+
+  /* Every test name gets room for two lines (sitting at the bottom of that room), so the picture above it
+     is the same size for every test, whatever the name's length. */
+  @media (min-width: 901px) { .test-panel h1 { display: grid; align-content: end; min-height: calc(1.8em + 21px); } }
+  @media (min-width: 901px) { .test-panel p { min-height: 4.5em; } }   /* three lines kept for every instruction, for the same reason */
+
+  /* Challenges page (#challenges; the old #leaderboard address still works) */
+  body:not(.page-leaderboard) #boardPage { display: none; }
+  body.page-leaderboard #form, body.page-leaderboard #empty { display: none; }
+  body.page-leaderboard #boardLink { color: var(--accent-text); }
+  .board-page { padding: 32px 0 56px; }
+  .board-intro { margin: -8px 0 28px; max-width: 60ch; color: var(--soft); }
+  .boards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 20px; }
+  .board { display: flex; flex-direction: column; gap: 12px; padding: 24px; background: var(--plate); border: 1px solid var(--line); border-radius: var(--r); }
+  .board-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .board h2 { margin: 0; font: italic 800 30px/1 var(--display); text-transform: uppercase; }
+  .board .kind { flex: none; }
+  .board p { margin: 0; font-size: 14px; color: var(--muted); }
+  .board ol { list-style: none; margin: 4px 0 0; padding: 0; }
+  .board li { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .board li:first-child .pos { color: var(--accent-text); }
+  .board .pos { font: italic 800 22px/1 var(--display); color: var(--muted); }
+  .board .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .board .val { font: italic 800 22px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .board .none { padding: 12px 0; color: var(--muted); font-size: 14px; }
+  /* the weekly challenge leads, across the full width */
+  .board.board-feature { grid-column: 1 / -1; border-color: var(--accent-text); background: linear-gradient(var(--sel), var(--plate)); }
+  .board.board-feature h2 { font-size: clamp(34px, 4vw, 52px); }
+  .board.board-feature ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); column-gap: 40px; }
+  .board.board-feature li { break-inside: avoid; }
+  .board .ends { margin-left: 6px; color: var(--accent-text); font-weight: 600; }
+  /* podium */
+  .board li.podium .val, .board li.podium .pos { font-size: 26px; }
+  .board li.p1 .pos, .board li.p1 .val { color: var(--accent-text); }
+  .board li.you { background: var(--tint); box-shadow: -10px 0 0 var(--tint), 10px 0 0 var(--tint); }
+  .board .me { margin-left: 6px; padding: 1px 6px; border-radius: 3px; font-size: 11.5px; font-weight: 700; background: var(--accent); color: var(--accent-ink); }
+  .board .you-line { margin: 8px 0 0; font-size: 14px; color: var(--soft); }
+  .board .you-line b { color: var(--accent-text); }
+  .board .see-all { align-self: flex-start; min-height: 36px; padding: 0; border: 0; background: none; color: var(--accent-text); font-weight: 600; font-size: 14px; cursor: pointer; }
+  .board .see-all:hover { text-decoration: underline; }
+  .board .sample { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+  .board .btn-sm { align-self: flex-start; margin-top: auto; }
+  /* "Enter a challenge" on a result */
+  .enter { margin-top: 28px; padding: 20px; border: 1px solid var(--line); border-radius: var(--r); background: var(--plate); }
+  .enter h2 { margin: 0 0 6px; font: italic 800 26px/1.05 var(--display); text-transform: uppercase; }
+  .enter p { margin: 0 0 12px; font-size: 14px; color: var(--muted); }
+  .enter label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; }
+  .enter input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--edge); border-radius: 10px; background: var(--card); font-size: 16px; }
+  .enter .choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .enter .ghost { min-height: 40px; }
+  .enter .out { margin-top: 10px; font-size: 14px; font-weight: 600; }
+  .enter .out.bad { color: var(--err); }
+  .enter .out.good { color: var(--accent-text); }
 
   /* Reduced motion: the loading spinners slow down, everything else holds still. */
   @media (prefers-reduced-motion: reduce) {
@@ -329,7 +400,8 @@
   <header>
     <a class="wordmark" href="/">FitCheck</a>
     <nav aria-label="Main">
-      <a class="nav-link" href="#analyses" id="analysesLink">Your analyses</a>
+      <a class="nav-link" href="#challenges" id="boardLink">Challenges</a>
+      <a class="nav-link" href="#analyses" id="analysesLink"><span class="hide-sm">Your&nbsp;</span><span class="cap-sm">analyses</span></a>
       <a class="nav-link" href="https://github.com/saanvi-kanodia/FitCheck" target="_blank" rel="noopener">GitHub</a>
       <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
     </nav>
@@ -446,6 +518,15 @@
       </div>
     </section>
   </main></form>
+
+  <section id="boardPage" class="board-page" aria-labelledby="boardHead">
+    <div class="page-head">
+      <h1 id="boardHead">Challenges</h1>
+      <a class="ghost" href="#">New analysis</a>
+    </div>
+    <p class="board-intro">Analyse a video, then enter your score from the result screen.</p>
+    <div class="boards" id="boards"><p class="saved-empty">Loading challenges…</p></div>
+  </section>
   <div id="infoPop" class="hidden" role="dialog"></div>
 </div>
 
@@ -480,13 +561,13 @@ const rating = f => f == null ? null : f >= 3.5 ? 'Excellent' : f >= 2.5 ? 'Good
 const G = '<path class="ground" d="M4 69h112" stroke-width="3"/>';
 const ILLUS = {
   pushup: ['<circle cx="17" cy="35" r="3.5"/><path d="M31 41L70 49L105 58M31 42v18"/>', 'Hands under your shoulders, body straight from head to heels. Lower until your elbows reach 90°, then push back up.'],
-  squats: ['<circle cx="53" cy="9" r="3.5"/><path d="M54 22L46 42L69 45L65 61M55 27L82 29"/>', 'Feet shoulder-width apart. Push your hips back and bend your knees until your thighs are level with the floor, then stand up.'],
+  squats: ['<circle cx="53" cy="9" r="3.5"/><path d="M54 22L46 42L69 45L65 61M55 27L82 29"/>', 'Feet shoulder-width apart. Push your hips back and bend your knees until your thighs are level, then stand.'],
   curlups: ['<circle cx="25" cy="38" r="3.5"/><path d="M36 45L58 60L75 41L92 60"/>', 'Lie on your back, knees bent and feet flat. Curl your shoulders off the floor towards your knees, then lower slowly.'],
   plank: ['<circle cx="16" cy="37" r="3.5"/><path d="M30 42L106 58M30 44v16h15"/>', 'Rest on your forearms and toes, elbows under your shoulders. Keep your body in one straight line and hold.'],
   jumpingjack: ['<circle cx="60" cy="9" r="3.5"/><path d="M60 22v18M60 27L39 10M60 27L81 10M60 40L44 61M60 40L76 61"/>', 'Jump your feet wide while raising your arms overhead, then jump back to feet together, arms at your sides.'],
   verticaljump: ['<circle cx="48" cy="12" r="3.5"/><path d="M48 25v15M48 30L29 17M48 30L67 17M48 40L41 54M48 40L55 54M96 58V22M87 31l9-9 9 9"/>', 'Stand tall, dip into a quick half squat, swing your arms and jump straight up as high as you can. Land softly.'],
   shuttlerun: ['<circle cx="67" cy="10" r="3.5"/><path d="M65 23L57 40M64 28L77 35M64 28L50 23M57 40L71 48L68 61M57 40L46 51L35 55M8 61l5-9 5 9zM102 61l5-9 5 9z"/>', 'Sprint to the far marker, touch the line, turn and sprint back. Keep going for the set number of laps.'],
-  sitreach: ['<circle cx="64" cy="29" r="3.5"/><path d="M28 61h66M28 61L50 38M52 41L88 52M104 46v15"/>', 'Sit with your legs straight and feet against a box. Reach forward slowly as far as you can and hold for two seconds.'],
+  sitreach: ['<circle cx="64" cy="29" r="3.5"/><path d="M28 61h66M28 61L50 38M52 41L88 52M104 46v15"/>', 'Sit with legs straight, feet against a box. Reach forward slowly as far as you can and hold.'],
   backstretch: ['<circle cx="89" cy="47" r="3.5"/><path d="M48 34v27M48 34L76 42M75 45L73 61"/>', 'Stand with your feet together and knees straight. Bend forward slowly from the hips and reach towards the floor.'],
 };
 // Line icons: one even, thin outline, outlined heads, feet on a faint ground line (viewBox 120 x 72).
@@ -536,6 +617,8 @@ const PIC_CREDITS = {
 // Shown larger, running to the panel edges.
 // How far each is zoomed in on its person (the GIFs carry wide white margins).
 const BIG_PICS = { verticaljump: 1, jumpingjack: 1, plank: 1, pushup: 1, curlups: 1, sitreach: 1, backstretch: 1, squats: 1, shuttlerun: 1 };   // all fill the space above the name, shown whole
+// Every test uses its animation cropped to the same 3:2 frame around the whole movement (made from the files above).
+for (const k of Object.keys(BIG_PICS)) PANEL_PICS[k] = { anim: `/static/${k}-crop.webp`, still: `/static/${k}-crop-still.png`, w: 900, h: 600 };
 // Pixels to move a picture down inside its box (jumping jacks' hands reach the top edge).
 const PIC_SHIFT = {};
 // Always shown whole, never trimmed at any screen width (her hands and feet reach the GIF's edges).
@@ -556,7 +639,8 @@ function syncTest() {
     : silhouette(sel.value, 'sil-big');
   if (PIC_CREDITS[sel.value]) $('illus').insertAdjacentHTML('beforeend', `<small class="credit">${PIC_CREDITS[sel.value]}</small>`);
   $('figNo').textContent = `Fig. ${radios.indexOf(sel) + 1}`;
-  $('emptyTitle').innerHTML = testName(sel.value).split(' ').map(w => `<span class="nw">${esc(w)}</span>`).join(' ');
+  // One wrapper, so the words flow as one line of text inside the heading's grid instead of one row each.
+  $('emptyTitle').innerHTML = `<span>${testName(sel.value).split(' ').map(w => `<span class="nw">${esc(w)}</span>`).join(' ')}</span>`;
   $('emptyHint').innerHTML = `<b>Instruction:</b> ${esc(ill[1])}`;
   $('sampleBtn').classList.toggle('hidden', !SAMPLES.includes(sel.value));
   const blocked = liveBlocker();
@@ -765,7 +849,7 @@ async function keep(rec, j) {
     } catch (e) { await waitRetry(2000); }
   }
   const entry = { id: rec.jobId, kind: 'upload', test: j.test, test_key: j.test_key, created: j.created,
-                  video_name: rec.name, size: rec.size, summary: j.summary, report: j.report, video, pdf };
+                  video_name: rec.name, size: rec.size, summary: j.summary, report: j.report, score_token: j.score_token, video, pdf };
   await DB.put('history', entry).catch(() => {});
   history.unshift(entry);
   items.delete(rec.key); await DB.del('pending', rec.key).catch(() => {});
@@ -885,13 +969,101 @@ function openResult(h) {
   $('dl').download = `${base}.${h.video?.type.includes('webm') ? 'webm' : 'mp4'}`;
   $('dlReport').classList.toggle('hidden', !pdfUrl); $('dlReport').href = pdfUrl || '#'; $('dlReport').download = `${base}_report.pdf`;
   $('reportView').innerHTML = renderReport(h);
+  renderEnter(h);
   $('reportBox').classList.add('hidden');
   renderList();
 }
 
+/* ------------------------------------------------------------- leaderboard */
+let boardCache = null;
+const fmtScore = (v, unit) => unit === 's' ? `${(+v).toFixed(1)} s` : unit === 'cm' ? `${Math.round(v)} cm` : `${Math.round(v)}`;
+const KIND = { best: 'All-time', timed: 'Timed', weekly: 'Weekly' };
+async function fetchBoards() {
+  let me = ''; try { me = localStorage.getItem('fc_name') || ''; } catch (e) {}
+  const r = await fetch('/api/leaderboard' + (me ? `?name=${encodeURIComponent(me)}` : '')); if (!r.ok) throw new Error();
+  boardCache = (await r.json()).challenges; return boardCache;
+}
+const SHOW = 5;   // rows per card before "See all"
+// "Ends in 3 days 4 h" for the weekly challenge.
+function endsIn(t) {
+  const s = Math.max(0, t - Date.now() / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return d ? `Ends in ${d} day${d > 1 ? 's' : ''} ${h} h` : h ? `Ends in ${h} h ${m} min` : `Ends in ${m} min`;
+}
+function boardRows(c, all) {
+  const me = c.you?.name, rows = all ? c.entries : c.entries.slice(0, SHOW);
+  if (!c.entries.length) return '<div class="none">No scores yet. Be the first.</div>';
+  const youShown = rows.some(e => e.name === me);
+  return `<ol>${rows.map((e, i) => `<li class="${i < 3 ? 'podium p' + (i + 1) : ''}${e.name === me ? ' you' : ''}"><span class="pos">${i + 1}</span><span class="who">${esc(e.name)}${e.name === me ? ' <small class="me">You</small>' : ''}${e.sample ? ' <small class="sample">Sample</small>' : ''}</span><span class="val">${fmtScore(e.value, c.unit)}</span></li>`).join('')}</ol>`
+    + (c.you && !youShown ? `<p class="you-line">You: <b>${c.you.rank}${['th','st','nd','rd'][(c.you.rank % 100 > 10 && c.you.rank % 100 < 14) ? 0 : Math.min(c.you.rank % 10, 4) % 4] || 'th'}</b> with ${fmtScore(c.you.value, c.unit)}</p>` : '')
+    + (c.entries.length > SHOW ? `<button type="button" class="see-all" data-all="${esc(c.id)}">${all ? 'Show top 5' : `See all ${c.entries.length}`}</button>` : '');
+}
+const expanded = new Set();
+function renderBoards() {
+  const card = c => `
+    <article class="board ${c.kind === 'weekly' ? 'board-feature' : ''}" data-id="${esc(c.id)}">
+      <div class="board-top"><h2>${esc(c.title)}</h2><span class="tag kind">${KIND[c.kind] || ''}</span></div>
+      <p>${esc(c.blurb)}${c.kind === 'weekly' && c.ends ? ` <b class="ends">${endsIn(c.ends)}</b>` : ''}</p>
+      <div class="rows">${boardRows(c, expanded.has(c.id))}</div>
+      <button type="button" class="btn-sm" data-take="${esc(c.test)}">Take it: ${esc(c.test_name)}</button>
+    </article>`;
+  const weekly = boardCache.filter(c => c.kind === 'weekly'), rest = boardCache.filter(c => c.kind !== 'weekly');
+  $('boards').innerHTML = weekly.map(card).join('') + rest.map(card).join('');
+}
+async function loadBoards() {
+  try { await fetchBoards(); } catch (e) { $('boards').innerHTML = '<p class="saved-empty">The challenges couldn’t be loaded. Check your connection and try again.</p>'; return; }
+  renderBoards();
+}
+$('boards').addEventListener('click', ev => {
+  const all = ev.target.closest('[data-all]');
+  if (all) { const id = all.dataset.all; expanded.has(id) ? expanded.delete(id) : expanded.add(id); renderBoards(); return; }
+  const b = ev.target.closest('[data-take]'); if (!b) return;
+  const r = radios.find(x => x.value === b.dataset.take); if (r) { r.checked = true; syncTest(); }
+  window.history.pushState(null, '', location.pathname + location.search); syncPage(); goNew();
+});
+
+// On a result: enter it into the challenges that take this test.
+async function renderEnter(h) {
+  const box = document.getElementById('enterBox'); if (box) box.remove();
+  if (!h.score_token) {
+    if (h.kind === 'live') return;   // live results are counted in the browser, so they can't be verified
+    if (!h.summary?.main) return;
+    document.querySelector('#result .actions').insertAdjacentHTML('afterend', '<div class="enter" id="enterBox"><h2>Challenges</h2><p>This analysis was saved before challenges existed. Analyse a new video to enter.</p></div>');
+    return;
+  }
+  let list = boardCache; try { list = list || await fetchBoards(); } catch (e) { return; }
+  const fits = list.filter(c => c.test === h.test_key);
+  if (!fits.length) return;
+  document.querySelector('#result .actions').insertAdjacentHTML('afterend', `<div class="enter" id="enterBox">
+    <h2>Enter a challenge</h2>
+    <p>Your score of ${esc(h.summary.main[1])} goes on the challenge board under the name you choose.</p>
+    <label for="enterName">Display name</label>
+    <input id="enterName" maxlength="24" autocomplete="nickname" value="${esc(localStorage.getItem('fc_name') || '')}">
+    <div class="choices">${fits.map(c => `<button type="button" class="ghost" data-enter="${esc(c.id)}">${esc(c.title)}</button>`).join('')}</div>
+    <p class="out" id="enterOut" aria-live="polite"></p></div>`);
+  document.getElementById('enterBox').addEventListener('click', async ev => {
+    const b = ev.target.closest('[data-enter]'); if (!b) return;
+    const name = $('enterName').value.trim(), out = $('enterOut');
+    try { localStorage.setItem('fc_name', name); } catch (e) {}
+    b.disabled = true; out.className = 'out'; out.textContent = 'Submitting…';
+    try {
+      const r = await fetch('/api/leaderboard', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: h.score_token, challenge: b.dataset.enter, name }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { out.className = 'out bad'; out.textContent = d.error || 'That didn’t go through. Try again.'; b.disabled = false; return; }
+      boardCache = null;
+      out.className = 'out good'; out.textContent = `You’re number ${d.rank} on “${b.textContent}”.`;
+    } catch (e) { out.className = 'out bad'; out.textContent = 'That didn’t go through. Check your connection and try again.'; b.disabled = false; }
+  });
+}
+
 // The analyses page lives at #analyses; any other address shows the test picker and stage.
 // (window.history, because this script's own `history` is the saved-analyses list.)
-const syncPage = () => { document.body.classList.toggle('page-analyses', location.hash === '#analyses'); scrollTo(0, 0); };
+const syncPage = () => {
+  document.body.classList.toggle('page-analyses', location.hash === '#analyses');
+  document.body.classList.toggle('page-leaderboard', /^#(challenges|leaderboard)$/.test(location.hash));
+  if (/^#(challenges|leaderboard)$/.test(location.hash)) loadBoards();
+  scrollTo(0, 0);
+};
 addEventListener('hashchange', syncPage);
 syncPage();
 const leaveAnalysesPage = () => { if (location.hash) { window.history.pushState(null, '', location.pathname + location.search); syncPage(); } };

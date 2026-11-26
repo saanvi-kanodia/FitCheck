@@ -26,6 +26,7 @@ from flask import Flask, abort, jsonify, render_template, request, send_from_dir
 from werkzeug.utils import secure_filename
 
 from pdf_report import FILMING, _rating, _summarise, build_pdf
+import leaderboard
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(APP_DIR)
@@ -69,7 +70,7 @@ jobs = {}
 uploads = {}
 lock = threading.Lock()
 META_KEYS = ("status", "test", "test_key", "created", "report", "log", "video_name", "owner",
-             "message", "height", "size")
+             "message", "height", "size", "seconds")
 
 
 def _memory_mb():
@@ -238,6 +239,8 @@ def _run_job(job_id, video_path):
 
     cap = cv2.VideoCapture(video_path)
     job["total"] = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
+    fps = cap.get(cv2.CAP_PROP_FPS) or 0
+    job["seconds"] = round(job["total"] / fps, 1) if fps else None   # timed challenges check this
     cap.release()
 
     cmd = [sys.executable, "-u", os.path.join(APP_DIR, "runner.py"), job_dir,
@@ -308,6 +311,13 @@ def public(job_id, job):
         out["summary"] = summary
         out["report"] = job.get("report")
         out["has_pdf"] = os.path.exists(os.path.join(JOBS_DIR, job_id, "report.pdf"))
+        # A signed copy of the result, so the browser can later enter it in a challenge without being
+        # able to change the number.
+        m = re.search(r"-?\d+(\.\d+)?", (summary.get("main") or ("", ""))[1] or "")
+        if m:
+            out["score_token"] = leaderboard.sign(DATA_DIR, {"test": job.get("test_key"), "value": float(m.group()),
+                                                            "seconds": job.get("seconds"), "job": job_id,
+                                                            "week": leaderboard.week_key()})
     if job.get("status") == "error":
         out["log"] = job.get("log")
     return out
@@ -483,6 +493,30 @@ def job_file(job_id, name):
     resp = send_from_directory(os.path.join(JOBS_DIR, job_id), name)
     resp.headers["Cache-Control"] = "private, no-store"
     return resp
+
+
+# ------------------------------------------------------------ leaderboard --
+
+_store = None
+
+
+def store():
+    global _store
+    if _store is None:
+        _store = leaderboard.Store(DATA_DIR)
+    return _store
+
+
+@app.get("/api/leaderboard")
+def get_leaderboard():
+    return jsonify(challenges=leaderboard.board(store(), request.args.get("name")))
+
+
+@app.post("/api/leaderboard")
+def post_leaderboard():
+    data = request.get_json(silent=True) or {}
+    ok, message, rank = leaderboard.submit(store(), DATA_DIR, data.get("token"), data.get("challenge"), data.get("name"))
+    return (jsonify(ok=True, message=message, rank=rank) if ok else (jsonify(error=message), 400))
 
 
 @app.post("/api/live-report")
