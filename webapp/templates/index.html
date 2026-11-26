@@ -275,7 +275,7 @@
     /* Fit the window's height: the nine test rows shrink (64px down to 44px) so the list and the
        panels beside it end above the bottom of the screen. 196px = header, top padding, the
        "Choose a test" label and a bottom margin. */
-    :root { --rowh: clamp(44px, calc((100vh - 196px - 48px) / 9), 64px); --panelh: calc(9 * var(--rowh) + 48px); }
+    :root { --rowh: clamp(44px, calc((100vh - 196px - var(--ann, 0px) - 48px) / 9), 64px); --panelh: calc(9 * var(--rowh) + 48px); }
     main { padding-bottom: 24px; }
     .tests label { min-height: var(--rowh); padding-block: 2px; }
     .thumb { height: min(44px, calc(var(--rowh) - 10px)); }
@@ -386,6 +386,25 @@
   .enter .out.bad { color: var(--err); }
   .enter .out.good { color: var(--accent-text); }
 
+  /* "Challenges are live" bar: lime, with a slow shine across it; dismissible */
+  .announce { position: relative; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 16px;
+              padding: 10px 52px; overflow: hidden; background: #c6f24e; color: #0c0f0d; font-size: 15px; text-align: center; }
+  .announce[hidden] { display: none; }
+  .announce p { position: relative; margin: 0; }
+  .announce b { font: italic 800 18px/1 var(--display); text-transform: uppercase; margin-right: 4px; }
+  .announce a { position: relative; padding: 6px 16px; background: #0c0f0d; color: #c6f24e; font: italic 800 15px/1 var(--display);
+                text-transform: uppercase; text-decoration: none; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+  .announce a:hover { color: #eef2ec; }
+  .announce a:focus-visible { outline: 2px solid #0c0f0d; outline-offset: 2px; clip-path: none; }
+  .announce::before { content: ""; position: absolute; inset: 0 auto 0 -40%; width: 30%; transform: skewX(-24deg);
+                      background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation: shine 3.2s ease-in-out infinite; }
+  @keyframes shine { 0% { left: -40%; } 60%, 100% { left: 120%; } }
+  .announce-x { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border: 0; background: none;
+                color: #0c0f0d; font-size: 24px; line-height: 1; cursor: pointer; }
+  .announce-x:focus-visible { outline: 2px solid #0c0f0d; }
+  @media (prefers-reduced-motion: reduce) { .announce::before { animation: none; display: none; } }
+  @media (max-width: 560px) { .announce { padding: 8px 44px 8px 14px; font-size: 13.5px; } .announce b { font-size: 16px; } }
+
   /* Reduced motion: the loading spinners slow down, everything else holds still. */
   @media (prefers-reduced-motion: reduce) {
     .spinner, .dot-spin { animation-duration: 2.4s; }
@@ -396,6 +415,11 @@
 </style>
 </head>
 <body>
+<div class="announce" id="announce" hidden>
+  <p><b>Challenges are live.</b> <span id="announceWeek">Climb the rankings on six new boards.</span></p>
+  <a href="#challenges" id="announceGo">See challenges</a>
+  <button type="button" class="announce-x" id="announceX" aria-label="Dismiss">&times;</button>
+</div>
 <div class="wrap">
   <header>
     <a class="wordmark" href="/">FitCheck</a>
@@ -1055,6 +1079,20 @@ async function renderEnter(h) {
     } catch (e) { out.className = 'out bad'; out.textContent = 'That didn’t go through. Check your connection and try again.'; b.disabled = false; }
   });
 }
+
+// The bar's height, so the main screen's fit-to-window sizing leaves room for it.
+function fitAnnounce() { const a = $('announce'); document.documentElement.style.setProperty('--ann', (a.hidden ? 0 : a.offsetHeight) + 'px'); }
+// "Challenges are live" bar: shown until dismissed; names this week's challenge when it's known.
+(() => {
+  let gone = false; try { gone = localStorage.getItem('fc_announce') === 'challenges-1'; } catch (e) {}
+  if (gone) return;
+  $('announce').hidden = false;
+  fitAnnounce(); addEventListener('resize', fitAnnounce);
+  fetch('/api/leaderboard').then(r => r.ok ? r.json() : null).then(d => {
+    const w = d?.challenges?.find(c => c.kind === 'weekly'); if (w) $('announceWeek').textContent = `This week: ${w.title.replace(/^This week:\s*/i, '')}. Can you top the board?`; fitAnnounce();
+  }).catch(() => {});
+  $('announceX').addEventListener('click', () => { $('announce').hidden = true; fitAnnounce(); try { localStorage.setItem('fc_announce', 'challenges-1'); } catch (e) {} });
+})();
 
 // The analyses page lives at #analyses; any other address shows the test picker and stage.
 // (window.history, because this script's own `history` is the saved-analyses list.)
