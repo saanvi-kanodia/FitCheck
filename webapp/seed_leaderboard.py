@@ -22,7 +22,7 @@ RANGES = {"pushups": (12, 46), "plank": (35, 160), "jump": (24, 56), "squats60":
 def seed(store, clear_only=False):
     """Replace the sample scores (never touches real ones)."""
     with store.lock, store._conn() as c:
-        c.cursor().execute("DELETE FROM entries WHERE job LIKE 'demo-%'")
+        c.cursor().execute(f"DELETE FROM entries WHERE job LIKE {store.ph}", ("demo-%",))
         c.commit()
     if clear_only:
         return

@@ -130,11 +130,12 @@ class Store:
 
     def top(self, challenge, period, n=TOP):
         """Each person's best entry, best first."""
-        q = (f"SELECT name, MAX(value) AS best, MIN(created), MIN(CASE WHEN job LIKE 'demo-%' THEN 1 ELSE 0 END) "
+        # The pattern goes in as a parameter: a literal % in the SQL breaks Postgres's driver.
+        q = (f"SELECT name, MAX(value) AS best, MIN(created), MIN(CASE WHEN job LIKE {self.ph} THEN 1 ELSE 0 END) "
              f"FROM entries WHERE challenge = {self.ph} AND period = {self.ph} "
              f"GROUP BY name ORDER BY best DESC, MIN(created) ASC LIMIT {int(n)}")
         with self.lock, self._conn() as c:
-            cur = c.cursor(); cur.execute(q, (challenge, period))
+            cur = c.cursor(); cur.execute(q, ("demo-%", challenge, period))
             # sample: only sample scores (seed_leaderboard.py) behind this row, so the page can say so
             return [{"name": r[0], "value": r[1], "created": r[2], "sample": bool(r[3])} for r in cur.fetchall()]
 
