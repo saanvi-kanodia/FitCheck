@@ -4,3 +4,20 @@ services:
     runtime: docker
     plan: free
     healthCheckPath: /
+    envVars:
+      # Challenge scores are kept in the Postgres database below, so they survive deploys.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fitcheck-db
+          property: connectionString
+      # Signs analysis results so challenge scores can't be faked; Render generates it once.
+      - key: FITCHECK_SECRET
+        generateValue: true
+      # Labelled sample scores on the challenge boards. Set to 0 to show only real scores.
+      - key: FITCHECK_SAMPLE_SCORES
+        value: "1"
+
+databases:
+  - name: fitcheck-db
+    plan: free
+    databaseName: fitcheck

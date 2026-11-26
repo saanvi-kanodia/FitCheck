@@ -504,6 +504,11 @@ def store():
     global _store
     if _store is None:
         _store = leaderboard.Store(DATA_DIR)
+        # FITCHECK_SAMPLE_SCORES=1 fills the boards with labelled sample scores (refreshed on each
+        # start, so the weekly board always has some). Real scores are never touched.
+        if os.environ.get("FITCHECK_SAMPLE_SCORES") == "1":
+            from seed_leaderboard import seed
+            seed(_store)
     return _store
 
 

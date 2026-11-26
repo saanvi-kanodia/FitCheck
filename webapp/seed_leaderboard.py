@@ -19,19 +19,22 @@ NAMES = ["Aarav", "Diya", "Kabir", "Ananya", "Vihaan", "Ishita", "Arjun", "Meera
 RANGES = {"pushups": (12, 46), "plank": (35, 160), "jump": (24, 56), "squats60": (18, 44),
           "jacks30": (22, 41), "weekly": (15, 40)}
 
-store = leaderboard.Store(DATA_DIR)
-with store.lock, store._conn() as c:
-    c.cursor().execute("DELETE FROM entries WHERE job LIKE 'demo-%'")
-    c.commit()
-if "--clear" in sys.argv:
-    print("Sample scores removed.")
-    sys.exit()
+def seed(store, clear_only=False):
+    """Replace the sample scores (never touches real ones)."""
+    with store.lock, store._conn() as c:
+        c.cursor().execute("DELETE FROM entries WHERE job LIKE 'demo-%'")
+        c.commit()
+    if clear_only:
+        return
+    rng = random.Random(7)
+    for ch in leaderboard.CHALLENGES:
+        r = leaderboard.resolve(ch)
+        lo, hi = RANGES[r["id"]]
+        for i, name in enumerate(rng.sample(NAMES, 8)):
+            value = round(rng.uniform(lo, hi), 1) if r["unit"] == "s" else rng.randint(lo, hi)
+            store.add(r["id"], r["period"], name, value, r["test"], f"demo-{r['id']}-{i}")
 
-rng = random.Random(7)
-for ch in leaderboard.CHALLENGES:
-    r = leaderboard.resolve(ch)
-    lo, hi = RANGES[r["id"]]
-    for i, name in enumerate(rng.sample(NAMES, 8)):
-        value = round(rng.uniform(lo, hi), 1) if r["unit"] == "s" else rng.randint(lo, hi)
-        store.add(r["id"], r["period"], name, value, r["test"], f"demo-{r['id']}-{i}")
-print("Added 8 sample scores to each of", len(leaderboard.CHALLENGES), "challenges.")
+
+if __name__ == "__main__":
+    seed(leaderboard.Store(DATA_DIR), clear_only="--clear" in sys.argv)
+    print("Sample scores removed." if "--clear" in sys.argv else f"Added 8 sample scores to each of {len(leaderboard.CHALLENGES)} challenges.")
