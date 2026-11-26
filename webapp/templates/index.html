@@ -4,290 +4,278 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FitCheck: fitness test analysis</title>
+<meta name="description" content="Upload a video of a fitness test. FitCheck counts your reps and flags form problems.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Inter:wght@400;600;700&display=swap">
 <script>
   const saved = localStorage.getItem('theme');
   if (saved) document.documentElement.dataset.theme = saved;
 </script>
 <style>
+  /* Hallmark · checked: 2026-11-27 · genre: atmospheric (inferred) · shape: app screen
+   * built: the project · redesign: full, from the owner's canvas design (Barlow Condensed display, Inter body, graphite and lime) · v2.0.0 */
+  /* Hallmark · waive 28b · both videos sit in panels a script reveals, neither is the LCP · the result video only exists after an analysis, so no frame is there to use as a poster */
   :root {
-    --bg: #0b0d0c; --plate: #151917; --card: #111412; --ink: #f2f5f0; --muted: #8d958f; --line: #232925;
-    --accent: #c6f24e; --accent-ink: #0b0d0c; --accent-text: #c6f24e; --tint: rgba(198, 242, 78, .08); --err: #ff6b5a;
-    --display: "Inter Tight", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --bg: #1e1f1e; --plate: #141814; --card: #141814; --ink: #eef2ec; --muted: #8f978f; --soft: #b9c0b8; --line: #262c27;
+    --accent: #c6f24e; --accent-ink: #0c0f0d; --accent-text: #c6f24e; --tint: rgba(198, 242, 78, .1); --err: #ff8a7a;
+    --accent-hover: #d6f77e; --err-tint: rgba(255, 138, 122, .12); --edge: #5d655f; --focus: var(--accent);
+    --sel: #1d2414; --thumb: #0f120f; --media: #050705; --scrim: rgba(12, 15, 13, .62); --on-media: #eef2ec; --shadow: rgba(5, 7, 5, .4);
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --mono: ui-monospace, "SF Mono", Menlo, monospace;
-    --r: 14px;
+    --r: 20px;
   }
   :root[data-theme=light] {
-    --bg: #f4f5f2; --plate: #e9ebe6; --card: #ffffff; --ink: #0e110f; --muted: #5f6661; --line: #dcdfd9;
-    --accent: #b4ea1c; --accent-ink: #0b0d0c; --accent-text: #3f6b00; --tint: rgba(132, 190, 0, .14); --err: #c8321f;
+    --bg: #f4f5f2; --plate: #fdfefb; --card: #fdfefb; --ink: #0e110f; --muted: #5f6661; --soft: #434a45; --line: #dcdfd9;
+    --accent: #b4ea1c; --accent-ink: #0c0f0d; --accent-text: #3f6b00; --tint: rgba(132, 190, 0, .14); --err: #c8321f;
+    --accent-hover: #a6dc14; --err-tint: rgba(200, 50, 31, .1); --edge: #7d857f; --focus: var(--accent-text);
+    --sel: #f3fadf; --thumb: #eef0eb; --shadow: rgba(14, 17, 15, .18);
   }
 
   * { box-sizing: border-box; }
   html, body { overflow-x: clip; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1360px; margin: 0 auto; padding: 0 40px; }
   button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .hidden, [hidden] { display: none !important; }
 
-  header { display: flex; justify-content: space-between; align-items: center; padding: 22px 0; }
-  .wordmark { font: 900 22px/1 var(--display); letter-spacing: -.02em; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
-  .wordmark::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 16px var(--accent); }
-  .theme-btn { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 13px;
-               font-weight: 600; color: var(--muted); cursor: pointer; }
-  .theme-btn:hover { color: var(--ink); border-color: var(--muted); }
+  /* Header */
+  header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 24px 0; border-bottom: 1px solid var(--line); }
+  .wordmark { font: 800 30px/1 var(--display); text-transform: uppercase; }
+  header nav { display: flex; align-items: center; gap: 12px; }
+  .nav-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px; }
+  .nav-link:hover { color: var(--accent-text); }
+  .theme-btn { min-height: 44px; padding: 0 18px; border: 1px solid var(--edge); border-radius: 999px; background: none; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .theme-btn:hover { border-color: var(--ink); }
 
-  .intro { padding: 36px 0 40px; max-width: 760px; }
-  .intro h1 { overflow-wrap: break-word; font: 900 clamp(30px, 8vw, 68px)/.95 var(--display); margin: 0 0 18px; letter-spacing: -.035em; text-transform: uppercase; }
-  .intro { text-align: center; margin-left: auto; margin-right: auto; }
-  .intro .wordmark { gap: .22em; justify-content: center; }
-  .intro p { margin-left: auto; margin-right: auto; }
-  .intro .wordmark::before { width: .22em; height: .22em; flex: none; }
-  .tagline { margin: 0 0 12px; font: 900 22px/1.1 var(--display); letter-spacing: -.02em; text-transform: uppercase; }
-  .tagline em { font-style: normal; color: var(--accent-text); }
-  .intro p { margin: 0; color: var(--muted); font-size: 17px; max-width: 580px; }
+  /* Main: the test list, then the stage */
+  main { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 40px; align-items: start; padding: 32px 0 56px; }
+  .picker, .stage { min-width: 0; }
+  .label { display: flex; justify-content: space-between; align-items: center; margin: 0 0 16px; font-size: 15px; font-weight: 600; color: var(--muted); }
+  .group + .group { margin-top: 36px; }
 
-  main { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px; align-items: start; padding-bottom: 48px; }
-  .picker, .stage { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
-
-  .label { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; font-weight: 800; letter-spacing: .12em;
-           text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
-  .group + .group { margin-top: 30px; }
-
-  /* Test tiles */
-  .tests { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .tests label { display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 10px; border: 1px solid var(--line);
-                 border-radius: 12px; cursor: pointer; position: relative; background: var(--plate);
-                 transition: border-color .15s, transform .15s, background .15s; }
+  /* Test list */
+  .tests { display: flex; flex-direction: column; gap: 6px; }
+  .tests label { position: relative; display: grid; grid-template-columns: 72px minmax(0, 1fr); column-gap: 14px; align-items: center; min-height: 64px;
+                 padding: 8px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--plate); cursor: pointer;
+                 transition: border-color .15s, background-color .15s; }
   .tests input { position: absolute; opacity: 0; pointer-events: none; }
-  .thumb { aspect-ratio: 5/3; background: var(--bg); border-radius: 8px; display: grid; place-items: center; }
-  .thumb svg { width: 86%; height: auto; stroke: var(--muted); }
-  .thumb .acc { stroke-dasharray: 3 3; }
-  .tests b { overflow-wrap: anywhere; font: 800 12.5px/1.2 var(--display); text-transform: uppercase; letter-spacing: .01em; }
-  .tests small { color: var(--muted); font-size: 11.5px; margin-top: -4px; }
-  .tests label:hover { border-color: var(--muted); transform: translateY(-1px); }
-  .tests label:has(input:checked) { border-color: var(--accent); background: var(--tint); box-shadow: 0 0 0 1px var(--accent); }
+  .thumb { grid-row: span 2; width: 72px; height: 44px; display: grid; place-items: center; }
+  .thumb svg { width: 100%; height: auto; stroke: var(--muted); }
+  .tests b { font-weight: 600; font-size: 16px; line-height: 1.25; align-self: end; }
+  .tests small { font-size: 13px; color: var(--muted); align-self: start; }
+  .tests label:hover { border-color: var(--edge); }
+  .tests label:active { background: var(--sel); }
+  .tests label:has(input:checked) { border-color: var(--accent-text); background: var(--sel); }
   .tests label:has(input:checked) .thumb svg { stroke: var(--accent-text); }
-  .tests label:has(input:checked) small { color: var(--accent-text); }
-  .tests label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tests label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-  /* Upload */
-  .drop { display: block; border: 2px dashed var(--line); border-radius: var(--r); padding: 26px 20px; cursor: pointer; text-align: center;
-          background: var(--plate); transition: border-color .15s, background .15s; }
-  .drop:hover, .drop.over { border-color: var(--accent); background: var(--tint); }
-  .drop.has { border-style: solid; border-color: var(--accent); }
-  .drop input { display: none; }
-  .drop strong { display: block; font: 800 16px/1.3 var(--display); word-break: break-all; margin-bottom: 4px; }
-  .drop small { color: var(--muted); font-size: 13px; }
-  .drop .film { display: block; max-width: 420px; margin: 14px auto 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1.5; }
-  .drop .film b { color: var(--accent-text); font-weight: 700; }
+  /* Empty state: the test panel and the upload column */
+  #empty:not(.hidden) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: stretch; }
+  /* Line the panels up with the first test, below the "Choose a test" label (15px at 1.5 line height, plus its 16px margin). */
+  /* ...and end them level with the last test: nine 64px rows with 6px gaps. */
+  @media (min-width: 901px) {
+    #empty:not(.hidden) { margin-top: calc(15px * 1.5 + 16px); height: calc(9 * 64px + 8 * 6px); }
+    .test-panel { min-height: 0; }
+    .drop { min-height: 0; }
+  }
+  .test-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 560px; padding: 32px;
+                background: var(--plate); border: 1px solid var(--line); border-radius: var(--r); }
+  .plate { flex: 1; display: grid; place-items: center; min-height: 240px; }
+  .plate svg { width: 100%; height: auto; stroke: var(--accent-text); }
+  .plate .ground { stroke: var(--edge); }
+  .plate img { display: block; width: auto; height: auto; max-width: 100%; max-height: 320px; }
+  /* Two frames of one rep, top and bottom, alternating; it holds on the top frame under reduced motion or on hover. */
+  /* One rep cut out of the push-up sample clip; under reduced motion the still frame shows instead. */
+  .test-panel h1 { margin: 0 0 12px; font: 800 clamp(56px, 6.4vw, 96px)/.9 var(--display); text-transform: uppercase; overflow-wrap: break-word; min-width: 0; }
+  /* A word never breaks at its hyphen, so "Push-ups" stays on one line. */
+  .test-panel h1 .nw { white-space: nowrap; }
+  .test-panel p { margin: 0; font-size: 18px; color: var(--soft); max-width: 44ch; }
+
+  .upload { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .drop { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 300px;
+          padding: 28px 24px; border: 2px dashed var(--edge); border-radius: var(--r); background: var(--plate); text-align: center; cursor: pointer;
+          transition: border-color .15s, background-color .15s; }
+  .drop:hover, .drop.over { border-color: var(--accent-text); background: var(--sel); }
+  .drop.has { border-style: solid; border-color: var(--accent-text); background: var(--sel); }
+  .drop:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+  /* Kept in the tab order (not display: none) so the file chooser opens from the keyboard. */
+  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  .drop strong { font: 800 28px/1.1 var(--display); text-transform: uppercase; word-break: break-word; }
+  .drop small { font-size: 14px; color: var(--muted); }
+  .drop .film { margin-top: 14px; max-width: 34ch; font-size: 14px; color: var(--soft); }
+  .drop .film b { color: var(--accent-text); font-weight: 600; }
   .drop.has .film { display: none; }
-  footer a { color: inherit; }
 
-  .field input { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--plate); font-size: 16px; }
-  .field input:focus { outline: none; border-color: var(--accent); }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field .label { margin: 0; font-size: 14px; color: var(--ink); }
+  .field input { min-height: 48px; padding: 0 14px; border: 1px solid var(--edge); border-radius: 12px; background: var(--plate); font-size: 16px; }
 
-  .btn { margin-top: 22px; width: 100%; padding: 16px; border: 0; border-radius: 999px; background: var(--accent);
-         color: var(--accent-ink); font: 900 15px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
-         transition: transform .12s, box-shadow .2s; }
-  .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(198, 242, 78, .3); }
-  .btn:disabled { opacity: .45; cursor: default; }
-  .note { margin-top: 10px; font-size: 13px; color: var(--muted); text-align: center; }
-  .link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent-text, var(--accent)); text-decoration: underline; cursor: pointer; }
-  .error { color: var(--err); margin-top: 12px; font-size: 14px; font-weight: 600; }
+  .btn { min-height: 56px; width: 100%; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
+         font: 800 22px/1 var(--display); text-transform: uppercase; cursor: pointer; transition: background-color .15s, transform .12s; }
+  .btn:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn:disabled { background: var(--plate); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); cursor: not-allowed; }
+  .btn:active:not(:disabled), .btn-sm:active:not(:disabled), .ghost:active:not(:disabled), .theme-btn:active, .saved .retry:active { transform: translateY(1px); }
+  .note { margin: 0; font-size: 14px; color: var(--muted); }
+  .alt-links { display: flex; flex-wrap: wrap; gap: 0 24px; padding-top: 4px; border-top: 1px solid var(--line); }
+  .link { min-height: 44px; padding: 0; border: 0; background: none; color: var(--accent-text); font-weight: 600; font-size: 15px; cursor: pointer; }
+  .link:hover { text-decoration: underline; }
+  .link:active { color: var(--ink); }
+  .link:disabled { color: var(--muted); cursor: not-allowed; }
+  .error { color: var(--err); font-size: 14px; font-weight: 600; }
   .error:empty { display: none; }
 
-  /* Right column */
-  .stage { min-width: 0; }
-  figure { margin: 0 0 24px; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 22px; align-items: center; }
-  .plate { background: var(--plate); border-radius: var(--r); aspect-ratio: 5/3; display: grid; place-items: center; }
-  .plate svg { width: 84%; height: auto; stroke: var(--accent-text); }
-  .plate .ground, .plate .acc { stroke: var(--muted); }
-  .plate .acc { stroke-dasharray: 3 3; }
-  figcaption { font-size: 14px; }
-  figcaption .fig { font: 800 11.5px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--accent-text); }
-  figcaption h3 { margin: 4px 0 6px; font: 900 30px/1.05 var(--display); letter-spacing: -.02em; text-transform: uppercase; }
-  figcaption p { margin: 0; color: var(--muted); }
+  /* Running, result and live share the stage */
+  .stage-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .stage-head h2 { margin: 0; font: 800 44px/1 var(--display); text-transform: uppercase; }
+  .tag { padding: 6px 12px; border-radius: 999px; background: var(--tint); color: var(--accent-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .tag.err { color: var(--err); background: var(--err-tint); }
+  .ghost { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid var(--edge); border-radius: 999px; background: none;
+           color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .ghost:hover:not(:disabled) { border-color: var(--ink); }
+  .ghost:disabled { color: var(--muted); border-style: dashed; cursor: not-allowed; }
+  .new-btn { margin-left: auto; white-space: nowrap; }
+  .btn-sm { min-height: 52px; padding: 0 26px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
+            font: 800 20px/1 var(--display); text-transform: uppercase; text-decoration: none; display: inline-flex; align-items: center; cursor: pointer; }
+  .btn-sm:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn-sm:disabled { background: var(--tint); color: var(--accent-text); cursor: not-allowed; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 
-  .stage-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
-  .stage-head h2 { margin: 0; font: 900 30px/1.05 var(--display); letter-spacing: -.02em; text-transform: uppercase; }
-  .tag { font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
-         padding: 6px 12px; border-radius: 999px; background: var(--tint); color: var(--accent-text); }
-  .tag.err { color: var(--err); background: rgba(255, 107, 90, .12); }
-
-  .media { width: 100%; aspect-ratio: 16/10; border-radius: var(--r); background: #000; display: block; object-fit: contain; }
+  .media { width: 100%; aspect-ratio: 16/9; border-radius: var(--r); background: var(--media); border: 1px solid var(--line); display: block; object-fit: contain; }
   img.media:not([src]) { visibility: hidden; }
   .media-box { position: relative; border-radius: var(--r); background: var(--plate); }
-  .spinner { display: block; width: 32px; height: 32px; margin: 0 auto 12px; border-radius: 50%;
-             border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+  .spinner { display: block; width: 32px; height: 32px; margin: 0 auto 12px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
-  .media-box .waiting { text-align: center; position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; font-weight: 600; }
-
-  .bar { height: 8px; background: var(--plate); margin-top: 18px; border-radius: 999px; overflow: hidden; }
-  .bar div { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width .4s; box-shadow: 0 0 12px var(--accent); }
-  .status { margin-top: 10px; color: var(--muted); font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
-  .slow { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; line-height: 1.45; }
-  .dot-spin { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent-text); animation: spin .8s linear infinite; }
+  .media-box .waiting { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 15px; font-weight: 600; }
+  .bar { height: 8px; margin-top: 18px; border-radius: 999px; background: var(--plate); overflow: hidden; }
+  /* The script sets --p (a percentage); the fill slides in so nothing animates width. */
+  .bar div { height: 100%; width: 100%; border-radius: 999px; background: var(--accent-text); transform: translateX(calc(var(--p, 0%) - 100%)); transition: transform .4s; }
   .bar.pulse #barFill { animation: pulse 1.2s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: .45; } }
-  .info { display: inline-grid; place-items: center; width: 17px; height: 17px; margin-left: 7px; padding: 0; vertical-align: 1px;
-    border-radius: 50%; border: 1.5px solid currentColor; background: none; color: inherit; opacity: .6;
-    font: italic 700 11px/1 Georgia, serif; cursor: pointer; }
-  .info:hover, .info:focus-visible { opacity: 1; }
-  #infoPop { position: fixed; z-index: 50; padding: 14px 16px; border-radius: 12px; background: var(--plate, #1b1d1c);
-    border: 1px solid var(--line); box-shadow: 0 12px 32px rgba(0,0,0,.35); color: var(--ink); font-size: 14px; line-height: 1.5; }
-  #infoPop b { display: block; margin-bottom: 4px; font-weight: 800; }
-  #infoPop p { margin: 0; color: var(--muted); }
-  .r-zero { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--err); color: var(--ink); font-size: 14px; line-height: 1.5; }
-  .status #pct { font: 900 20px/1 var(--display); color: var(--ink); }
+  .status { display: flex; justify-content: space-between; margin-top: 10px; color: var(--muted); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .status #pct { font: 800 28px/1 var(--display); color: var(--ink); }
+  .slow { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; }
+  .dot-spin { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent-text); animation: spin .8s linear infinite; }
+  .msg { margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--err); border-radius: 12px; font-size: 14px; }
+  .msg:empty { display: none; }
 
-  details { margin-top: 20px; border-top: 1px solid var(--line); }
-  summary { cursor: pointer; padding: 12px 0; font-weight: 700; font-size: 13px; color: var(--muted); }
-  pre { white-space: pre-wrap; margin: 0 0 14px; max-height: 380px; overflow: auto; font: 12.5px/1.6 var(--mono); color: var(--muted);
-        background: var(--plate); padding: 14px; border-radius: 10px; }
-
-  /* In-page report */
-  .report { margin-top: 22px; }
+  /* Result: the score on the left, the video and coaching on the right */
+  #result:not(.hidden) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); column-gap: 48px; align-items: start;
+                         grid-template-areas: "head head" "report video" "report actions" "report box"; }
+  #result .stage-head { grid-area: head; }
+  #result .media { grid-area: video; }
+  #result .report { grid-area: report; }
+  #result .actions { grid-area: actions; }
+  #result details { grid-area: box; }
   .report:empty { display: none; }
-  .r-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .r-card { min-width: 0;  background: var(--plate); padding: 20px 22px; border-radius: var(--r); border: 1px solid var(--line); }
-  .r-card.main { background: var(--accent); border-color: var(--accent); }
-  .r-card b { display: block; overflow-wrap: normal; font: 900 clamp(24px, 6.4vw, 46px)/1 var(--display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
-  .r-card.main b, .r-card.main span { color: var(--accent-ink); }
-  .r-card span { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-  .r-sec { margin-top: 26px; }
-  .r-sec .label { margin-bottom: 6px; }
-  .r-row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; font-size: 14.5px; border-bottom: 1px solid var(--line); }
-  .r-row span:first-child { color: var(--muted); }
-  .r-row span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .r-cards { display: flex; flex-direction: column; }
+  .r-card { min-width: 0; }
+  .r-card.main b { display: block; font: 800 clamp(120px, 14vw, 220px)/.82 var(--display); color: var(--accent-text); font-variant-numeric: tabular-nums; }
+  .r-card.main span { display: block; margin-top: 8px; font: 800 40px/1 var(--display); text-transform: uppercase; }
+  .r-card:not(.main) { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 24px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .r-card:not(.main) b { font: 800 40px/1 var(--display); text-transform: uppercase; }
+  .r-card:not(.main) span { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .r-sec { margin-top: 28px; }
+  .r-sec .label { margin-bottom: 6px; font: 800 26px/1.05 var(--display); text-transform: uppercase; color: var(--ink); }
+  .r-row { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .r-row span:first-child { color: var(--soft); }
+  .r-row span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
   .r-row.warn span:last-child { color: var(--err); }
-  .r-sec ul { margin: 6px 0 0; padding-left: 18px; }
+  .r-sec ul { margin: 6px 0 0; padding-left: 18px; color: var(--soft); }
   .r-sec li { margin: 6px 0; }
   .r-sec li::marker { color: var(--accent-text); }
-  .r-sec p { margin: 6px 0 0; }
-  .r-note { color: var(--muted); font-size: 12.5px; margin-top: 22px; }
-  .link { font-size: 13px; color: var(--accent-text); text-decoration: none; font-weight: 700; }
-  .link:hover { text-decoration: underline; }
-  .actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
-  .btn-sm { padding: 11px 20px; border-radius: 999px; border: 0; background: var(--accent); color: var(--accent-ink);
-            font: 900 13px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
-  .btn-sm:disabled { background: var(--tint); color: var(--accent-text); cursor: default; }
+  .r-sec p { margin: 6px 0 0; color: var(--soft); }
+  .r-zero { margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--err); border-radius: 12px; font-size: 14px; }
+  .r-note { margin-top: 24px; font-size: 13px; color: var(--muted); }
+  details { margin-top: 20px; border-top: 1px solid var(--line); }
+  summary { padding: 12px 0; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
+  pre { margin: 0 0 14px; padding: 14px; max-height: 380px; overflow: auto; white-space: pre-wrap; border-radius: 10px; background: var(--plate); font: 12.5px/1.6 var(--mono); color: var(--muted); }
 
-  /* Saved analyses */
+  /* The (i) buttons: a 32px button around an 18px ring, with a 44px hit area */
+  .info { position: relative; top: -1.5px; display: inline-grid; place-items: center; width: 32px; height: 32px; margin: -8px -8px -8px -2px; padding: 0; vertical-align: middle;
+          border: 0; border-radius: 50%; background: none; color: inherit; font: 700 11px/1 var(--sans); text-transform: none; cursor: pointer; }
+  .info::before { content: ""; position: absolute; inset: 7px; border: 1.5px solid currentColor; border-radius: 50%; }
+  .info::after { content: ""; position: absolute; inset: -6px; }
+  .info:hover::before { box-shadow: inset 0 0 0 1px currentColor; }
+  #infoPop { position: fixed; z-index: 50; padding: 14px 16px; border-radius: 12px; background: var(--plate); border: 1px solid var(--line);
+             box-shadow: 0 4px 12px var(--shadow); color: var(--ink); font-size: 14px; line-height: 1.5; }
+  #infoPop b { display: block; margin-bottom: 4px; font-weight: 700; }
+  #infoPop p { margin: 0; color: var(--muted); }
+
+  /* Saved analyses, under the test list */
   .saved { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-  .saved li { display: flex; align-items: center; gap: 6px; border-radius: 12px; background: var(--plate); border: 1px solid transparent; }
-  .saved li.active { border-color: var(--accent); background: var(--tint); }
-  .saved .open { flex: 1; min-width: 0; display: grid; grid-template-columns: 64px 1fr; gap: 2px 12px; align-items: center;
-                 padding: 8px; background: none; border: 0; text-align: left; cursor: pointer; }
+  .saved li { display: flex; align-items: center; gap: 6px; border-radius: 14px; background: var(--plate); border: 1px solid var(--line); }
+  .saved li.active { border-color: var(--accent-text); background: var(--sel); }
+  .saved .open { flex: 1; min-width: 0; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 2px 12px; align-items: center; padding: 8px 12px; background: none; border: 0; text-align: left; cursor: pointer; }
   .saved .open:hover b { color: var(--accent-text); }
-  .saved .mini { grid-row: span 2; aspect-ratio: 5/3; background: var(--bg); border-radius: 6px; display: grid; place-items: center; }
-  .saved .mini svg { width: 84%; stroke: var(--muted); }
-  .saved b { font: 800 13px/1.2 var(--display); text-transform: uppercase; }
-  .saved small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .saved .del { background: none; border: 0; color: var(--muted); font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; border-radius: 8px; }
-  .saved .del:hover { color: var(--err); }
-  .saved .del.confirm { color: var(--err); }
-  .saved-empty { margin: 0; color: var(--muted); font-size: 13.5px; }
-  .ghost { padding: 11px 18px; border-radius: 999px; border: 1px solid var(--line); background: none; font-size: 13px;
-           font-weight: 700; text-decoration: none; color: var(--ink); cursor: pointer; }
-  .ghost:hover { border-color: var(--ink); }
-  .new-btn { margin-left: auto; padding: 8px 14px; white-space: nowrap; cursor: pointer; color: var(--ink); }
-  .hidden { display: none !important; }
-  footer { padding: 18px 0 32px; color: var(--muted); font-size: 13px; }
-
-  /* Fit the viewport on larger screens: panels scroll internally */
-  @media (min-width: 901px) and (min-height: 560px) {
-    .wrap { height: 100vh; display: flex; flex-direction: column; }
-    header { padding: 16px 0 6px; flex: none; }
-    .intro { padding: 0 0 22px; flex: none; max-width: none; margin-top: auto; }
-    .intro h1 { font-size: clamp(30px, 3.4vw, 44px); margin: 0 0 8px; white-space: nowrap; }
-    .tagline { margin-bottom: 8px; }
-    .intro p { font-size: 15px; max-width: none; }
-    /* Cards keep a comfortable height and the heading + cards sit centred in the window. */
-    #form { flex: none; display: flex; flex-direction: column; }
-    main { height: clamp(500px, calc(100vh - 290px), 640px); padding-bottom: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
-    .picker, .stage { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-    .picker, .stage { align-self: stretch; }
-    .stage { display: flex; flex-direction: column; }
-    #empty:not(.hidden) { flex: 1; display: flex; flex-direction: column; }
-    #empty .upload { flex: 1; display: flex; flex-direction: column; }
-    #empty .upload > .group:first-child { flex: 1; display: flex; flex-direction: column; }
-    #empty .drop { flex: 1; min-height: 140px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    #running:not(.hidden), #result:not(.hidden) { display: block; }
-    .media { max-height: 52vh; }
-    footer { flex: none; margin-top: auto; padding: 10px 0 12px; font-size: 12px; line-height: 1.4; }
-  }
-  /* Light mode: crisper tiles and a stronger accent */
-  :root[data-theme=light] .wordmark::before { background: var(--accent-text); box-shadow: 0 0 10px rgba(63, 107, 0, .35); }
-  :root[data-theme=light] .picker, :root[data-theme=light] .stage { box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.04); }
-  :root[data-theme=light] .tests label { background: var(--card); }
-  :root[data-theme=light] .thumb { background: #f1f3ee; }
-  :root[data-theme=light] .tests label:has(input:checked) { border-color: var(--accent-text); box-shadow: 0 0 0 1px var(--accent-text); background: #f3fadf; }
-  :root[data-theme=light] .tests label:has(input:checked) .thumb { background: #e6f5bd; }
-  :root[data-theme=light] .saved li { background: var(--card); border-color: var(--line); }
-  :root[data-theme=light] .saved li.active { border-color: var(--accent-text); background: #f3fadf; }
-  :root[data-theme=light] .drop { background: #f7f8f5; border-color: #c9cec6; }
-  :root[data-theme=light] .drop:hover, :root[data-theme=light] .drop.over, :root[data-theme=light] .drop.has { border-color: var(--accent-text); background: #f3fadf; }
-  :root[data-theme=light] .btn:hover:not(:disabled) { box-shadow: 0 8px 24px rgba(120, 170, 0, .35); }
-  :root[data-theme=light] .r-card.main { border-color: var(--accent); }
-  :root[data-theme=light] .bar div { box-shadow: none; background: var(--accent-text); }
-
-  @media (max-width: 900px) {
-    main { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-  }
-  @media (max-width: 560px) {
-    .wrap { padding: 0 14px; }
-    header { padding: 14px 0; }
-    .intro { padding: 18px 0 24px; }
-    .intro p { font-size: 15px; }
-    .picker, .stage { padding: 16px; border-radius: 16px; }
-    .tests { gap: 6px; }
-    .tests label { padding: 6px 6px 8px; }
-    .tests b { font-size: 11px; }
-    .tests small { display: none; }
-    figure { grid-template-columns: 120px 1fr; gap: 14px; }
-    figcaption h3, .stage-head h2 { font-size: 22px; }
-    .media { aspect-ratio: 4/3; }
-    .r-card b { font-size: clamp(24px, 7vw, 36px); }
-    .r-card { padding: 16px; }
-    .actions .ghost, .actions .btn-sm { flex: 1; text-align: center; }
-  }
-
-  /* Analyses list: each item has its own progress */
-  .saved .open { grid-template-columns: 64px minmax(0, 1fr); }
-  .saved .prog { grid-column: 2; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; margin-top: 4px; }
-  .saved .prog i { display: block; height: 100%; width: 0; background: var(--accent-text); transition: width .4s; }
-  .saved .state { color: var(--accent-text); font-weight: 700; }
+  .saved .mini { grid-row: span 2; height: 40px; display: grid; place-items: center; }
+  .saved .mini svg { width: 100%; stroke: var(--muted); }
+  .saved b { font-weight: 600; font-size: 15px; line-height: 1.2; }
+  .saved small { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .saved .prog { grid-column: 2; height: 4px; margin-top: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .saved .prog i { display: block; height: 100%; width: 100%; background: var(--accent-text); transform: translateX(calc(var(--p, 0%) - 100%)); transition: transform .4s; }
+  .saved .state { color: var(--accent-text); font-weight: 600; }
   .saved .state.bad { color: var(--err); }
-  .saved .retry { background: none; border: 1px solid var(--line); color: var(--ink); font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; border-radius: 999px; }
-  .saved .retry:hover { border-color: var(--ink); }
-  .store-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
-  .msg { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--err); font-size: 14px; line-height: 1.5; }
-  .msg:empty { display: none; }
+  .saved .del, .saved .retry { min-height: 36px; padding: 0 12px; border-radius: 999px; background: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .saved .del { border: 0; color: var(--muted); margin-right: 4px; }
+  .saved .del:hover, .saved .del.confirm { color: var(--err); }
+  .saved .retry { border: 1px solid var(--edge); color: var(--ink); }
+  .saved-empty { margin: 0; font-size: 14px; color: var(--muted); }
+  .store-note { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+
   /* Live camera */
   .live-box { position: relative; overflow: hidden; }
   .live-box video { display: none; }
-  .live-box canvas { width: 100%; aspect-ratio: 4/3; border-radius: var(--r); background: #000; display: block; object-fit: contain; }
-  .live-hud { position: absolute; top: 12px; left: 12px; padding: 10px 14px; border-radius: 12px; background: rgba(0,0,0,.6); color: #fff; line-height: 1; }
-  .live-hud b { display: block; font: 900 44px/1 var(--display); font-variant-numeric: tabular-nums; }
-  .live-hud span { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
-  .live-time { position: absolute; top: 12px; right: 12px; padding: 6px 10px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font: 700 13px/1 var(--sans); font-variant-numeric: tabular-nums; }
-  .live-cue { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--plate); font-weight: 700; min-height: 46px; }
+  .live-box canvas { width: 100%; max-height: 62vh; aspect-ratio: 4/3; border-radius: var(--r); background: var(--media); display: block; object-fit: contain; }
+  .live-time { position: absolute; top: 12px; right: 12px; padding: 6px 10px; border-radius: 999px; background: var(--scrim); color: var(--on-media); font: 600 13px/1 var(--sans); font-variant-numeric: tabular-nums; }
+  .live-cue { margin: 16px 0 0; padding: 12px 14px; min-height: 46px; border-radius: 12px; background: var(--plate); font-weight: 600; }
   .live-cue.good { color: var(--accent-text); }
   .live-cue.warn { color: var(--err); }
+
+  footer { padding: 20px 0 32px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  footer a { color: var(--soft); }
+
+  @media (max-width: 1100px) {
+    #empty:not(.hidden) { grid-template-columns: minmax(0, 1fr); }
+    .test-panel { min-height: 0; }
+    .plate { min-height: 180px; }
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+    .stage { order: -1; }   /* the upload comes first on a phone */
+    #result:not(.hidden) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "video" "report" "actions" "box"; }
+    #result .report { margin-top: 24px; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 16px; }
+    header { padding: 16px 0; }
+    .nav-link { padding: 0 8px; }
+    .test-panel { padding: 24px; }
+    .stage-head { flex-wrap: wrap; }
+    .stage-head h2 { font-size: 34px; }
+    .r-card.main span, .r-card:not(.main) b { font-size: 32px; }
+  }
+
+  /* Reduced motion: the loading spinners slow down, everything else holds still. */
+  @media (prefers-reduced-motion: reduce) {
+    .spinner, .dot-spin { animation-duration: 2.4s; }
+    .bar.pulse #barFill { animation: none; }
+    .tests label, .drop, .btn, .bar div, .saved .prog i { transition: none; }
+    .btn:active:not(:disabled), .btn-sm:active:not(:disabled), .ghost:active:not(:disabled), .theme-btn:active, .saved .retry:active { transform: none; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <span></span>
-    <button class="theme-btn" id="themeBtn" type="button">Dark</button>
+    <span class="wordmark">FitCheck</span>
+    <nav>
+      <a class="nav-link" href="#savedGroup">Your analyses</a>
+      <button class="theme-btn" id="themeBtn" type="button">Dark</button>
+    </nav>
   </header>
-
-  <section class="intro">
-    <h1 class="wordmark">FitCheck</h1>
-    <h2 class="tagline">Analyse your <em>fitness test.</em></h2>
-    <p>Upload a video of a fitness test. FitCheck counts your reps and flags form problems.</p>
-  </section>
 
   {% set hints = {
     "pushup": "Upper body", "squats": "Lower body", "curlups": "Core",
@@ -297,7 +285,7 @@
   <form id="form"><main>
     <div class="picker">
       <div class="group">
-        <p class="label"><span>Test</span></p>
+        <p class="label"><span>Choose a test</span></p>
         <div class="tests">
           {% for key, t in tests.items() %}
           <label><input type="radio" name="test" value="{{ key }}" {% if loop.first %}checked{% endif %}
@@ -316,42 +304,42 @@
 
     <section class="stage" id="stage">
       <div id="empty">
-      <figure>
-        <div class="plate" id="illus" aria-hidden="true"></div>
-        <figcaption>
-          <span class="fig" id="figNo">Fig. 1</span>
-          <h3 id="emptyTitle"></h3>
-          <p id="emptyHint"></p>
-        </figcaption>
-      </figure>
-      <div class="upload">
-      <div class="group">
-        <p class="label"><span>Video</span></p>
-        <label class="drop" id="drop">
-          <input type="file" name="video" accept="video/*" id="file">
-          <strong id="dropText">Choose a file or drop it here</strong>
-          <small id="dropHint">MP4 or MOV, up to {{ max_mb }} MB</small>
-          <span class="film" id="filmTip"></span>
-        </label>
-      </div>
+        <div class="test-panel">
+          <div class="plate" id="illus" aria-hidden="true"></div>
+          <div>
+            <span class="hidden" id="figNo"></span>
+            <h1 id="emptyTitle"></h1>
+            <p id="emptyHint"></p>
+          </div>
+        </div>
+        <div class="upload">
+          <label class="drop" id="drop">
+            <input type="file" name="video" accept="video/*" id="file">
+            <strong id="dropText">Drop your video</strong>
+            <small id="dropHint">or choose a file. MP4 or MOV, up to {{ max_mb }} MB.</small>
+            <span class="film" id="filmTip"></span>
+          </label>
 
-      <div class="group field hidden" id="heightField">
-        <p class="label"><span>Height</span><span>needed for this test</span></p>
-        <input type="number" name="height" min="80" max="250" step="0.5" placeholder="cm">
-      </div>
+          <div class="field hidden" id="heightField">
+            <label class="label" for="heightInput">Your height in cm</label>
+            <input id="heightInput" type="number" name="height" min="80" max="250" step="0.5" inputmode="decimal">
+          </div>
 
-      <button class="btn" id="go" type="submit" disabled>Analyse video</button>
-      <p class="note">Analysis takes about 1&ndash;2 minutes. <button type="button" class="link" id="sampleBtn">No video? Try a sample clip</button>
-        <br><button type="button" class="link" id="liveBtn">Or analyse live with your camera</button></p>
-      <div class="error" id="err"></div>
-      </div>
+          <button class="btn" id="go" type="submit" disabled>Analyse video</button>
+          <p class="note">Takes about 1 to 2 minutes.</p>
+          <div class="alt-links">
+            <button type="button" class="link" id="sampleBtn">Try a sample clip</button>
+            <button type="button" class="link" id="liveBtn">Count live with your camera</button>
+          </div>
+          <div class="error" id="err"></div>
+        </div>
       </div>
 
       <div id="running" class="hidden">
         <div class="stage-head"><h2 id="runTitle">Analysing</h2><span class="tag" id="runTag">Analysing</span>
-          <button class="ghost new-btn" type="button" data-new>&larr; New analysis</button></div>
+          <button class="ghost new-btn" type="button" data-new>New analysis</button></div>
         <div class="media-box">
-          <img class="media" id="preview" alt="Live analysis preview">
+          <img class="media" id="preview" alt="Live analysis preview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
           <div class="waiting" id="waiting"><div><span class="spinner" aria-hidden="true"></span><span id="waitText">Starting…</span></div></div>
         </div>
         <div class="bar" id="bar"><div id="barFill"></div></div>
@@ -366,7 +354,7 @@
 
       <div id="result" class="hidden">
         <div class="stage-head"><h2 id="resTitle">Results</h2><span class="tag" id="resChip">Saved</span>
-          <button class="ghost new-btn" type="button" data-new>&larr; New analysis</button></div>
+          <button class="ghost new-btn" type="button" data-new>New analysis</button></div>
         <video class="media" id="video" controls playsinline></video>
         <div class="report" id="reportView"></div>
         <details id="reportBox" class="hidden">
@@ -374,17 +362,17 @@
           <pre id="report"></pre>
         </details>
         <div class="actions">
+          <a class="btn-sm" id="dlReport" download>Download PDF</a>
           <a class="ghost" id="dl" download>Download video</a>
-          <a class="ghost" id="dlReport" download>Download PDF</a>
         </div>
       </div>
 
       <div id="live" class="hidden">
         <div class="stage-head"><h2 id="liveTitle">Live</h2><span class="tag" id="liveTag">Camera</span>
-          <button class="ghost new-btn" type="button" id="liveClose">&larr; Back</button></div>
+          <button class="ghost new-btn" type="button" id="liveClose">Back</button></div>
         <div class="media-box live-box">
           <video id="cam" playsinline muted></video>
-          <canvas id="liveCanvas" width="640" height="480"></canvas>
+          <canvas id="liveCanvas" width="640" height="480" role="img" aria-label="Live camera view with the pose overlay and rep counter"></canvas>
           <div class="live-time" id="liveTime">0:00</div>
         </div>
         <p class="live-cue" id="liveCue">Press Start and allow camera access.</p>
@@ -420,33 +408,41 @@ const fmtSize = b => `${(b / 1e6).toFixed(b < 1e7 ? 1 : 0)} MB`;
 const fmtDate = t => new Date(t * 1000).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 const rating = f => f == null ? null : f >= 3.5 ? 'Excellent' : f >= 2.5 ? 'Good' : f >= 1.5 ? 'Fair' : 'Needs work';
 
-const G = '<path class="ground" d="M6 66h108"/>';
+// Figures are drawn for a heavy rounded stroke: solid heads (a small circle the stroke fills in),
+// limbs kept apart so they don't merge, feet just above a thin ground line.
+const G = '<path class="ground" d="M4 69h112" stroke-width="3"/>';
 const ILLUS = {
-  pushup: ['<circle cx="22" cy="40" r="5"/><path d="M28 44L66 50L104 64M32 45v19"/>', 'Side view. Head, hips and heels should stay in one line.'],
-  squats: ['<circle cx="56" cy="12" r="5"/><path d="M56 18L50 40L72 42L68 64M56 24L82 28"/>', 'Side view, whole body in frame. Hips back, chest up.'],
-  curlups: ['<circle cx="26" cy="44" r="5"/><path d="M31 48L56 64L74 46L90 64M33 50L56 56"/>', 'Side view. Knees bent, feet flat on the floor.'],
-  plank: ['<circle cx="22" cy="44" r="5"/><path d="M28 48L104 62M30 50v14h14"/>', 'Side view, on forearms. The timer runs while your body stays straight.'],
-  jumpingjack: ['<circle cx="60" cy="10" r="5"/><path d="M60 16v24M60 22L40 4M60 22L80 4M60 40L44 64M60 40L76 64"/>', 'Front view. Leave room above your hands and below your feet.'],
-  verticaljump: ['<circle cx="56" cy="10" r="5"/><path d="M56 16v22M56 22L46 4M56 22L66 4M56 38L50 52M56 38L62 52"/><path class="acc" d="M92 56V18M86 24l6-6 6 6"/>', 'Side view. Keep your feet in frame for the whole jump.'],
-  shuttlerun: ['<circle cx="64" cy="16" r="5"/><path d="M62 22L56 40M61 27L72 35M61 27L50 22M56 40L68 50L66 64M56 40L46 52L38 58"/><path class="acc" d="M10 64l4-10 4 10zM102 64l4-10 4 10z"/>', 'Side view, wide enough to show both markers.'],
-  sitreach: ['<circle cx="62" cy="34" r="5"/><path d="M40 64h54M40 64L58 42M58 44L90 54"/><path class="acc" d="M96 52h14v12H96z"/>', 'Side view. Legs straight, reach forward slowly and hold.'],
-  backstretch: ['<circle cx="84" cy="54" r="5"/><path d="M60 30v34M60 30L80 48M78 46L76 64"/>', 'Side view. Bend forward from the hips.'],
+  pushup: ['<circle cx="17" cy="35" r="3.5"/><path d="M31 41L70 49L105 58M31 42v18"/>', 'Side view. Head, hips and heels should stay in one line.'],
+  squats: ['<circle cx="53" cy="9" r="3.5"/><path d="M54 22L46 42L69 45L65 61M55 27L82 29"/>', 'Side view, whole body in frame. Hips back, chest up.'],
+  curlups: ['<circle cx="25" cy="38" r="3.5"/><path d="M36 45L58 60L75 41L92 60"/>', 'Side view. Knees bent, feet flat on the floor.'],
+  plank: ['<circle cx="16" cy="37" r="3.5"/><path d="M30 42L106 58M30 44v16h15"/>', 'Side view, on forearms. The timer runs while your body stays straight.'],
+  jumpingjack: ['<circle cx="60" cy="9" r="3.5"/><path d="M60 22v18M60 27L39 10M60 27L81 10M60 40L44 61M60 40L76 61"/>', 'Front view. Leave room above your hands and below your feet.'],
+  verticaljump: ['<circle cx="48" cy="12" r="3.5"/><path d="M48 25v15M48 30L29 17M48 30L67 17M48 40L41 54M48 40L55 54M96 58V22M87 31l9-9 9 9"/>', 'Side view. Keep your feet in frame for the whole jump.'],
+  shuttlerun: ['<circle cx="67" cy="10" r="3.5"/><path d="M65 23L57 40M64 28L77 35M64 28L50 23M57 40L71 48L68 61M57 40L46 51L35 55M8 61l5-9 5 9zM102 61l5-9 5 9z"/>', 'Side view, wide enough to show both markers.'],
+  sitreach: ['<circle cx="64" cy="29" r="3.5"/><path d="M28 61h66M28 61L50 38M52 41L88 52M104 46v15"/>', 'Side view. Legs straight, reach forward slowly and hold.'],
+  backstretch: ['<circle cx="89" cy="47" r="3.5"/><path d="M48 34v27M48 34L76 42M75 45L73 61"/>', 'Side view. Bend forward from the hips.'],
 };
-const miniSvg = key => ILLUS[key] ? `<svg viewBox="0 0 120 72" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[key][0]}</svg>` : '';
+const miniSvg = key => ILLUS[key] ? `<svg viewBox="0 0 120 72" fill="none" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[key][0]}</svg>` : '';
 const radios = [...form.querySelectorAll('input[name=test]')];
 const testName = key => radios.find(r => r.value === key)?.parentElement.querySelector('b').textContent || key;
 const selectedTest = () => form.querySelector('input[name=test]:checked').value;
 
 const FILMING = {{ filming|tojson }}, MAX_MB = {{ max_mb }}, SAMPLES = {{ samples|tojson }}, CHUNK = {{ chunk }};
 // Live mode only where in-browser tracking is reliable; lying-down tests (plank, curl-ups) are often missed.
+// A real photo for the big panel, cut out from the sample clip with the pose drawn on. Other tests keep the drawing.
+// Real people: one stretch of each sample clip, cut out of its background (webapp/static/sample-*.mp4).
+const PANEL_PICS = Object.fromEntries([['pushup', 623, 414], ['plank', 439, 138], ['jumpingjack', 398, 600], ['verticaljump', 279, 600], ['shuttlerun', 650, 318]]
+  .map(([k, w, h]) => [k, { anim: `/static/${k}-rep.webp`, still: `/static/${k}-still.png`, w, h }]));
 const LIVE_TESTS = ['pushup', 'squats', 'jumpingjack'];
 function syncTest() {
   const sel = form.querySelector('input[name=test]:checked');
   $('heightField').classList.toggle('hidden', sel.dataset.height !== '1');
   const ill = ILLUS[sel.value];
-  $('illus').innerHTML = `<svg viewBox="0 0 120 72" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${G}${ill[0]}</svg>`;
+  $('illus').innerHTML = PANEL_PICS[sel.value]
+    ? `<picture><source srcset="${PANEL_PICS[sel.value].still}" media="(prefers-reduced-motion: reduce)"><img src="${PANEL_PICS[sel.value].anim}" alt="" width="${PANEL_PICS[sel.value].w}" height="${PANEL_PICS[sel.value].h}"></picture>`
+    : `<svg viewBox="0 0 120 72" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">${G}${ill[0]}</svg>`;
   $('figNo').textContent = `Fig. ${radios.indexOf(sel) + 1}`;
-  $('emptyTitle').textContent = testName(sel.value);
+  $('emptyTitle').innerHTML = testName(sel.value).split(' ').map(w => `<span class="nw">${esc(w)}</span>`).join(' ');
   $('emptyHint').textContent = ill[1];
   $('sampleBtn').classList.toggle('hidden', !SAMPLES.includes(sel.value));
   $('liveBtn').classList.toggle('hidden', !LIVE_TESTS.includes(sel.value) || !navigator.mediaDevices?.getUserMedia);
@@ -454,20 +450,20 @@ function syncTest() {
 }
 radios.forEach(r => {
   r.parentElement.querySelector('.thumb').innerHTML =
-    `<svg viewBox="0 0 120 72" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[r.value][0]}</svg>`;
+    `<svg viewBox="0 0 120 72" fill="none" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">${G}${ILLUS[r.value][0]}</svg>`;
   r.addEventListener('change', syncTest);
 });
 syncTest();
 
 function setFile(f) {
-  $('dropText').textContent = f ? f.name : 'Choose a file or drop it here';
-  $('dropHint').textContent = f ? `${fmtSize(f.size)}. Click to change.` : `MP4 or MOV, up to ${MAX_MB} MB`;
+  $('dropText').textContent = f ? f.name : 'Drop your video';
+  $('dropHint').textContent = f ? `${fmtSize(f.size)}. Click to change.` : `or choose a file. MP4 or MOV, up to ${MAX_MB} MB.`;
   drop.classList.toggle('has', !!f);
   $('go').disabled = !f;
 }
 $('sampleBtn').addEventListener('click', async () => {
   const key = selectedTest();
-  const btn = $('sampleBtn'); btn.disabled = true; btn.textContent = 'Loading sample...';
+  const btn = $('sampleBtn'); btn.disabled = true; btn.textContent = 'Loading sample…';
   try {
     const res = await fetch(`/static/sample-${key}.mp4`);
     if (!res.ok) throw new Error();
@@ -475,7 +471,7 @@ $('sampleBtn').addEventListener('click', async () => {
     file.files = dt.files;
     setFile(file.files[0]);
   } catch (e) { $('err').textContent = 'Could not load the sample video.'; }
-  btn.disabled = false; btn.textContent = 'No video? Try a sample clip';
+  btn.disabled = false; btn.textContent = 'Try a sample clip';
 });
 file.addEventListener('change', () => { $('err').textContent = ''; setFile(file.files[0]); });
 ['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
@@ -717,13 +713,13 @@ function renderList() {
     return `<li data-key="${rec.key}" class="${rec.key === selected ? 'active' : ''}">
       <button type="button" class="open"><span class="mini">${miniSvg(rec.test_key)}</span>
         <b>${esc(rec.test)}</b><small><span class="state ${bad ? 'bad' : ''}">${esc(text)}</span> · ${esc(rec.name)}</small>
-        ${bad ? '' : `<span class="prog"><i style="width:${Math.round(frac * 100)}%"></i></span>`}</button>
+        ${bad ? '' : `<span class="prog"><i style="--p:${Math.round(frac * 100)}%"></i></span>`}</button>
       ${rec.state === 'failed' ? '<button type="button" class="retry">Retry</button>' : ''}
     </li>`;
   }).join('') + history.map(h => `
     <li data-id="${h.id}" class="${h.id === selected ? 'active' : ''}">
       <button type="button" class="open"><span class="mini">${miniSvg(h.test_key)}</span>
-        <b>${esc(h.test)}${h.kind === 'live' ? ' · live' : ''}</b><small>${fmtDate(h.created)} · ${esc(h.video_name || '')}</small></button>
+        <b>${esc(h.test)}${h.kind === 'live' ? ' (live)' : ''}</b><small>${fmtDate(h.created)} · ${esc(h.video_name || '')}</small></button>
       <button type="button" class="del" aria-label="Delete">Delete</button>
     </li>`).join('');
 }
@@ -734,7 +730,7 @@ function renderRunning(rec) {
   const [text, frac] = stateText(rec), bad = rec.state === 'failed' || rec.state === 'rejected';
   $('runTag').textContent = bad ? (rec.state === 'failed' ? 'Failed' : 'Not analysed') : rec.state === 'uploading' || rec.state === 'paused' ? 'Uploading' : 'Analysing';
   $('runTag').className = 'tag' + (bad ? ' err' : '');
-  $('barFill').style.width = Math.round(frac * 100) + '%';
+  $('barFill').style.setProperty('--p', Math.round(frac * 100) + '%');
   $('bar').classList.toggle('pulse', rec.state === 'encoding' || rec.state === 'saving');
   $('bar').classList.toggle('hidden', bad);
   $('pct').textContent = !bad && frac ? Math.round(frac * 100) + '%' : '';
@@ -869,7 +865,7 @@ function renderReport(j) {
   let html = '';
   const cards = [];
   if (r.main) cards.push(`<div class="r-card main"><b>${esc(r.main[1])}</b><span>${esc(r.main[0])}${infoBtn(r.main[0])}</span></div>`);
-  if (r.rating) cards.push(`<div class="r-card"><b>${esc(r.rating)}</b><span>Form · ${r.form.toFixed(1)} out of 4${infoBtn('Form')}</span></div>`);
+  if (r.rating) cards.push(`<div class="r-card"><b>${esc(r.rating)}</b><span>Form ${r.form.toFixed(1)} out of 4${infoBtn('Form')}</span></div>`);
   if (cards.length) html += `<div class="r-cards">${cards.join('')}</div>`;
   if (r.main && /^0(\.0+)?( |$)/.test(r.main[1])) html += `<p class="r-zero">Nothing was counted. Check that you picked the right test above and that the clip shows the full movement, then try again.</p>`;
   else if (!j.report && !r.main) html += `<p>This test does not produce a scored report yet. Watch the video above to see your movement with the pose overlay.</p>`;
@@ -986,7 +982,7 @@ function openLive() {
   $('liveTime').textContent = '0:00';
   $('liveStart').disabled = false; $('liveStop').disabled = true;
   liveCue(`${LIVE[key].start} Then press Start.`);
-  const c = $('liveCanvas').getContext('2d'); c.fillStyle = '#000'; c.fillRect(0, 0, 640, 480);
+  const c = $('liveCanvas').getContext('2d'); c.fillStyle = '#050705'; c.fillRect(0, 0, 640, 480);   // same as --media, so the letterbox is seamless
   $('liveStart').dataset.test = key;
 }
 $('liveBtn').addEventListener('click', openLive);
@@ -1126,7 +1122,7 @@ $('liveClose').addEventListener('click', () => {
       if (rec.jobId) track(rec); else if (rec.blob) upload(rec);
     }
   } catch (e) {
-    $('savedEmpty').textContent = 'This browser is not allowing FitCheck to store analyses (private browsing?). Results will still show, but won\'t be kept.';
+    $('savedEmpty').textContent = 'This browser is not allowing FitCheck to store analyses (private browsing?). Results will still show, but won’t be kept.';
   }
   renderList();
   // Reopen the newest analysis that is still in progress.
