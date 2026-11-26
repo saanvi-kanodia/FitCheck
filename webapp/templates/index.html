@@ -43,12 +43,16 @@
 
   /* Header */
   header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 24px 0; border-bottom: 1px solid var(--line); }
-  .wordmark { font: 800 30px/1 var(--display); text-transform: uppercase; }
+  .wordmark { font: 800 30px/1 var(--display); text-transform: uppercase; color: var(--ink); text-decoration: none; }
   header nav { display: flex; align-items: center; gap: 12px; }
   .nav-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px; }
   .nav-link:hover { color: var(--accent-text); }
   .theme-btn { min-height: 44px; padding: 0 18px; border: 1px solid var(--edge); border-radius: 999px; background: none; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .theme-btn { display: inline-grid; place-items: center; width: 44px; padding: 0; color: var(--ink); }
+  .theme-btn svg { width: 18px; height: 18px; }
   .theme-btn:hover { border-color: var(--ink); }
+  .field .need { margin-left: 8px; font-weight: 400; color: var(--muted); }
+  .live-note { margin: 0; font-size: 14px; color: var(--muted); }
 
   /* Main: the test list, then the stage */
   main { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 40px; align-items: start; padding: 32px 0 56px; }
@@ -270,10 +274,11 @@
 <body>
 <div class="wrap">
   <header>
-    <span class="wordmark">FitCheck</span>
-    <nav>
+    <a class="wordmark" href="/">FitCheck</a>
+    <nav aria-label="Main">
       <a class="nav-link" href="#savedGroup">Your analyses</a>
-      <button class="theme-btn" id="themeBtn" type="button">Dark</button>
+      <a class="nav-link" href="https://github.com/saanvi-kanodia/FitCheck" target="_blank" rel="noopener">GitHub</a>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
     </nav>
   </header>
 
@@ -321,7 +326,7 @@
           </label>
 
           <div class="field hidden" id="heightField">
-            <label class="label" for="heightInput">Your height in cm</label>
+            <label class="label" for="heightInput"><span>Your height in cm</span><span class="need" id="heightNeed">needed for this test</span></label>
             <input id="heightInput" type="number" name="height" min="80" max="250" step="0.5" inputmode="decimal">
           </div>
 
@@ -329,8 +334,9 @@
           <p class="note">Takes about 1 to 2 minutes.</p>
           <div class="alt-links">
             <button type="button" class="link" id="sampleBtn">Try a sample clip</button>
-            <button type="button" class="link" id="liveBtn">Count live with your camera</button>
+            <button type="button" class="link" id="liveBtn">Count live with your camera<span class="hidden" id="liveBtnText"></span></button>
           </div>
+          <p class="live-note hidden" id="liveNote"></p>
           <div class="error" id="err"></div>
         </div>
       </div>
@@ -393,7 +399,13 @@ const $ = id => document.getElementById(id);
 const form = $('form'), file = $('file'), drop = $('drop');
 const root = document.documentElement;
 const isDark = () => root.dataset.theme !== 'light';
-const syncThemeLabel = () => { $('themeBtn').textContent = isDark() ? 'Light' : 'Dark'; };
+// Icon shows the theme you'd switch to: a sun in dark mode, a moon in light mode.
+const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+const syncThemeLabel = () => {
+  const b = $('themeBtn'); b.innerHTML = isDark() ? SUN : MOON;
+  b.setAttribute('aria-label', isDark() ? 'Switch to light mode' : 'Switch to dark mode'); b.title = b.getAttribute('aria-label');
+};
 $('themeBtn').addEventListener('click', () => {
   root.dataset.theme = isDark() ? 'light' : 'dark';
   localStorage.setItem('theme', root.dataset.theme);
@@ -428,15 +440,18 @@ const testName = key => radios.find(r => r.value === key)?.parentElement.querySe
 const selectedTest = () => form.querySelector('input[name=test]:checked').value;
 
 const FILMING = {{ filming|tojson }}, MAX_MB = {{ max_mb }}, SAMPLES = {{ samples|tojson }}, CHUNK = {{ chunk }};
-// Live mode only where in-browser tracking is reliable; lying-down tests (plank, curl-ups) are often missed.
-// A real photo for the big panel, cut out from the sample clip with the pose drawn on. Other tests keep the drawing.
 // Real people: one stretch of each sample clip, cut out of its background (webapp/static/sample-*.mp4).
 const PANEL_PICS = Object.fromEntries([['pushup', 623, 414], ['plank', 439, 138], ['jumpingjack', 398, 600], ['verticaljump', 279, 600], ['shuttlerun', 650, 318]]
   .map(([k, w, h]) => [k, { anim: `/static/${k}-rep.webp`, still: `/static/${k}-still.png`, w, h }]));
-const LIVE_TESTS = ['pushup', 'squats', 'jumpingjack'];
+// Why live mode can't run here, or '' when it can.
+const liveBlocker = () => !window.isSecureContext ? 'Live mode needs a secure (https) connection.'
+  : !navigator.mediaDevices?.getUserMedia ? 'This browser does not support camera access.'
+  : typeof MediaRecorder === 'undefined' ? 'This browser cannot record the camera. Try Chrome, Edge or Safari.' : '';
 function syncTest() {
   const sel = form.querySelector('input[name=test]:checked');
-  $('heightField').classList.toggle('hidden', sel.dataset.height !== '1');
+  // Vertical jump uses height only in live mode, to turn the jump into centimetres.
+  $('heightField').classList.toggle('hidden', sel.dataset.height !== '1' && sel.value !== 'verticaljump');
+  $('heightNeed').textContent = sel.dataset.height === '1' ? 'needed for this test' : 'optional, for live jump height in cm';
   const ill = ILLUS[sel.value];
   $('illus').innerHTML = PANEL_PICS[sel.value]
     ? `<picture><source srcset="${PANEL_PICS[sel.value].still}" media="(prefers-reduced-motion: reduce)"><img src="${PANEL_PICS[sel.value].anim}" alt="" width="${PANEL_PICS[sel.value].w}" height="${PANEL_PICS[sel.value].h}"></picture>`
@@ -445,7 +460,10 @@ function syncTest() {
   $('emptyTitle').innerHTML = testName(sel.value).split(' ').map(w => `<span class="nw">${esc(w)}</span>`).join(' ');
   $('emptyHint').textContent = ill[1];
   $('sampleBtn').classList.toggle('hidden', !SAMPLES.includes(sel.value));
-  $('liveBtn').classList.toggle('hidden', !LIVE_TESTS.includes(sel.value) || !navigator.mediaDevices?.getUserMedia);
+  const blocked = liveBlocker();
+  $('liveBtnText').textContent = `${testName(sel.value)} with your camera`;
+  $('liveBtn').disabled = !!blocked;
+  $('liveNote').textContent = blocked; $('liveNote').classList.toggle('hidden', !blocked);
   $('filmTip').innerHTML = FILMING[sel.value] ? `<b>Filming tip:</b> ${esc(FILMING[sel.value])}` : '';
 }
 radios.forEach(r => {
@@ -519,7 +537,7 @@ let history = [];          // finished analyses (newest first)
 let selected = null;       // key of the item shown on the right
 let view = 'empty';
 
-function show(id) {
+let show = function (id) {
   view = id;
   ['empty', 'running', 'result', 'live'].forEach(x => $(x).classList.toggle('hidden', x !== id));
 }
@@ -889,7 +907,13 @@ const LIVE = {
   curlups:     { label: 'curl-ups', start: 'Lie down side-on to the camera with your knees bent.' },
   jumpingjack: { label: 'jumping jacks', start: 'Face the camera with room above your hands and below your feet.' },
   plank:       { label: 'seconds held', start: 'Get into a forearm plank, side-on to the camera.' },
+  verticaljump:{ label: 'jumps', start: 'Stand side-on to the camera with your feet in view. Stand still for a moment, then jump.' },
+  shuttlerun:  { label: 'laps', start: 'Put the camera side-on and far back, so your whole run between the markers is in view.' },
+  sitreach:    { label: 'best reach', start: 'Sit side-on to the camera with legs straight, then reach forward slowly.' },
+  backstretch: { label: 'best bend °', start: 'Stand side-on to the camera, then bend forward slowly from the hips.' },
 };
+const COUNTDOWN_MS = 3000, MIN_REP_MS = 350;
+const userHeight = () => { const h = parseFloat(form.querySelector('input[name=height]')?.value); return h >= 80 && h <= 250 ? h : null; };
 let landmarker = null, cam = null, rafId = 0, recorder = null, chunks = [], session = null;
 
 function angle(a, b, c) {
@@ -898,21 +922,30 @@ function angle(a, b, c) {
   return d > 180 ? 360 - d : d;
 }
 function newSession(key) {
-  return { key, start: performance.now(), count: 0, attempts: 0, phase: 'up', min: 999, bad: false,
-           faults: {}, held: 0, lastT: null, outFrames: 0, frames: 0, cue: '', cueClass: '', cueUntil: 0 };
+  const now = performance.now();
+  return { key, start: now + COUNTDOWN_MS, go: now + COUNTDOWN_MS, count: 0, attempts: 0, phase: 'up', min: 999, bad: false,
+           faults: {}, held: 0, lastT: null, outFrames: 0, frames: 0, cue: '', cueClass: '', cueUntil: 0,
+           sm: {}, repAt: 0, show: null, best: null, base: null, leg: null, peak: 0,
+           dir: 0, ext: null, turnX: null, height: userHeight() };
 }
 function cue(s, text, cls = '', ms = 1500) { s.cue = text; s.cueClass = cls; s.cueUntil = performance.now() + ms; }
 function fault(s, name) { s.faults[name] = (s.faults[name] || 0) + 1; }
+// Smooth a measurement over frames so tracking jitter can't flip a rep on and off.
+function sm(s, name, v, k = 0.45) { const o = s.sm[name]; return s.sm[name] = o == null ? v : o + k * (v - o); }
+// A rep only counts if it took a believable amount of time (stops double counts from jitter).
+function repOk(s, now) { if (now - s.repAt < MIN_REP_MS) return false; s.repAt = now; return true; }
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 // One step of counting for the current frame. p(i) gives a landmark in pixels.
 function step(s, p, vis, now) {
   const side = (vis(LM.lSh) + vis(LM.lHip) + vis(LM.lKn) + vis(LM.lAn)) >= (vis(LM.rSh) + vis(LM.rHip) + vis(LM.rKn) + vis(LM.rAn)) ? 'l' : 'r';
   const P = n => p(LM[side + n]);
   const sh = P('Sh'), el = P('El'), wr = P('Wr'), hip = P('Hip'), kn = P('Kn'), an = P('An');
-  const body = angle(sh, hip, an);
-  const dt = s.lastT ? (now - s.lastT) / 1000 : 0; s.lastT = now;
+  const body = sm(s, 'body', angle(sh, hip, an));
+  // Capped so a stalled frame or a background tab can't add a big jump in time.
+  const dt = s.lastT ? Math.min(0.25, (now - s.lastT) / 1000) : 0; s.lastT = now;
   if (s.key === 'pushup') {
-    const e = angle(sh, el, wr);
+    const e = sm(s, 'e', angle(sh, el, wr));
     if (body < 150) s.bad = true;
     if (s.phase === 'up') {
       s.min = Math.min(s.min, e);
@@ -923,33 +956,40 @@ function step(s, p, vis, now) {
     } else if (e > 155) {
       s.attempts++;
       if (s.bad) { fault(s, 'Hips sagging or piking'); cue(s, 'Not counted: keep your body in a straight line', 'warn'); }
-      else { s.count++; cue(s, 'Good rep', 'good'); }
+      else if (repOk(s, now)) { s.count++; cue(s, 'Good rep', 'good'); }
       s.phase = 'up'; s.min = 999; s.bad = false;
     }
     if (body < 150 && now > s.cueUntil) cue(s, 'Keep your hips in line with your shoulders and ankles', 'warn', 600);
   } else if (s.key === 'squats') {
-    const k = angle(hip, kn, an);
+    const k = sm(s, 'k', angle(hip, kn, an));
     if (s.phase === 'up') {
       s.min = Math.min(s.min, k);
       if (k < 100) s.phase = 'down';
       else if (k > 160 && s.min < 140) { s.attempts++; fault(s, 'Not deep enough'); cue(s, 'Not counted: go deeper', 'warn'); s.min = 999; }
       else if (k > 160) s.min = 999;
-    } else if (k > 160) { s.attempts++; s.count++; cue(s, 'Good squat', 'good'); s.phase = 'up'; s.min = 999; }
+    } else if (k > 160) { s.attempts++; if (repOk(s, now)) { s.count++; cue(s, 'Good squat', 'good'); } s.phase = 'up'; s.min = 999; }
   } else if (s.key === 'curlups') {
-    const h = angle(sh, hip, kn);
+    const h = sm(s, 'h', angle(sh, hip, kn));
     if (s.phase === 'up') {                          // "up" here means lying back, ready
       s.min = Math.min(s.min, h);
       if (h < 80) s.phase = 'down';
       else if (h > 115 && s.min < 100) { s.attempts++; fault(s, 'Not a full rep'); cue(s, 'Not counted: curl up further', 'warn'); s.min = 999; }
       else if (h > 115) s.min = 999;
-    } else if (h > 115) { s.attempts++; s.count++; cue(s, 'Good curl-up', 'good'); s.phase = 'up'; s.min = 999; }
+    } else if (h > 115) { s.attempts++; if (repOk(s, now)) { s.count++; cue(s, 'Good curl-up', 'good'); } s.phase = 'up'; s.min = 999; }
   } else if (s.key === 'jumpingjack') {
-    const lw = p(LM.lWr), rw = p(LM.rWr), la = p(LM.lAn), ra = p(LM.rAn), lh = p(LM.lHip), rh = p(LM.rHip), nose = p(LM.nose);
-    const hipW = Math.hypot(lh.x - rh.x, lh.y - rh.y) || 1, feet = Math.hypot(la.x - ra.x, la.y - ra.y);
-    const open = lw.y < nose.y && rw.y < nose.y && feet > 1.6 * hipW;
-    const closed = lw.y > p(LM.lSh).y && rw.y > p(LM.rSh).y && feet < 1.4 * hipW;
+    // Front view. Arms use the elbows and legs fall back to the knees, so a rep still counts
+    // when hands go above the frame or feet slip below it.
+    const ok = i => vis(i);
+    const shY = (p(LM.lSh).y + p(LM.rSh).y) / 2, hipY = (p(LM.lHip).y + p(LM.rHip).y) / 2, torso = Math.abs(hipY - shY) || 1;
+    const hipW = dist(p(LM.lHip), p(LM.rHip)) || 1;
+    const elRise = sm(s, 'el', shY - (p(LM.lEl).y + p(LM.rEl).y) / 2);      // > 0 means elbows above shoulders
+    const useFeet = ok(LM.lAn) && ok(LM.rAn);
+    const spread = sm(s, 'sp', (useFeet ? dist(p(LM.lAn), p(LM.rAn)) : dist(p(LM.lKn), p(LM.rKn))) / hipW);
+    const [wide, narrow] = useFeet ? [1.6, 1.35] : [1.3, 1.12];
+    const open = elRise > 0.1 * torso && spread > wide;
+    const closed = elRise < -0.25 * torso && spread < narrow;
     if (s.phase === 'up' && open) s.phase = 'down';
-    else if (s.phase === 'down' && closed) { s.attempts++; s.count++; cue(s, 'Good rep', 'good', 700); s.phase = 'up'; }
+    else if (s.phase === 'down' && closed) { s.attempts++; if (repOk(s, now)) { s.count++; cue(s, 'Good rep', 'good', 700); } s.phase = 'up'; }
   } else if (s.key === 'plank') {
     const good = body >= 160;
     if (good) { s.held += dt; if (now > s.cueUntil) cue(s, 'Hold it. Body is straight.', 'good', 400); }
@@ -958,6 +998,54 @@ function step(s, p, vis, now) {
       if (now > s.cueUntil) cue(s, hip.y > (sh.y + an.y) / 2 ? 'Lift your hips into line' : 'Lower your hips into line', 'warn', 600);
     }
     s.count = Math.floor(s.held);
+  } else if (s.key === 'verticaljump') {
+    // Ground level is learned while standing; a jump is the feet rising clear of it and landing again.
+    const ay = sm(s, 'ay', (p(LM.lAn).y + p(LM.rAn).y) / 2, 0.6);
+    const leg = dist(hip, an);
+    if (s.phase === 'up') {                                  // on the ground
+      s.base = s.base == null ? ay : s.base + 0.1 * (ay - s.base);
+      s.leg = s.leg == null ? leg : s.leg + 0.1 * (leg - s.leg);
+      if (s.base - ay > 0.12 * s.leg) { s.phase = 'down'; s.peak = 0; }
+    } else {                                                 // in the air
+      s.peak = Math.max(s.peak, s.base - ay);
+      if (s.base - ay < 0.04 * s.leg) {
+        s.phase = 'up'; s.attempts++;
+        if (repOk(s, now)) {
+          s.count++;
+          // Hip-to-ankle is roughly half of standing height.
+          const cm = s.height ? s.peak / s.leg * 0.5 * s.height : null;
+          const v = cm ?? s.peak / s.leg * 100;
+          if (s.best == null || v > s.best) s.best = v;
+          cue(s, cm ? `Jump ${s.count}: ${Math.round(cm)} cm` : `Jump ${s.count} landed`, 'good', 1500);
+        }
+      }
+    }
+  } else if (s.key === 'shuttlerun') {
+    // A lap is a run across the frame followed by a turn back.
+    const x = sm(s, 'x', (p(LM.lHip).x + p(LM.rHip).x) / 2, 0.5), W = s.W;
+    if (s.ext == null) { s.ext = x; s.turnX = x; }
+    const d = Math.sign(x - s.ext);
+    if (d && (s.dir === 0 || d === s.dir)) { s.dir = d; s.ext = x; }
+    else if (d && Math.abs(x - s.ext) > 0.06 * W) {          // clearly heading back
+      if (Math.abs(s.ext - s.turnX) > 0.3 * W && repOk(s, now)) { s.count++; s.attempts++; cue(s, `Turn ${s.count}`, 'good', 900); }
+      s.turnX = s.ext; s.dir = d; s.ext = x;
+    }
+  } else if (s.key === 'sitreach') {
+    const k = sm(s, 'k', angle(hip, kn, an));
+    if (k < 155) { fault(s, 'Knees bent'); if (now > s.cueUntil) cue(s, 'Keep your knees straight', 'warn', 600); return; }
+    const toward = Math.sign(an.x - hip.x) || 1, leg = dist(hip, an) || 1;
+    const reach = sm(s, 'r', (wr.x - an.x) * toward / leg);  // past the toes is positive
+    const v = s.height ? reach * 0.5 * s.height : reach * 100;
+    if (s.best == null || v > s.best) s.best = v;
+    if (now > s.cueUntil) cue(s, 'Reach forward slowly and hold', 'good', 400);
+    s.show = (s.best >= 0 ? '+' : '') + Math.round(s.best) + (s.height ? ' cm' : '%');
+  } else if (s.key === 'backstretch') {
+    const k = sm(s, 'k', angle(hip, kn, an));
+    const bend = sm(s, 'b', Math.atan2(Math.abs(sh.x - hip.x), hip.y - sh.y) * 180 / Math.PI);
+    if (k < 155) { fault(s, 'Knees bent'); if (now > s.cueUntil) cue(s, 'Keep your knees straight', 'warn', 600); }
+    else if (s.best == null || bend > s.best) s.best = bend;
+    if (now > s.cueUntil && k >= 155) cue(s, 'Bend forward slowly from the hips', 'good', 400);
+    s.show = Math.round(s.best ?? 0) + '°';
   }
 }
 
@@ -970,12 +1058,14 @@ async function loadLandmarker() {
     runningMode: 'VIDEO', numPoses: 1,
     // Lower than the defaults so people lying down (plank, curl-ups) are still found.
     minPoseDetectionConfidence: 0.3, minPosePresenceConfidence: 0.3, minTrackingConfidence: 0.3 });
-  try { landmarker = await make('GPU'); } catch (e) { landmarker = await make('CPU'); }
+  const timed = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+  try { landmarker = await timed(make('GPU'), 30000); } catch (e) { landmarker = await timed(make('CPU'), 45000); }
   return landmarker;
 }
 
 function liveCue(text, cls = '') { $('liveCue').textContent = text; $('liveCue').className = 'live-cue ' + cls; }
 function openLive() {
+  if (liveBlocker()) return;
   const key = selectedTest();
   selected = null; renderList(); show('live');
   $('liveTitle').textContent = testName(key); $('liveTag').textContent = 'Live';
@@ -990,21 +1080,29 @@ $('liveBtn').addEventListener('click', openLive);
 $('liveStart').addEventListener('click', async () => {
   const key = $('liveStart').dataset.test;
   $('liveStart').disabled = true;
+  stopCamera();
   try {
     liveCue('Starting camera…');
     cam = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 960 }, height: { ideal: 720 } }, audio: false });
+    cam.getVideoTracks()[0].addEventListener('ended', () => {
+      if (session) { liveCue('The camera stopped. Saving what was recorded…', 'warn'); $('liveStop').click(); }
+    });
     $('cam').srcObject = cam; await $('cam').play();
     liveCue('Loading the pose model (first time only)…');
     await loadLandmarker();
   } catch (e) {
     stopCamera(); $('liveStart').disabled = false;
     liveCue(e.name === 'NotAllowedError' ? 'Camera access was blocked. Allow it in your browser settings and try again.'
-          : e.name === 'NotFoundError' ? 'No camera was found on this device.' : 'Live mode could not start. Check your connection and try again.', 'warn');
+          : e.name === 'NotFoundError' ? 'No camera was found on this device.'
+          : e.name === 'NotReadableError' ? 'The camera is being used by another app. Close it and try again.'
+          : 'Live mode could not start. Check your connection and try again.', 'warn');
     return;
   }
   const v = $('cam'), canvas = $('liveCanvas');
   canvas.width = v.videoWidth || 640; canvas.height = v.videoHeight || 480;
-  session = newSession(key);
+  if (view !== 'live') { stopCamera(); return; }       // user left while the camera was starting
+  session = newSession(key); session.W = canvas.width;
+  radios.forEach(r => r.disabled = true);
   chunks = [];
   try {
     const type = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9', 'video/webm'].find(t => MediaRecorder.isTypeSupported(t));
@@ -1014,6 +1112,7 @@ $('liveStart').addEventListener('click', async () => {
   } catch (e) { recorder = null; }
   $('liveStop').disabled = false;
   liveCue(LIVE[key].start);
+  lastTs = 0;
   loop();
 });
 
@@ -1021,45 +1120,84 @@ function loop() {
   const v = $('cam'), canvas = $('liveCanvas'), c = canvas.getContext('2d'), s = session;
   if (!s) return;
   const W = canvas.width, H = canvas.height, now = performance.now();
+  if (v.readyState < 2) { rafId = requestAnimationFrame(loop); return; }   // camera has no frame yet
   c.drawImage(v, 0, 0, W, H);
   let res = null;
-  try { res = landmarker.detectForVideo(v, now); } catch (e) { /* skip frame */ }
+  lastTs = Math.max(lastTs + 1, Math.round(now));                       // the model needs increasing timestamps
+  try { res = landmarker.detectForVideo(v, lastTs); } catch (e) { /* skip frame */ }
+  const counting = now >= s.go;
   const lm = res?.landmarks?.[0];
   s.frames++;
   if (lm) {
     const p = i => ({ x: lm[i].x * W, y: lm[i].y * H });
     const vis = i => (lm[i].visibility ?? 1) > 0.5 && lm[i].x > -0.02 && lm[i].x < 1.02 && lm[i].y > -0.02 && lm[i].y < 1.02 ? 1 : 0;
     const head = vis(LM.nose) || vis(LM.lEar) || vis(LM.rEar);
-    const full = head && ['Sh', 'Hip', 'Kn', 'An'].every(n => vis(LM['l' + n]) || vis(LM['r' + n]));
+    // Jumping jacks are filmed from the front and can count from the knees, so feet and head are optional.
+    const need = s.key === 'jumpingjack' ? ['Sh', 'Hip', 'Kn'] : ['Sh', 'Hip', 'Kn', 'An'];
+    const full = (head || s.key === 'jumpingjack') && need.every(n => s.key === 'jumpingjack' ? vis(LM['l' + n]) && vis(LM['r' + n]) : vis(LM['l' + n]) || vis(LM['r' + n]));
     c.lineWidth = Math.max(3, W / 200); c.strokeStyle = 'rgba(198,242,78,.9)'; c.fillStyle = '#fff';
     for (const [a, b] of BONES) if (vis(a) && vis(b)) { c.beginPath(); c.moveTo(p(a).x, p(a).y); c.lineTo(p(b).x, p(b).y); c.stroke(); }
     for (const i of Object.values(LM)) if (vis(i)) { c.beginPath(); c.arc(p(i).x, p(i).y, W / 160, 0, 7); c.fill(); }
-    if (full) step(s, p, vis, now);
+    if (!counting) { /* countdown: just show the skeleton */ }
+    else if (full) step(s, p, vis, now);
     else { s.outFrames++; s.lastT = now; if (now > s.cueUntil) cue(s, 'Step back so your whole body is in view', 'warn', 500); }
-  } else { s.outFrames++; s.lastT = now; if (now > s.cueUntil) cue(s, 'Looking for you… make sure your whole body is in view', 'warn', 500); }
+  } else if (counting) { s.outFrames++; s.lastT = now; if (now > s.cueUntil) cue(s, 'Looking for you… make sure your whole body is in view', 'warn', 500); }
   // The counter is drawn on the video itself, so it is also in the saved recording.
   const u = H / 480, label = LIVE[s.key].label.toUpperCase();
   c.font = `700 ${Math.round(11 * u)}px sans-serif`;
   const bw = Math.max(90 * u, c.measureText(label).width + 28 * u);
   c.fillStyle = 'rgba(0,0,0,.62)'; c.beginPath(); c.roundRect(12 * u, 12 * u, bw, 72 * u, 12 * u); c.fill();
-  c.fillStyle = '#fff'; c.font = `900 ${Math.round(42 * u)}px sans-serif`; c.fillText(String(s.count), 26 * u, 56 * u);
+  c.fillStyle = '#fff'; c.font = `900 ${Math.round(42 * u)}px sans-serif`; c.fillText(String(s.show ?? s.count), 26 * u, 56 * u);
   c.font = `700 ${Math.round(11 * u)}px sans-serif`; c.fillText(label, 26 * u, 74 * u);
-  const secs = Math.floor((now - s.start) / 1000);
+  if (!counting) {
+    const n = Math.ceil((s.go - now) / 1000);
+    c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(0, 0, W, H);
+    c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = `900 ${Math.round(160 * u)}px sans-serif`;
+    c.fillText(String(n), W / 2, H / 2 + 55 * u); c.textAlign = 'left';
+    if (now > s.cueUntil) cue(s, `Get into position… starting in ${n}`, '', 300);
+  }
+  const secs = Math.max(0, Math.floor((now - s.start) / 1000));
   $('liveTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
   if (now <= s.cueUntil) liveCue(s.cue, s.cueClass);          // otherwise keep the last message
   rafId = requestAnimationFrame(loop);
 }
 
+let lastTs = 0;
 function stopCamera() {
   cancelAnimationFrame(rafId);
   cam?.getTracks().forEach(t => t.stop()); cam = null;
+  radios.forEach(r => r.disabled = false);
 }
+// Leave live mode without saving (e.g. the user opened something else).
+function endLive() {
+  if (session) { session = null; if (recorder && recorder.state !== 'inactive') recorder.stop(); }
+  stopCamera();
+}
+// Picking another test while the live view is open switches live mode to that test.
+radios.forEach(r => r.addEventListener('change', () => { if (view === 'live' && !session) openLive(); }));
 function liveSummary(s) {
-  const dur = (performance.now() - s.start) / 1000;
-  const issues = Object.entries(s.faults).map(([k, n]) => [k, s.key === 'plank' ? `${Math.round(n / Math.max(1, s.frames) * 100)}% of the session` : `${n} rep${n === 1 ? '' : 's'}`]);
+  const dur = Math.max(0, (performance.now() - s.start) / 1000);
+  const issues = Object.entries(s.faults).map(([k, n]) => [k, ['plank', 'sitreach', 'backstretch'].includes(s.key) ? `${Math.round(n / Math.max(1, s.frames) * 100)}% of the session` : `${n} rep${n === 1 ? '' : 's'}`]);
   if (s.frames && s.outFrames / s.frames > 0.2) issues.push(['Out of frame', `${Math.round(s.outFrames / s.frames * 100)}% of the session`]);
   let main, form = null; const highlights = [];
-  if (s.key === 'plank') {
+  const dur0 = dur;
+  if (s.key === 'verticaljump') {
+    main = ['Best jump', s.best == null ? '–' : s.height ? `${Math.round(s.best)} cm` : `${Math.round(s.best)}% of leg length`];
+    highlights.push(['Jumps', String(s.count)], ['Session length', `${Math.round(dur0)} s`]);
+    if (!s.height) highlights.push(['Tip', 'Enter your height for a result in cm']);
+  } else if (s.key === 'shuttlerun') {
+    main = ['Laps', String(s.count)];
+    highlights.push(['Total time', `${dur0.toFixed(1)} s`]);
+    if (s.count) highlights.push(['Average per lap', `${(dur0 / s.count).toFixed(1)} s`]);
+  } else if (s.key === 'sitreach') {
+    main = ['Best reach', s.best == null ? '–' : (s.best >= 0 ? '+' : '') + Math.round(s.best) + (s.height ? ' cm past toes' : '% of leg length')];
+    highlights.push(['Session length', `${Math.round(dur0)} s`]);
+    if (s.best != null) form = Math.max(0, Math.min(4, 2 + (s.height ? s.best / 5 : s.best / 10)));
+  } else if (s.key === 'backstretch') {
+    main = ['Best forward bend', s.best == null ? '–' : `${Math.round(s.best)}°`];
+    highlights.push(['Session length', `${Math.round(dur0)} s`]);
+    if (s.best != null) form = Math.max(0, Math.min(4, s.best / 90 * 4));
+  } else if (s.key === 'plank') {
     main = ['Plank held', `${s.held.toFixed(1)} s`];
     form = dur ? Math.min(4, s.held / dur * 4) : 0;
     highlights.push(['Session length', `${Math.round(dur)} s`]);
@@ -1077,6 +1215,7 @@ function liveSummary(s) {
                  'Not deep enough': 'Sit back until your thighs are close to parallel with the floor.',
                  'Not a full rep': 'Curl up until your shoulder blades clear the floor before lowering.',
                  'Hips sagging': 'Squeeze your glutes to lift your hips into line.', 'Hips too high': 'Lower your hips until your body is straight.',
+                 'Knees bent': 'Keep your knees straight; bend only from the hips.',
                  'Out of frame': 'Place the camera further back so your whole body stays in view.' };
   return { main, form, rating: rating(form), highlights, issues, duration: dur,
            tips: Object.keys(s.faults).concat(issues.some(i => i[0] === 'Out of frame') ? ['Out of frame'] : []).map(k => tips[k]).filter(Boolean),
@@ -1107,10 +1246,10 @@ $('liveStop').addEventListener('click', async () => {
   history.unshift(entry);
   selected = entry.id; openResult(entry);
 });
-$('liveClose').addEventListener('click', () => {
-  if (session) { session = null; if (recorder && recorder.state !== 'inactive') recorder.stop(); }
-  stopCamera(); goNew();
-});
+$('liveClose').addEventListener('click', () => { endLive(); goNew(); });
+// The camera must not stay on in the background when another view opens.
+const _show = show;
+show = id => { if (view === 'live' && id !== 'live') endLive(); _show(id); };
 
 /* ------------------------------------------------------------------ startup */
 (async () => {
