@@ -393,6 +393,10 @@
   .enter .out { margin-top: 10px; font-size: 14px; font-weight: 600; }
   .enter .out.bad { color: var(--err); }
   .enter .out.good { color: var(--accent-text); }
+  .enter .entered { list-style: none; margin: 4px 0 12px; padding: 0; }
+  .enter .entered li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .enter .entered b { font: italic 800 22px/1 var(--display); color: var(--accent-text); }
+  .enter p a { color: var(--accent-text); font-weight: 600; }
 
   /* "Challenges are live" bar: lime, with a slow shine across it; dismissible */
   .announce { margin-top: 12px; border-radius: 6px; }   /* sits under the top bar, within the page width */
@@ -925,6 +929,7 @@ async function keep(rec, j) {
                   video_name: rec.name, size: rec.size, summary: j.summary, report: j.report, score_token: j.score_token, video, pdf };
   await DB.put('history', entry).catch(() => {});
   history.unshift(entry);
+  autoEnter(entry);                                // onto the challenge boards, if a name is saved
   items.delete(rec.key); await DB.del('pending', rec.key).catch(() => {});
   fetch(`/api/jobs/${rec.jobId}`, { method: 'DELETE' });     // the browser has its own copy now
   if (selected === rec.key) { selected = entry.id; openResult(entry); }
@@ -1094,38 +1099,59 @@ $('boards').addEventListener('click', ev => {
   window.history.pushState(null, '', location.pathname + location.search); syncPage(); goNew();
 });
 
-// On a result: enter it into the challenges that take this test.
+// Challenges: every uploaded analysis is entered into all the challenges for its test automatically,
+// under the display name saved in this browser. The first time, the result screen asks for that name.
+const savedName = () => { try { return localStorage.getItem('fc_name') || ''; } catch (e) { return ''; } };
+async function autoEnter(h) {
+  const name = savedName();
+  if (!h.score_token || !name || h.entered) return;
+  let list = boardCache; try { list = list || await fetchBoards(); } catch (e) { return; }
+  const fits = list.filter(c => c.test === h.test_key); if (!fits.length) return;
+  const results = [];
+  for (const c of fits) {
+    try {
+      const r = await fetch('/api/leaderboard', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: h.score_token, challenge: c.id, name }) });
+      const d = await r.json().catch(() => ({}));
+      results.push({ id: c.id, title: c.title, ok: r.ok, rank: d.rank, msg: r.ok ? '' : (d.error || 'Not entered.') });
+    } catch (e) { return; }                     // offline: try again next time this result is opened
+  }
+  h.entered = results; h.enteredAs = name; boardCache = null;
+  await DB.put('history', h).catch(() => {});
+  if (selected === h.id) renderEnter(h);
+}
+const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : n % 10] || 'th');
 async function renderEnter(h) {
   const box = document.getElementById('enterBox'); if (box) box.remove();
+  const place = html => document.querySelector('#result .actions').insertAdjacentHTML('afterend', `<div class="enter" id="enterBox">${html}</div>`);
   if (!h.score_token) {
     if (h.kind === 'live') return;   // live results are counted in the browser, so they can't be verified
     if (!h.summary?.main) return;
-    document.querySelector('#result .actions').insertAdjacentHTML('afterend', '<div class="enter" id="enterBox"><h2>Challenges</h2><p>This analysis was saved before challenges existed. Analyse a new video to enter.</p></div>');
+    place('<h2>Challenges</h2><p>This analysis was saved before challenges existed. Analyse a new video to enter.</p>');
     return;
   }
-  let list = boardCache; try { list = list || await fetchBoards(); } catch (e) { return; }
-  const fits = list.filter(c => c.test === h.test_key);
-  if (!fits.length) return;
-  document.querySelector('#result .actions').insertAdjacentHTML('afterend', `<div class="enter" id="enterBox">
-    <h2>Enter a challenge</h2>
-    <p>Your score of ${esc(h.summary.main[1])} goes on the challenge board under the name you choose.</p>
+  if (h.entered) {
+    const ok = h.entered.filter(e => e.ok), no = h.entered.filter(e => !e.ok);
+    place(`<h2>On the challenge board</h2>
+      ${ok.length ? `<ul class="entered">${ok.map(e => `<li><span>${esc(e.title)}</span><b>${e.rank ? ordinal(e.rank) : ''}</b></li>`).join('')}</ul>` : ''}
+      ${no.map(e => `<p class="out bad">${esc(e.title)}: ${esc(e.msg)}</p>`).join('')}
+      <p>Entered as <b>${esc(h.enteredAs)}</b>. <a href="#challenges">See challenges</a></p>`);
+    return;
+  }
+  if (savedName()) { place('<h2>Challenges</h2><p>Adding your score to the challenge board…</p>'); autoEnter(h); return; }
+  place(`<h2>Join the challenges</h2>
+    <p>Pick a display name once. This score and every analysis after it go on the challenge board automatically.</p>
     <label for="enterName">Display name</label>
-    <input id="enterName" maxlength="24" autocomplete="nickname" value="${esc(localStorage.getItem('fc_name') || '')}">
-    <div class="choices">${fits.map(c => `<button type="button" class="ghost" data-enter="${esc(c.id)}">${esc(c.title)}</button>`).join('')}</div>
-    <p class="out" id="enterOut" aria-live="polite"></p></div>`);
-  document.getElementById('enterBox').addEventListener('click', async ev => {
-    const b = ev.target.closest('[data-enter]'); if (!b) return;
-    const name = $('enterName').value.trim(), out = $('enterOut');
+    <input id="enterName" maxlength="24" autocomplete="nickname">
+    <div class="choices"><button type="button" class="btn-sm" id="enterGo">Add my score</button></div>
+    <p class="out" id="enterOut" aria-live="polite"></p>`);
+  $('enterGo').addEventListener('click', async () => {
+    const name = $('enterName').value.trim().replace(/\s+/g, ' '), out = $('enterOut');
+    if (!/^[\p{L}\p{N} .'\-_]{2,24}$/u.test(name)) { out.className = 'out bad'; out.textContent = 'Use 2 to 24 letters, numbers or spaces.'; return; }
     try { localStorage.setItem('fc_name', name); } catch (e) {}
-    b.disabled = true; out.className = 'out'; out.textContent = 'Submitting…';
-    try {
-      const r = await fetch('/api/leaderboard', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: h.score_token, challenge: b.dataset.enter, name }) });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) { out.className = 'out bad'; out.textContent = d.error || 'That didn’t go through. Try again.'; b.disabled = false; return; }
-      boardCache = null;
-      out.className = 'out good'; out.textContent = `You’re number ${d.rank} on “${b.textContent}”.`;
-    } catch (e) { out.className = 'out bad'; out.textContent = 'That didn’t go through. Check your connection and try again.'; b.disabled = false; }
+    $('enterGo').disabled = true; out.className = 'out'; out.textContent = 'Adding your score…';
+    await autoEnter(h);
+    if (!h.entered) { out.className = 'out bad'; out.textContent = 'That didn’t go through. Check your connection and open this result again.'; $('enterGo').disabled = false; }
   });
 }
 

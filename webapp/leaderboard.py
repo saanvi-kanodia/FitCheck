@@ -195,6 +195,8 @@ def submit(store, data_dir, token, challenge_id, name):
         return False, f"For this challenge the video must be {ch['seconds']} seconds or shorter.", None
     if ch["kind"] == "weekly" and claim.get("week") != ch["period"]:
         return False, "This analysis was done before this week's challenge started.", None
+    if float(claim.get("value") or 0) <= 0:
+        return False, "Nothing was counted in this video, so there's no score to enter.", None
     if not store.add(ch["id"], ch["period"], name, float(claim["value"]), claim["test"], claim["job"]):
-        return False, "You've already submitted this analysis to this challenge.", None
+        return True, "Already on the board.", store.rank(ch["id"], ch["period"], name)   # same analysis again: fine
     return True, "Submitted.", store.rank(ch["id"], ch["period"], name)
