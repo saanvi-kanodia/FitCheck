@@ -65,6 +65,11 @@ KEEP_HOURS = 24                  # server copies are removed after this; history
 ID = re.compile(r"[0-9a-f]{12}")
 ACTIVE = ("queued", "running", "encoding")
 
+# The slim Linux image doesn't know these types, so static .webp files would go out as octet-stream.
+import mimetypes  # noqa: E402
+mimetypes.add_type("image/webp", ".webp")
+mimetypes.add_type("application/manifest+json", ".webmanifest")
+
 app = Flask(__name__)
 # Render sits behind a proxy: trust its headers so request.url_root is the real https address
 # (used for the canonical link, share previews and the sitemap).
