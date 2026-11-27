@@ -13,9 +13,9 @@ services:
       # Signs analysis results so challenge scores can't be faked; Render generates it once.
       - key: FITCHECK_SECRET
         generateValue: true
-      # Labelled sample scores on the challenge boards. Set to 0 to show only real scores.
+      # Labelled sample scores on the challenge boards: 1 shows them, 0 removes them (real scores stay).
       - key: FITCHECK_SAMPLE_SCORES
-        value: "1"
+        value: "0"
 
 databases:
   - name: fitcheck-db
