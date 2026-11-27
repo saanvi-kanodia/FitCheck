@@ -902,6 +902,26 @@
   .live-cancel { gap: 8px; }
   .live-cancel svg { width: 16px; height: 16px; color: #ff5a4f; flex: none; }
   .live-cancel:hover { border-color: #ff5a4f; background: rgba(255, 90, 79, .08); }
+  /* More breathing room in the lower home sections */
+  .landing .land-sec, .landing .land-sec.faq { padding: 112px 0; column-gap: 96px; }
+  .landing .land-sec.hiw { padding-top: 136px; }
+  .landing .cta-band { padding: 104px 0; }
+  .landing .land-kicker { margin-bottom: 16px; }
+  .landing .land-sub { margin-top: 20px; }
+  .landing .land-sec.hiw > .trust-grid { margin-top: 64px; }
+  .landing .hiw .trust-grid .trust-card:nth-child(n) { padding: 0 40px; }
+  .landing .hiw .trust-card h3 { margin: 26px 0 12px; }
+  .landing .trust-card p, .landing .priv-list span, .landing .faq-list details p { line-height: 1.7; }
+  .landing .priv-list li { padding: 30px 0; }
+  .landing .faq-list summary { padding: 24px 0; }
+  .landing .faq-list details p { padding: 0 0 24px; }
+  @media (max-width: 900px) {
+    .landing .land-sec, .landing .land-sec.faq { padding: 72px 0; }
+    .landing .land-sec.hiw { padding-top: 88px; }
+    .landing .cta-band { padding: 72px 0; }
+    .landing .land-sec.hiw > .trust-grid { margin-top: 40px; }
+    .landing .privacy > ul, .landing .faq > .faq-list { margin-top: 32px; } }
+  @media (max-width: 640px) { .landing .hiw .trust-card h3 { margin-top: 18px; } }
 </style>
 </head>
 <body>
