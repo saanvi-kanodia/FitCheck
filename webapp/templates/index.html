@@ -765,6 +765,143 @@
                      background: linear-gradient(100deg, transparent 30%, rgba(198,242,78,.10) 50%, transparent 70%); }
   @media (prefers-reduced-motion: reduce) { .announce::before { animation: none; display: none; } }
   .cam-switch { gap: 8px; } .cam-switch svg { width: 18px; height: 18px; }
+  /* Landing sections below the hero: flat, no cards. Hairlines do the separating. */
+  .landing .trust-card, .landing .priv-list li, .landing .faq-list, .landing .faq-list details, .landing .cta-band {
+    background: none; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; transform: none; }
+  .landing .trust-card:hover { transform: none; box-shadow: none; }
+  .landing .trust-grid { gap: 0 40px; }
+  .landing .trust-card { padding: 24px 0 0; border-top: 1px solid var(--line); }
+  .landing .t-ic { background: none; border: 0; padding: 0; width: 28px; height: 28px; }
+  .landing .priv-list { gap: 0; }
+  .landing .priv-list li { padding: 20px 0; border-top: 1px solid var(--line); grid-template-columns: 28px minmax(0, 1fr); }
+  .landing .priv-list li:last-child { border-bottom: 1px solid var(--line); }
+  .landing .faq-list details { border-top: 1px solid var(--line); }
+  .landing .faq-list details:last-child { border-bottom: 1px solid var(--line); }
+  .landing .faq-list summary { padding: 16px 0; }
+  .landing .faq-list details p { padding: 0 0 16px; max-width: 62ch; }
+  .landing .cta-band { padding: 64px 0 8px; border-top: 1px solid var(--line); }
+  .landing .cta-band .inner { padding: 0; }
+  /* Landing structure: visible hairlines, one continuous frame for How it works, columns that line up */
+  .landing { --hair: color-mix(in srgb, var(--ink) 15%, transparent); counter-reset: hiw; }
+  .landing .land-sec, .landing .cta-band { border-top-color: var(--hair); }
+  .landing .trust-grid { gap: 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+  .landing .trust-card { border-top: 0; padding: 28px 28px 32px; display: grid; grid-template-rows: auto auto 1fr; align-content: start; }
+  .landing .trust-card + .trust-card { border-left: 1px solid var(--hair); }
+  .landing .trust-card:first-child { padding-left: 0; }
+  .landing .trust-card:last-child { padding-right: 0; }
+  .landing .trust-card::before { counter-increment: hiw; content: "0" counter(hiw); justify-self: end; grid-row: 1; grid-column: 1;
+    font: 700 15px/1 var(--display); letter-spacing: .1em; color: var(--muted); }
+  .landing .trust-card .t-ic { grid-row: 1; grid-column: 1; }
+  .landing .trust-card h3 { min-height: 2.1em; display: flex; align-items: flex-end; margin: 26px 0 10px; }
+  .landing .priv-list li, .landing .priv-list li:last-child, .landing .faq-list details, .landing .faq-list details:last-child { border-color: var(--hair); }
+  .landing .privacy, .landing .faq { align-items: start; }
+  .landing .privacy > div:first-child, .landing .faq > div:first-child { padding-top: 20px; }
+  @media (max-width: 1100px) {
+    .landing .trust-card, .landing .trust-card:first-child, .landing .trust-card:last-child { padding: 24px 24px 28px; border-left: 0; }
+    .landing .trust-card:nth-child(even) { border-left: 1px solid var(--hair); }
+    .landing .trust-card:nth-child(n+3) { border-top: 1px solid var(--hair); }
+    .landing .trust-card:nth-child(odd) { padding-left: 0; } .landing .trust-card:nth-child(even) { padding-right: 0; } }
+  @media (max-width: 640px) {
+    .landing .trust-card, .landing .trust-card:nth-child(odd), .landing .trust-card:nth-child(even) { padding: 22px 0 24px; border-left: 0; }
+    .landing .trust-card + .trust-card { border-top: 1px solid var(--hair); }
+    .landing .trust-card h3 { min-height: 0; } }
+  /* Landing, editorial layout: every section is heading on the left, a ruled list on the right */
+  .landing .land-sec { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); column-gap: 72px; align-items: start; padding: 64px 0; }
+  .landing .land-sec > .land-kicker, .landing .land-sec > .land-h { grid-column: 1; }
+  .landing .land-sec > .trust-grid { grid-column: 2; grid-row: 1 / span 3; }
+  .landing .land-h { font-size: clamp(34px, 3.6vw, 50px); margin-bottom: 0; }
+  .landing .land-sub { margin-top: 16px; }
+  .landing .privacy > div:first-child, .landing .faq > div:first-child { padding-top: 0; }
+  /* the ruled list */
+  .landing .trust-grid, .landing .trust-grid.four { display: block; border: 0; }
+  .landing .trust-card, .landing .trust-card:first-child, .landing .trust-card:last-child, .landing .trust-card:nth-child(n) {
+    display: grid; grid-template-columns: 56px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; padding: 22px 0; border: 0; border-top: 1px solid var(--hair); }
+  .landing .trust-card:last-child { border-bottom: 1px solid var(--hair); }
+  .landing .trust-card::before { grid-row: 1 / span 2; grid-column: 1; justify-self: start; align-self: start; padding-top: 3px; font: 700 18px/1 var(--display); letter-spacing: .06em; color: var(--accent-text); }
+  .landing .trust-card .t-ic { display: none; }
+  .landing .trust-card h3 { grid-column: 2; min-height: 0; display: block; margin: 0 0 6px; font-size: 22px; }
+  .landing .trust-card p { grid-column: 2; max-width: 60ch; }
+  .landing .priv-list li { grid-template-columns: 56px minmax(0, 1fr); column-gap: 8px; padding: 22px 0; }
+  .landing .priv-list .t-ic { width: 24px; height: 24px; margin-top: 2px; }
+  .landing .priv-list li:first-child { border-top: 1px solid var(--hair); }
+  .landing .faq-list summary { font-size: 17px; padding: 18px 0; }
+  @media (max-width: 900px) {
+    .landing .land-sec { grid-template-columns: minmax(0, 1fr); row-gap: 8px; padding: 48px 0; }
+    .landing .land-sec > .trust-grid { grid-column: 1; grid-row: auto; margin-top: 24px; }
+    .landing .privacy > ul, .landing .faq > .faq-list { margin-top: 24px; }
+    .landing .trust-card, .landing .trust-card:nth-child(n), .landing .priv-list li { grid-template-columns: 40px minmax(0, 1fr); } }
+  .landing .land-sec { border-top: 0; }   /* the ruled lists carry the lines; no second line above them */
+  .landing .cta-band h2 { font-size: clamp(34px, 3.6vw, 50px); }
+  .landing .cta-band { margin-top: 40px; }
+  /* Ruled lists: lines only between items, none above the first or below the last */
+  .landing .trust-card:first-child, .landing .priv-list li:first-child, .landing .faq-list details:first-child { border-top: 0; padding-top: 0; }
+  .landing .trust-card:last-child, .landing .priv-list li:last-child, .landing .faq-list details:last-child { border-bottom: 0; padding-bottom: 0; }
+  .landing .faq-list details:first-child summary { padding-top: 0; }
+  /* Distinction: a lime bar on each label, the icon tiles back, and alternating full-width bands */
+  .landing .land-kicker::before, .hero .land-kicker::before { content: ""; display: inline-block; width: 22px; height: 3px; margin: 0 10px 0 0;
+    border-radius: 2px; background: var(--accent); vertical-align: middle; position: relative; top: -2px; }
+  .landing .t-ic, .landing .trust-card .t-ic, .landing .priv-list .t-ic {
+    display: block; width: 40px; height: 40px; padding: 9px; margin: 0; border-radius: 11px; color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 7%, transparent); border: 1px solid var(--hair); }
+  .landing .trust-grid .trust-card:nth-child(n) { grid-template-columns: 60px minmax(0, 1fr) auto; }
+  .landing .trust-card .t-ic { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+  .landing .trust-card::before { grid-column: 3; grid-row: 1; justify-self: end; padding: 4px 0 0 16px; font-size: 15px; color: var(--muted); }
+  .landing .priv-list li { grid-template-columns: 60px minmax(0, 1fr); }
+  .landing .land-sec.privacy, .landing .cta-band { position: relative; isolation: isolate; }
+  .landing .land-sec.privacy::before, .landing .cta-band::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0;
+    left: calc(50% - 50vw); right: calc(50% - 50vw); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+  .landing .land-sec.privacy::before { background: color-mix(in srgb, var(--ink) 3.5%, transparent); }
+  .landing .cta-band { margin-top: 0; padding: 80px 0; border-top: 0; }
+  .landing .cta-band::before { border-bottom: 0;
+    background: radial-gradient(55% 130% at 88% 50%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 70%), color-mix(in srgb, var(--ink) 3%, transparent); }
+  body:not(.page-analyses):not(.page-leaderboard):not(.page-analyse):has(#empty:not(.hidden)) .site-foot { margin-top: 0; }   /* the band leads into the footer */
+  @media (max-width: 900px) {
+    .landing .trust-grid .trust-card:nth-child(n) { grid-template-columns: 52px minmax(0, 1fr) auto; }
+    .landing .priv-list li { grid-template-columns: 52px minmax(0, 1fr); }
+    .landing .t-ic, .landing .trust-card .t-ic, .landing .priv-list .t-ic { width: 36px; height: 36px; padding: 8px; }
+    .landing .cta-band { padding: 56px 0; } }
+  .landing .cta-band { overflow: visible; }   /* let its band reach the screen edges */
+  .landing .cta-band h2 { max-width: none; }
+  .landing { padding-bottom: 0; }   /* the band meets the footer with no strip between */
+  /* How it works, horizontal: heading across the top, four columns with dividers between them.
+     Subgrid lines the icon row, titles and descriptions up across columns even when a title wraps. */
+  .landing .land-sec.hiw { grid-template-columns: minmax(0, 1fr); }
+  .landing .land-sec.hiw > .land-kicker, .landing .land-sec.hiw > .land-h { grid-column: 1; }
+  .landing .land-sec.hiw > .land-h { max-width: none; }
+  .landing .land-sec.hiw > .trust-grid { grid-column: 1; grid-row: auto; margin-top: 44px; }
+  .landing .hiw .trust-grid, .landing .hiw .trust-grid.four { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: auto auto auto; gap: 0; border: 0; }
+  .landing .hiw .trust-grid .trust-card:nth-child(n) { grid-row: span 3; display: grid; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px; padding: 0 32px; border: 0; }
+  .landing .hiw .trust-grid .trust-card:nth-child(n) + .trust-card { border-left: 1px solid var(--hair); }
+  .landing .hiw .trust-grid .trust-card:nth-child(n):first-child { padding-left: 0; }
+  .landing .hiw .trust-grid .trust-card:nth-child(n):last-child { padding-right: 0; }
+  .landing .hiw .trust-card .t-ic { grid-column: 1; grid-row: 1; justify-self: start; }
+  .landing .hiw .trust-card::before { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; padding: 2px 0 0; }
+  .landing .hiw .trust-card h3 { grid-column: 1 / -1; grid-row: 2; margin: 22px 0 8px; }
+  .landing .hiw .trust-card p { grid-column: 1 / -1; grid-row: 3; }
+  @supports not (grid-template-rows: subgrid) { .landing .hiw .trust-card h3 { min-height: 2.1em; } }
+  @media (max-width: 1100px) {   /* two columns: a divider only between the pair, space between the rows */
+    .landing .hiw .trust-grid, .landing .hiw .trust-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; }
+    .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n) { padding: 0 28px; border-left: 0; }
+    .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n):nth-child(odd) { padding-left: 0; }
+    .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n):nth-child(even) { padding-right: 0; border-left: 1px solid var(--hair); }
+    .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n+3) .t-ic, .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n+3)::before { margin-top: 40px; } }
+  @media (max-width: 640px) {   /* one column: a line between items */
+    .landing .hiw .trust-grid, .landing .hiw .trust-grid.four { grid-template-columns: minmax(0, 1fr); }
+    .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n):nth-child(n) { grid-row: auto; grid-template-rows: auto auto auto; padding: 24px 0; border-left: 0; }
+    .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n):first-child { padding-top: 0; }
+    .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n) + .trust-card { border-top: 1px solid var(--hair); }
+    .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n+3) .t-ic, .landing .land-sec.hiw .trust-grid .trust-card:nth-child(n+3)::before { margin-top: 0; }
+    .landing .hiw .trust-card h3 { margin-top: 16px; } }
+  /* The hero fills the first screen (below the header and the challenges bar), so How it works only appears on scroll */
+  .hero { --head: 92px; box-sizing: border-box; align-content: center;
+          min-height: calc(100vh - var(--head) - var(--ann, 46px)); min-height: calc(100svh - var(--head) - var(--ann, 46px)); }
+  @media (max-width: 560px) { .hero { --head: 76px; } }
+  .landing .land-sec.hiw { padding-top: 96px; }
+  [hidden] { display: none !important; }
+  .live-cancel { gap: 8px; }
+  .live-cancel svg { width: 16px; height: 16px; color: #ff5a4f; flex: none; }
+  .live-cancel:hover { border-color: #ff5a4f; background: rgba(255, 90, 79, .08); }
 </style>
 </head>
 <body>
@@ -931,8 +1068,10 @@
         </div>
         <p class="live-cue" id="liveCue">Press Start and allow camera access.</p>
         <div class="actions">
+          <button class="btn-sm" type="button" id="liveSave" hidden>Save</button>
           <button class="btn-sm" type="button" id="liveStart">Start</button>
-          <button class="ghost" type="button" id="liveStop" disabled>Stop and save</button>
+          <button class="ghost" type="button" id="liveStop" hidden>Stop</button>
+          <button class="ghost live-cancel" type="button" id="liveCancel" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Cancel</button>
           <button class="ghost cam-switch" type="button" id="camSwitch" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-3l-2-3H9L7 7H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1z"/><path d="M9 13a3 3 0 0 1 5.2-2M15 13a3 3 0 0 1-5.2 2"/><path d="M14.5 9v2h-2M9.5 17v-2h2"/></svg><span>Use back camera</span></button>
         </div>
         <p class="r-note">Counting runs in your browser and the camera video never leaves this device. Live results are less precise than an uploaded analysis.</p>
@@ -940,7 +1079,7 @@
     </section>
   </main></form>
   <div class="landing" id="landing">
-    <section class="land-sec" aria-labelledby="howHead">
+    <section class="land-sec hiw" aria-labelledby="howHead">
       <p class="land-kicker">How it works</p>
       <h2 class="land-h" id="howHead">Body tracking, not guesswork.</h2>
       <div class="trust-grid four">
@@ -1976,7 +2115,7 @@ function openLive() {
   selected = null; renderList(); show('live');
   $('liveTitle').textContent = testName(key); $('liveTag').textContent = 'Live';
   $('liveTime').textContent = '0:00';
-  $('liveStart').disabled = false; $('liveStop').disabled = true; $('liveStart').textContent = 'Start';
+  pendingLive = null; liveButtons('ready');
   liveCue(`${LIVE[key].start} Then press Start.`);
   const c = $('liveCanvas').getContext('2d'); c.fillStyle = '#050705'; c.fillRect(0, 0, 640, 480);   // same as --media, so the letterbox is seamless
   $('liveStart').dataset.test = key;
@@ -1989,7 +2128,7 @@ let facing = localStorage.getItem('fc_cam') === 'environment' ? 'environment' : 
 async function openCam() {
   const c = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: { ideal: 960 }, height: { ideal: 720 } }, audio: false });
   c.getVideoTracks()[0].addEventListener('ended', () => {
-    if (session && cam === c) { liveCue('The camera stopped. Saving what was recorded…', 'warn'); $('liveStop').click(); }
+    if (session && cam === c) $('liveStop').click();
   });
   return c;
 }
@@ -2009,19 +2148,24 @@ $('camSwitch').addEventListener('click', async () => {
   } catch (e) { facing = facing === 'user' ? 'environment' : 'user'; localStorage.setItem('fc_cam', facing); syncCamSwitch();
     liveCue('That camera could not be opened.', 'warn'); }
 });
+let startToken = 0;                 // bumped by Cancel / leaving, so a camera still starting is abandoned
 $('liveStart').addEventListener('click', async () => {
-  const key = $('liveStart').dataset.test;
-  $('liveStart').disabled = true;
+  const key = $('liveStart').dataset.test, my = ++startToken;
+  pendingLive = null;                      // starting again discards a stopped, unsaved session
+  liveButtons('starting');
   stopCamera();
   try {
     liveCue('Starting camera…');
     cam = await openCam();
+    if (my !== startToken) { stopCamera(); return; }
     $('cam').srcObject = cam; await $('cam').play(); document.querySelector('.live-box').classList.add('on');
     syncCamSwitch();
     liveCue('Loading the pose model (first time only)…');
     await loadLandmarker();
   } catch (e) {
-    stopCamera(); $('liveStart').disabled = false;
+    stopCamera();
+    if (my !== startToken) return;
+    liveButtons('ready');
     liveCue(e.name === 'NotAllowedError' ? 'Camera access was blocked. Allow it in your browser settings and try again.'
           : e.name === 'NotFoundError' ? 'No camera was found on this device.'
           : e.name === 'NotReadableError' ? 'The camera is being used by another app. Close it and try again.'
@@ -2030,7 +2174,7 @@ $('liveStart').addEventListener('click', async () => {
   }
   const v = $('cam'), canvas = $('liveCanvas');
   canvas.width = v.videoWidth || 640; canvas.height = v.videoHeight || 480;
-  if (view !== 'live') { stopCamera(); return; }       // user left while the camera was starting
+  if (view !== 'live' || my !== startToken) { stopCamera(); return; }   // left or cancelled while the camera was starting
   session = newSession(key); session.W = canvas.width;
   radios.forEach(r => r.disabled = true);
   chunks = [];
@@ -2040,7 +2184,7 @@ $('liveStart').addEventListener('click', async () => {
     recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
     recorder.start(1000);
   } catch (e) { recorder = null; }
-  $('liveStop').disabled = false; $('liveStart').textContent = 'Start';
+  liveButtons('running');
   liveCue(LIVE[key].start);
   lastTs = 0;
   loop();
@@ -2103,7 +2247,8 @@ function stopCamera() {
 }
 // Leave live mode without saving (e.g. the user opened something else).
 function endLive() {
-  if (session) { session = null; if (recorder && recorder.state !== 'inactive') recorder.stop(); }
+  startToken++; session = null; pendingLive = null;
+  if (recorder && recorder.state !== 'inactive') recorder.stop();
   stopCamera();
 }
 // Picking another test while the live view is open switches live mode to that test.
@@ -2155,29 +2300,48 @@ function liveSummary(s) {
            filming: FILMING[s.key] };
 }
 
+// Live buttons: Start → (Stop while counting) → Save or Start again once stopped.
+let pendingLive = null;            // a stopped session waiting for Save
+function liveButtons(state) {
+  const st = $('liveStart');
+  st.hidden = state === 'running';
+  st.disabled = state === 'starting';
+  st.className = state === 'stopped' ? 'ghost' : 'btn-sm';
+  st.textContent = { stopped: 'Start again', retry: 'Try again', starting: 'Starting…' }[state] || 'Start';
+  $('liveStop').hidden = state !== 'running';
+  $('liveCancel').hidden = !['starting', 'running', 'stopped'].includes(state);
+  $('liveSave').hidden = state !== 'stopped'; $('liveSave').disabled = false;
+}
 $('liveStop').addEventListener('click', async () => {
   const s = session; if (!s) return;
-  session = null; $('liveStop').disabled = true;
+  session = null;                                  // the loop stops, leaving the last frame (with the count) on screen
   const summary = liveSummary(s);
-  // Nothing counted: don't save an empty result. Say why and offer another go.
-  const val = parseFloat(summary.main?.[1]);
-  // Sit and reach / back stretch measure a position, where zero or below is a real result.
-  if (!isFinite(val) || (val <= 0 && !['sitreach', 'backstretch'].includes(s.key))) {
-    endLive();
-    const out = s.frames ? s.outFrames / s.frames : 1;
-    liveCue(out > 0.5 ? 'Nothing was counted: you were out of view most of the time. Step back so your hips and knees are in the picture.'
-          : s.attempts ? `Nothing was counted: ${(Object.keys(s.faults)[0] || 'the reps were not complete').toLowerCase()}. Have another go.`
-          : 'Nothing was counted. Make sure you are in view and do the full movement.', 'warn');
-    $('liveStart').textContent = 'Try again'; $('liveStart').disabled = false;
-    return;
-  }
-  liveCue('Saving your session…');
   let video = null;
   if (recorder && recorder.state !== 'inactive') {
     await new Promise(r => { recorder.onstop = r; recorder.stop(); });
     video = chunks.length ? new Blob(chunks, { type: recorder.mimeType || 'video/webm' }) : null;
   }
   stopCamera();
+  // Nothing counted: nothing to save. Say why and offer another go.
+  const val = parseFloat(summary.main?.[1]);
+  // Sit and reach / back stretch measure a position, where zero or below is a real result.
+  if (!isFinite(val) || (val <= 0 && !['sitreach', 'backstretch'].includes(s.key))) {
+    const out = s.frames ? s.outFrames / s.frames : 1;
+    liveCue(out > 0.5 ? 'Nothing was counted: you were out of view most of the time. Step back so your hips and knees are in the picture.'
+          : s.attempts ? `Nothing was counted: ${(Object.keys(s.faults)[0] || 'the reps were not complete').toLowerCase()}. Have another go.`
+          : 'Nothing was counted. Make sure you are in view and do the full movement.', 'warn');
+    liveButtons('retry');
+    return;
+  }
+  document.querySelector('.live-box').classList.add('on');   // keep the final frame showing, not the camera placeholder
+  pendingLive = { s, summary, video };
+  liveCue(`Stopped. ${summary.main[0]}: ${summary.main[1]}. Save to keep this result, or start again.`, 'good');
+  liveButtons('stopped');
+});
+$('liveSave').addEventListener('click', async () => {
+  const p = pendingLive; if (!p) return;
+  const { s, summary, video } = p;
+  $('liveSave').disabled = true; liveCue('Saving your session…');
   const created = Date.now() / 1000;
   let pdf = null;
   try {
@@ -2185,12 +2349,24 @@ $('liveStop').addEventListener('click', async () => {
                                                 body: JSON.stringify({ test_key: s.key, created, ...summary }) });
     if (r.ok) pdf = await r.blob();
   } catch (e) { /* offline: saved without a PDF */ }
+  if (pendingLive !== p) return;                   // they started again or left while the PDF was being made
+  pendingLive = null;
   const entry = { id: 'live-' + Date.now().toString(36), kind: 'live', test: testName(s.key), test_key: s.key, created,
                   video_name: 'Camera session', summary, report: null, video, pdf };
   await DB.put('history', entry).catch(() => {});
   history.unshift(entry);
   autoEnter(entry);                                // live scores go on the boards too, marked Live
   selected = entry.id; openResult(entry);
+});
+// Cancel: throw this session away, turn the camera off and go back to Start.
+$('liveCancel').addEventListener('click', () => {
+  startToken++; session = null; pendingLive = null;
+  if (recorder && recorder.state !== 'inactive') { recorder.onstop = null; recorder.stop(); }
+  stopCamera();
+  const cv = $('liveCanvas'), c = cv.getContext('2d'); c.fillStyle = '#050705'; c.fillRect(0, 0, cv.width, cv.height);
+  $('liveTime').textContent = '0:00';
+  liveButtons('ready');
+  liveCue("Cancelled. Nothing was saved. Press Start when you're ready.");
 });
 $('liveClose').addEventListener('click', () => { endLive(); goNew(); });
 // The camera must not stay on in the background when another view opens.
