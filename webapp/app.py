@@ -9,6 +9,7 @@ Finished results are copied into the browser's own storage, which is the user's 
 the server keeps jobs only for a limited time.
 """
 import glob
+import hashlib
 import json
 import os
 import re
@@ -65,12 +66,16 @@ ID = re.compile(r"[0-9a-f]{12}")
 ACTIVE = ("queued", "running", "encoding")
 
 app = Flask(__name__)
+# Render sits behind a proxy: trust its headers so request.url_root is the real https address
+# (used for the canonical link, share previews and the sitemap).
+from werkzeug.middleware.proxy_fix import ProxyFix  # noqa: E402
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config["MAX_CONTENT_LENGTH"] = CHUNK_BYTES + 64 * 1024
 jobs = {}
 uploads = {}
 lock = threading.Lock()
 META_KEYS = ("status", "test", "test_key", "created", "report", "log", "video_name", "owner",
-             "message", "height", "size", "seconds")
+             "message", "height", "size", "seconds", "sample")
 
 
 def _memory_mb():
@@ -314,7 +319,8 @@ def public(job_id, job):
         # A signed copy of the result, so the browser can later enter it in a challenge without being
         # able to change the number.
         m = re.search(r"-?\d+(\.\d+)?", (summary.get("main") or ("", ""))[1] or "")
-        if m:
+        out["sample"] = bool(job.get("sample"))
+        if m and not job.get("sample"):          # sample clips get no signed score, so they can't enter
             out["score_token"] = leaderboard.sign(DATA_DIR, {"test": job.get("test_key"), "value": float(m.group()),
                                                             "seconds": job.get("seconds"), "job": job_id,
                                                             "week": leaderboard.week_key()})
@@ -325,11 +331,26 @@ def public(job_id, job):
 
 # ------------------------------------------------------------------ pages ---
 
+@app.get("/robots.txt")
+def robots():
+    body = f"User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /jobs/\n\nSitemap: {request.url_root}sitemap.xml\n"
+    return app.response_class(body, mimetype="text/plain")
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    body = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f"  <url><loc>{request.url_root}</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n"
+            "</urlset>\n")
+    return app.response_class(body, mimetype="application/xml")
+
+
 @app.get("/")
 def index():
     samples = [k for k in TESTS if os.path.exists(os.path.join(APP_DIR, "static", f"sample-{k}.mp4"))]
     return render_template("index.html", tests=TESTS, filming=FILMING, max_mb=MAX_MB, samples=samples,
-                           chunk=CHUNK_BYTES)
+                           chunk=CHUNK_BYTES, year=time.gmtime().tm_year, base=request.url_root.rstrip("/"))
 
 
 @app.errorhandler(413)
@@ -364,7 +385,7 @@ def create_upload():
     data = request.get_json(silent=True) or {}
     size, test_key = data.get("size"), data.get("test")
     if test_key not in TESTS or not isinstance(size, int) or size <= 0 or not data.get("name"):
-        return jsonify(error="Choose a test and a video file."), 400
+        return jsonify(error="Choose an exercise and a video file."), 400
     if size > MAX_BYTES:
         return jsonify(error=f"Video is over {MAX_MB} MB. Trim it to under a minute and try again."), 413
     height = data.get("height")
@@ -409,6 +430,28 @@ def upload_chunk(up_id):
     return jsonify(received=have + len(body))
 
 
+# The sample clips, by content: an analysis of one of them is shown as usual but can't enter a challenge.
+_sample_hashes = None
+
+
+def _file_hash(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def is_sample_clip(path):
+    global _sample_hashes
+    if _sample_hashes is None:
+        _sample_hashes = {_file_hash(p) for p in glob.glob(os.path.join(APP_DIR, "static", "sample-*.mp4"))}
+    try:
+        return os.path.getsize(path) > 0 and _file_hash(path) in _sample_hashes
+    except OSError:
+        return False
+
+
 @app.post("/api/uploads/<up_id>/complete")
 def complete_upload(up_id):
     up = _upload(up_id)
@@ -423,7 +466,8 @@ def complete_upload(up_id):
     src = os.path.join(job_dir, "source" + (ext if re.fullmatch(r"\.[a-z0-9]{1,5}", ext) else ".mp4"))
     shutil.move(os.path.join(UPLOADS_DIR, up_id, "data"), src)
     jobs[job_id] = {"test": TESTS[up["test"]]["name"], "test_key": up["test"], "created": time.time(),
-                    "video_name": up["name"], "owner": owner(), "height": up.get("height"), "size": up["size"]}
+                    "video_name": up["name"], "owner": owner(), "height": up.get("height"), "size": up["size"],
+                    "sample": is_sample_clip(src)}
     up["job"] = job_id
     with open(os.path.join(UPLOADS_DIR, up_id, "meta.json"), "w", encoding="utf-8") as f:
         json.dump(up, f)

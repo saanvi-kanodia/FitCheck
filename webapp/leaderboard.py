@@ -34,7 +34,7 @@ CHALLENGES = [
     {"id": "jacks30", "kind": "timed", "test": "jumpingjack", "seconds": 30, "title": "30-second jumping jacks",
      "unit": "reps", "blurb": "As many jumping jacks as you can in a video of 30 seconds or less."},
     {"id": "weekly", "kind": "weekly", "rotation": ["curlups", "pushup", "squats", "jumpingjack"],
-     "title": "This week", "unit": "reps", "blurb": "A new test every Monday. The board resets each week."},
+     "title": "This week", "unit": "reps", "blurb": "A new exercise every Monday. The board resets each week."},
 ]
 TEST_NAMES = {"pushup": "Push-ups", "squats": "Squats", "curlups": "Curl-ups", "plank": "Plank hold",
               "jumpingjack": "Jumping jacks", "verticaljump": "Vertical jump", "shuttlerun": "Shuttle run",
@@ -142,6 +142,12 @@ class Store:
             return [{"name": r[0], "value": r[1], "created": r[2], "sample": bool(r[3]),
                      "live": r[4] is not None and r[4] >= r[1]} for r in cur.fetchall()]
 
+    def rename(self, challenge, period, job, name):
+        """Move one analysis's entry to another display name (the person changed it)."""
+        q = f"UPDATE entries SET name = {self.ph} WHERE challenge = {self.ph} AND period = {self.ph} AND job = {self.ph}"
+        with self.lock, self._conn() as c:
+            c.cursor().execute(q, (name, challenge, period, job)); c.commit()
+
     def best(self, challenge, period, name):
         q = f"SELECT MAX(value) FROM entries WHERE challenge = {self.ph} AND period = {self.ph} AND name = {self.ph}"
         with self.lock, self._conn() as c:
@@ -229,5 +235,7 @@ def submit(store, data_dir, token, challenge_id, name, live=None):
     if float(claim.get("value") or 0) <= 0:
         return False, "Nothing was counted in this video, so there's no score to enter.", None
     if not store.add(ch["id"], ch["period"], name, float(claim["value"]), claim["test"], claim["job"]):
-        return True, "Already on the board.", store.rank(ch["id"], ch["period"], name)   # same analysis again: fine
+        # The same analysis again: keep one entry, under the name given now (so a name can be changed).
+        store.rename(ch["id"], ch["period"], claim["job"], name)
+        return True, "Already on the board.", store.rank(ch["id"], ch["period"], name)
     return True, "Submitted.", store.rank(ch["id"], ch["period"], name)

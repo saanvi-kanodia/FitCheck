@@ -3,8 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FitCheck: fitness test analysis</title>
-<meta name="description" content="Upload a video of a fitness test. FitCheck counts your reps and flags form problems.">
+<title>FitCheck: Free AI Rep Counter &amp; Form Checker for Push-ups, Squats and Fitness Tests</title>
+<meta name="description" content="Film a push-up, squat, plank or other fitness test, or count live with your camera. FitCheck counts your valid reps, scores your form and tells you what to fix. Free, in your browser.">
+<link rel="canonical" href="{{ base }}/">
+<meta name="theme-color" content="#1e1f1e">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/static/icon-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/static/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="FitCheck">
+<meta property="og:url" content="{{ base }}/">
+<meta property="og:title" content="FitCheck: count every rep, check your form">
+<meta property="og:description" content="Free AI rep counter and form checker for push-ups, squats, planks and more. Upload a video or count live with your camera.">
+<meta property="og:image" content="{{ base }}/static/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FitCheck: Count every rep. Check your form.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FitCheck: count every rep, check your form">
+<meta name="twitter:description" content="Free AI rep counter and form checker for push-ups, squats, planks and more.">
+<meta name="twitter:image" content="{{ base }}/static/og.png">
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "WebApplication", "name": "FitCheck", "url": "{{ base }}/",
+ "applicationCategory": "HealthApplication", "operatingSystem": "Any (web browser)",
+ "description": "Counts valid reps and scores form from a video or a live camera, for push-ups, squats, curl-ups, plank hold, jumping jacks, vertical jump, shuttle run, sit and reach and back stretch.",
+ "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+ "image": "{{ base }}/static/og.png"}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;1,700;1,800&family=Inter:wght@400;600;700&display=swap">
@@ -49,7 +74,7 @@
   .wordmark::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: #c6f24e;   /* lime in both themes */ flex: none; }
   header nav { display: flex; align-items: center; gap: 12px; }
   .nav-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px; }
-  .nav-link:hover { color: var(--accent-text); }
+  .nav-link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 6px; }
   .theme-btn { min-height: 44px; padding: 0 18px; border: 1px solid var(--edge); border-radius: 999px; background: none; font-weight: 600; font-size: 14px; cursor: pointer; }
   .theme-btn { display: inline-grid; place-items: center; width: 44px; padding: 0; color: var(--ink); }
   .theme-btn svg { width: 18px; height: 18px; }
@@ -67,11 +92,14 @@
   body:not(.page-analyses) #savedGroup { display: none; }
   body.page-analyses main { grid-template-columns: minmax(0, 1fr); }
   body.page-analyses .picker > .group:first-child, body.page-analyses #stage { display: none; }
-  body.page-analyses #savedGroup { margin-top: 0; max-width: 880px; }
-  body.page-analyses #analysesLink { color: var(--accent-text); }
+  body.page-analyses #savedGroup { margin-top: 0; }   /* full width, like the header */
+  body.page-analyses #analysesLink { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
   .page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
-  .page-head h1 { margin: 0; font: italic 800 clamp(48px, 6vw, 80px)/.9 var(--display); text-transform: uppercase; }
-  .page-head #savedCount { color: var(--muted); }
+  .page-head h1 { margin: 0; font: 700 clamp(48px, 6vw, 80px)/.9 var(--display); text-transform: uppercase; }
+  .page-head #savedCount { display: inline-block; vertical-align: middle; margin-left: 10px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--plate); font: 600 15px/1 var(--sans); text-transform: none; color: var(--muted); }
+  .page-head #savedCount:empty { display: none; }
+  .list-head { margin: 0 0 14px; font: 700 26px/1 var(--display); text-transform: uppercase; }
   body.page-analyses .saved li { min-height: 72px; }
   body.page-analyses .saved .open { grid-template-columns: 96px minmax(0, 1fr); padding: 12px 16px; }
   body.page-analyses .saved .mini { height: 56px; }
@@ -121,11 +149,11 @@
   .plate img.big.whole { object-fit: contain; }
   /* Two frames of one rep, top and bottom, alternating; it holds on the top frame under reduced motion or on hover. */
   /* One rep cut out of the push-up sample clip; under reduced motion the still frame shows instead. */
-  .test-panel h1 { margin: 0 0 12px; font: italic 800 clamp(56px, 6.4vw, 96px)/.9 var(--display); text-transform: uppercase; overflow-wrap: break-word; min-width: 0; }
+  .test-panel h1 { margin: 0 0 12px; font: 700 clamp(56px, 6.4vw, 96px)/.9 var(--display); text-transform: uppercase; overflow-wrap: break-word; min-width: 0; }
   /* A word never breaks at its hyphen, so "Push-ups" stays on one line. */
   .test-panel h1 .nw { white-space: nowrap; }
   .test-panel p { margin: 0; font-size: 18px; color: var(--soft); max-width: 44ch; }
-  .test-panel p b { color: var(--accent-text); font-weight: 600; }
+  .test-panel p b { color: var(--ink); font-weight: 700; }
 
   .upload { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
   .drop { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 300px;
@@ -136,10 +164,10 @@
   .drop:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
   /* Kept in the tab order (not display: none) so the file chooser opens from the keyboard. */
   .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-  .drop strong { font: italic 800 28px/1.1 var(--display); text-transform: uppercase; word-break: break-word; }
+  .drop strong { font: 700 28px/1.1 var(--display); text-transform: uppercase; word-break: break-word; }
   .drop small { font-size: 14px; color: var(--muted); }
   .drop .film { margin-top: 14px; max-width: 34ch; font-size: 14px; color: var(--soft); }
-  .drop .film b { color: var(--accent-text); font-weight: 600; }
+  .drop .film b { color: var(--ink); font-weight: 700; }
   .drop.has .film { display: none; }
 
   .field { display: flex; flex-direction: column; gap: 6px; }
@@ -147,13 +175,13 @@
   .field input { min-height: 48px; padding: 0 14px; border: 1px solid var(--edge); border-radius: 12px; background: var(--plate); font-size: 16px; }
 
   .btn { min-height: 56px; width: 100%; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
-         font: italic 800 22px/1 var(--display); text-transform: uppercase; cursor: pointer; transition: background-color .15s, transform .12s; }
+         font: 700 22px/1 var(--display); text-transform: uppercase; cursor: pointer; transition: background-color .15s, transform .12s; }
   .btn:hover:not(:disabled) { background: var(--accent-hover); }
   .btn:disabled { background: var(--plate); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); cursor: not-allowed; }
   .btn:active:not(:disabled), .btn-sm:active:not(:disabled), .ghost:active:not(:disabled), .theme-btn:active, .saved .retry:active { transform: translateY(1px); }
   .note { margin: 0; font-size: 14px; color: var(--muted); }
   .alt-links { display: flex; flex-wrap: wrap; gap: 0 24px; padding-top: 4px; border-top: 1px solid var(--line); }
-  .link { min-height: 44px; padding: 0; border: 0; background: none; color: var(--accent-text); font-weight: 600; font-size: 15px; cursor: pointer; }
+  .link { min-height: 44px; padding: 0; border: 0; background: none; color: var(--ink); font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
   .link:hover { text-decoration: underline; }
   .link:active { color: var(--ink); }
   .link:disabled { color: var(--muted); cursor: not-allowed; }
@@ -162,8 +190,8 @@
 
   /* Running, result and live share the stage */
   .stage-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-  .stage-head h2 { margin: 0; font: italic 800 44px/1 var(--display); text-transform: uppercase; }
-  .tag { padding: 6px 12px; border-radius: 999px; background: var(--tint); color: var(--accent-text); font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .stage-head h2 { margin: 0; font: 700 44px/1 var(--display); text-transform: uppercase; }
+  .tag { padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--ink); font-size: 13px; font-weight: 600; white-space: nowrap; }
   .tag.err { color: var(--err); background: var(--err-tint); }
   .ghost { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid var(--edge); border-radius: 999px; background: none;
            color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
@@ -171,7 +199,7 @@
   .ghost:disabled { color: var(--muted); border-style: dashed; cursor: not-allowed; }
   .new-btn { margin-left: auto; white-space: nowrap; }
   .btn-sm { min-height: 52px; padding: 0 26px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
-            font: italic 800 20px/1 var(--display); text-transform: uppercase; text-decoration: none; display: inline-flex; align-items: center; cursor: pointer; }
+            font: 700 20px/1 var(--display); text-transform: uppercase; text-decoration: none; display: inline-flex; align-items: center; cursor: pointer; }
   .btn-sm:hover:not(:disabled) { background: var(--accent-hover); }
   .btn-sm:disabled { background: var(--tint); color: var(--accent-text); cursor: not-allowed; }
   .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
@@ -188,40 +216,43 @@
   .bar.pulse #barFill { animation: pulse 1.2s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: .45; } }
   .status { display: flex; justify-content: space-between; margin-top: 10px; color: var(--muted); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .status #pct { font: italic 800 28px/1 var(--display); color: var(--ink); }
+  .status #pct { font: 700 28px/1 var(--display); color: var(--ink); }
   .slow { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; }
   .dot-spin { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent-text); animation: spin .8s linear infinite; }
   .msg { margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--err); border-radius: 12px; font-size: 14px; }
   .msg:empty { display: none; }
 
-  /* Result: the score on the left, the video and coaching on the right */
-  #result:not(.hidden) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); column-gap: 48px; align-items: start;
-                         grid-template-areas: "head head" "report video" "report actions" "report enter" "report box" "report ."; grid-template-rows: auto auto auto auto auto 1fr; }
+  /* Result: full width (the test list steps aside). The video and downloads stay in view on the left while the
+     score, coaching and challenge card scroll on the right, so no column stops short of the others. */
+  main:has(#result:not(.hidden)) { grid-template-columns: minmax(0, 1fr); }
+  main:has(#result:not(.hidden)) .picker { display: none; }
+  #result:not(.hidden) { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); column-gap: 48px; align-items: start;
+                         grid-template-areas: "head head" "side report" "side enter" "side box"; grid-template-rows: auto auto auto 1fr; }
   #result .stage-head { grid-area: head; }
-  #result .media { grid-area: video; }
+  #result .res-side { grid-area: side; position: sticky; top: 112px; }
   #result .report { grid-area: report; }
-  #result .actions { grid-area: actions; }
   #result details { grid-area: box; }
-  #result .enter { grid-area: enter; }   /* Enter a challenge sits under the video, not at the end of the report */
+  #result .enter { grid-area: enter; }
   .report:empty { display: none; }
   .r-cards { display: flex; flex-direction: column; }
   .r-card { min-width: 0; }
-  .r-card.main b { display: block; font: italic 800 clamp(120px, 14vw, 220px)/.82 var(--display); color: var(--accent-text); font-variant-numeric: tabular-nums; }
-  .r-card.main span { display: block; margin-top: 8px; font: italic 800 40px/1 var(--display); text-transform: uppercase; }
+  .r-card.main b { display: block; font: 700 clamp(120px, 14vw, 220px)/.82 var(--display); color: var(--accent-text); font-variant-numeric: tabular-nums; }
+  .r-card.main span { display: block; margin-top: 8px; font: 700 40px/1 var(--display); text-transform: uppercase; }
   .r-card:not(.main) { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 24px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  .r-card:not(.main) b { font: italic 800 40px/1 var(--display); text-transform: uppercase; }
+  .r-card:not(.main) b { font: 700 40px/1 var(--display); text-transform: uppercase; }
   .r-card:not(.main) span { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .r-sec { margin-top: 28px; }
-  .r-sec .label { margin-bottom: 6px; font: italic 800 26px/1.05 var(--display); text-transform: uppercase; color: var(--ink); }
+  .r-sec .label { margin-bottom: 6px; font: 700 26px/1.05 var(--display); text-transform: uppercase; color: var(--ink); }
   .r-row { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
   .r-row span:first-child { color: var(--soft); }
   .r-row span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
   .r-row.warn span:last-child { color: var(--err); }
   .r-sec ul { margin: 6px 0 0; padding-left: 18px; color: var(--soft); }
   .r-sec li { margin: 6px 0; }
-  .r-sec li::marker { color: var(--accent-text); }
+  .r-sec li::marker { color: var(--muted); }
   .r-sec p { margin: 6px 0 0; color: var(--soft); }
-  .r-zero { margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--err); border-radius: 12px; font-size: 14px; }
+  .r-zero { margin: 16px 0 0; padding: 14px 16px; border: 1px solid var(--err); border-radius: 12px; font-size: 15px; }
+  .r-zero p { margin: 0 0 12px; }
   .r-note { margin-top: 24px; font-size: 13px; color: var(--muted); }
   details { margin-top: 20px; border-top: 1px solid var(--line); }
   summary { padding: 12px 0; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
@@ -243,14 +274,14 @@
   .saved li { display: flex; align-items: center; gap: 6px; border-radius: 14px; background: var(--plate); border: 1px solid var(--line); }
   .saved li.active { border-color: var(--accent-text); background: var(--sel); }
   .saved .open { flex: 1; min-width: 0; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 2px 12px; align-items: center; padding: 8px 12px; background: none; border: 0; text-align: left; cursor: pointer; }
-  .saved .open:hover b { color: var(--accent-text); }
+  .saved .open:hover b { text-decoration: underline; }
   .saved .mini { grid-row: span 2; height: 40px; display: grid; place-items: center; }
   .saved .mini svg { width: 100%; stroke: var(--muted); }
   .saved b { font-weight: 600; font-size: 15px; line-height: 1.2; }
   .saved small { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .saved .prog { grid-column: 2; height: 4px; margin-top: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .saved .prog i { display: block; height: 100%; width: 100%; background: var(--accent-text); transform: translateX(calc(var(--p, 0%) - 100%)); transition: transform .4s; }
-  .saved .state { color: var(--accent-text); font-weight: 600; }
+  .saved .state { color: var(--ink); font-weight: 600; }
   .saved .state.bad { color: var(--err); }
   .saved .del, .saved .retry { min-height: 36px; padding: 0 12px; border-radius: 999px; background: none; font-size: 13px; font-weight: 600; cursor: pointer; }
   .saved .del { border: 0; color: var(--muted); margin-right: 4px; }
@@ -263,19 +294,86 @@
   .live-box { position: relative; overflow: hidden; }
   .live-box video { display: none; }
   .live-box canvas { width: 100%; max-height: max(260px, calc(100vh - 420px));   /* leaves the cue and the Start button in view */ aspect-ratio: 4/3; border-radius: var(--r); background: var(--media); display: block; object-fit: contain; }
+  .live-idle { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 24px; text-align: center; color: var(--on-media); pointer-events: none; }
+  .live-idle svg { width: 56px; height: 56px; color: var(--accent); margin-bottom: 6px; }
+  .live-idle b { font: 700 28px/1 var(--display); text-transform: uppercase; }
+  .live-idle span { max-width: 36ch; font-size: 14px; opacity: .7; }
+  .live-box.on .live-idle { display: none; }
   .live-time { position: absolute; top: 12px; right: 12px; padding: 6px 10px; border-radius: 999px; background: var(--scrim); color: var(--on-media); font: 600 13px/1 var(--sans); font-variant-numeric: tabular-nums; }
   .live-cue { margin: 16px 0 0; padding: 12px 14px; min-height: 46px; border-radius: 12px; background: var(--plate); font-weight: 600; }
   .live-cue.good { color: var(--accent-text); }
   .live-cue.warn { color: var(--err); }
 
-  footer { padding: 20px 0 32px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
-  footer a { color: var(--soft); }
+  /* How it works: a slim strip under the bar, on the test screen only. Its height feeds the fit-to-window sizing. */
+  .how-strip { display: none; }
+  .how-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; margin: 10px 0 0; padding: 0; height: 42px;
+    border: 1px solid var(--line); border-radius: 12px; background: var(--plate); overflow: hidden; }
+  .how-strip li { display: flex; align-items: center; gap: 12px; padding: 0 18px; min-width: 0; }
+  .how-strip li + li { border-left: 1px solid var(--line); }
+  .how-strip b { font: 700 26px/1 var(--display); color: var(--ink); }
+  .how-strip span { display: flex; align-items: baseline; gap: 8px; min-width: 0; white-space: nowrap; }
+  .how-strip strong { font-size: 15px; }
+  .how-strip em { font-style: normal; font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 900px) { .how-strip { height: auto; } .how-strip li { padding: 10px 12px; } .how-strip em { display: none; } }
+  @media (max-width: 560px) { .how-strip li { flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px; } .how-strip strong { font-size: 13px; white-space: normal; line-height: 1.2; } .how-strip b { font-size: 20px; } }
+  /* Landing sections under the tool: only on the main test screen */
+  .landing { display: none; }
+  body:not(.page-analyses):not(.page-leaderboard):not(.page-analyse):has(#empty:not(.hidden)) .landing { display: block; }
+  .landing { padding: 24px 0 8px; }
+  .land-sec { padding: 72px 0; border-top: 1px solid var(--line); }
+  .land-kicker { margin: 0 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .land-h { margin: 0 0 40px; max-width: 18ch; font: 700 clamp(44px, 5.4vw, 76px)/.92 var(--display); text-transform: uppercase; }
+  .get { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+  .get .land-h { margin-bottom: 28px; }
+  .get-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+  .get-list li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; }
+  .get-list svg { width: 28px; height: 28px; color: var(--ink); }
+  .get-list b { display: block; font-size: 17px; margin-bottom: 2px; }
+  .get-list span { color: var(--soft); line-height: 1.5; }
+  .mock { position: relative; padding: 32px; background: var(--plate); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 30px 60px -30px var(--shadow); transform: rotate(-1.5deg); }
+  .mock .tag { position: absolute; top: 20px; right: 20px; }
+  .mock-num { font: 700 120px/.8 var(--display); color: var(--accent-text); }
+  .mock-lbl { margin: 8px 0 22px; font: 700 30px/1 var(--display); text-transform: uppercase; }
+  .mock-rate { display: flex; align-items: baseline; gap: 12px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .mock-rate b { font: 700 34px/1 var(--display); text-transform: uppercase; }
+  .mock-rate span { color: var(--muted); font-size: 14px; }
+  .mock-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--line); color: var(--soft); }
+  .mock-row b { color: var(--ink); }
+  .mock-row.warn b { color: var(--err); }
+  .cta-band { margin: 72px calc(50% - 50vw) 0; padding: 64px 0; background: var(--accent); color: var(--accent-ink); overflow: hidden; }
+  .cta-band .inner { max-width: 1360px; margin: 0 auto; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+  .cta-band h2 { margin: 0; max-width: 16ch; font: 700 clamp(40px, 5vw, 68px)/.92 var(--display); text-transform: uppercase; }
+  .cta-band p { margin: 12px 0 0; font-size: 17px; font-weight: 500; }
+  .cta-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+  .cta-band .btn-sm { background: var(--accent-ink); color: var(--accent); }
+  .cta-band .ghost { border-color: var(--accent-ink); color: var(--accent-ink); min-height: 52px; padding: 0 24px; font-weight: 700; }
+  body:not(.page-analyses):not(.page-leaderboard):not(.page-analyse):has(#empty:not(.hidden)) .site-foot { margin-top: 0; border-top: 0; }   /* the lime band leads straight into it */
+  @media (max-width: 900px) { .get { grid-template-columns: minmax(0, 1fr); } .get { gap: 40px; } .land-sec { padding: 56px 0; } .mock { transform: none; } }
+  @media (max-width: 560px) { .cta-band .inner { padding: 0 16px; } .mock { padding: 24px; } .mock-num { font-size: 96px; } }
+  /* Ending section: full width, on every page */
+  .site-foot { margin: 40px calc(50% - 50vw) 0; padding: 56px 0 28px; background: var(--card);
+    border-top: 3px solid var(--accent); color: var(--muted); font-size: 15px; }
+  .site-foot .inner { max-width: 1360px; margin: 0 auto; padding: 0 40px; }   /* same as .wrap, so it lines up with the page */
+  .foot-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr)); gap: 40px; }
+  .foot-brand .wordmark { font-size: 34px; }
+  .foot-brand p { margin: 14px 0 0; max-width: 34ch; font: 700 22px/1.15 var(--display); text-transform: uppercase; color: var(--ink); }
+  .foot-brand p em { font-style: inherit; color: var(--muted); }
+  .site-foot h2 { margin: 0 0 14px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .site-foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .site-foot ul a, .site-foot ul button { color: var(--ink); text-decoration: none; font: inherit; font-weight: 600; background: none; border: 0; padding: 0; cursor: pointer; }
+  .site-foot ul a:hover, .site-foot ul button:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .site-foot ul.foot-tests { display: block; columns: 2; column-gap: 24px; }
+  .foot-tests li { margin-bottom: 10px; break-inside: avoid; }
+  .foot-base { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; }
+  .foot-base a { color: var(--soft); font-weight: 600; }
+  @media (max-width: 900px) { .foot-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .foot-brand { grid-column: 1 / -1; } }
+  @media (max-width: 560px) { .site-foot .inner { padding: 0 16px; } .foot-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
 
   @media (min-width: 901px) {
     /* Fit the window's height: the nine test rows shrink (64px down to 44px) so the list and the
        panels beside it end above the bottom of the screen. 196px = header, top padding, the
        "Choose a test" label and a bottom margin. */
-    :root { --rowh: clamp(40px, calc((100vh - 196px - var(--ann, 0px) - 48px) / 9), 64px); --panelh: calc(9 * var(--rowh) + 48px); }
+    body { --rowh: clamp(37px, calc((100vh - 196px - var(--ann, 0px) - var(--steps, 0px) - 48px) / 9), 64px); --panelh: calc(9 * var(--rowh) + 48px); }
     main { padding-bottom: 24px; }
     .tests label { min-height: var(--rowh); padding-block: 2px; }
     .thumb { height: min(44px, calc(var(--rowh) - 10px)); }
@@ -305,7 +403,8 @@
     .tests { flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; margin: 0 -16px; padding-inline: 16px; scrollbar-width: none; }
     .tests label { flex: none; width: 196px; scroll-snap-align: start; }
     .picker .label { margin-bottom: 10px; }
-    #result:not(.hidden) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "video" "actions" "enter" "report" "box"; grid-template-rows: none; }
+    #result:not(.hidden) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "side" "report" "enter" "box"; grid-template-rows: none; }
+    #result .res-side { position: static; }
     #result .report { margin-top: 24px; }
   }
   @media (max-width: 560px) {
@@ -313,7 +412,6 @@
     header { padding: 16px 0; }
     .nav-link { padding: 0 8px; white-space: nowrap; }
     header nav { gap: 4px; }
-    header nav a[href*="github.com"] { display: none; }   /* room for the wordmark and Your analyses on one line */
     .hide-sm { display: none; }   /* "Analyses" instead of "Your analyses" so the theme button stays on screen */
     .cap-sm { text-transform: capitalize; }
     .nav-link { font-size: 14px; padding: 0 6px; }
@@ -342,22 +440,24 @@
   /* Challenges page (#challenges; the old #leaderboard address still works) */
   body:not(.page-leaderboard) #boardPage { display: none; }
   body.page-leaderboard #form, body.page-leaderboard #empty { display: none; }
-  body.page-leaderboard #boardLink { color: var(--accent-text); }
+  body.page-leaderboard #boardLink { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
   .board-page { padding: 32px 0 56px; }
   .board-intro { margin: -8px 0 28px; max-width: 60ch; color: var(--soft); }
   .boards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 20px; }
   .board { display: flex; flex-direction: column; gap: 12px; padding: 24px; background: var(--plate); border: 1px solid var(--line); border-radius: var(--r); }
   .board-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-  .board h2 { margin: 0; font: italic 800 30px/1 var(--display); text-transform: uppercase; }
+  .board h2 { margin: 0; font: 700 30px/1 var(--display); text-transform: uppercase; }
   .board .kind { flex: none; }
   .board p { margin: 0; font-size: 14px; color: var(--muted); }
   .board ol { list-style: none; margin: 4px 0 0; padding: 0; }
   .board li { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line); }
   .board li:first-child .pos { color: var(--accent-text); }
-  .board .pos { font: italic 800 22px/1 var(--display); color: var(--muted); }
+  .board .pos { font: 700 22px/1 var(--display); color: var(--muted); }
   .board .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-  .board .val { font: italic 800 22px/1 var(--display); font-variant-numeric: tabular-nums; }
-  .board .none { padding: 12px 0; color: var(--muted); font-size: 14px; }
+  .board .val { font: 700 22px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .board .none { padding: 4px 0 0; color: var(--muted); font-size: 14px; }
+  .board ol.open li { border-bottom-style: dashed; }
+  .board ol.open .who, .board ol.open .val, .board ol.open .pos { color: var(--muted); opacity: .55; font-weight: 500; }
   /* Shiny gold trophy next to the Challenges title, with a glint sweeping across the cup */
   .board-title { display: flex; align-items: center; gap: 14px; }
   .trophy { width: clamp(56px, 6vw, 84px); height: auto; flex: none; filter: drop-shadow(0 4px 10px rgba(217, 154, 22, .45)); }
@@ -368,24 +468,27 @@
   /* the weekly challenge leads, across the full width */
   .board.board-feature { grid-column: 1 / -1; border-color: var(--accent-text); background: linear-gradient(var(--sel), var(--plate)); }
   .board.board-feature h2 { font-size: clamp(34px, 4vw, 52px); }
-  .board.board-feature ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); column-gap: 40px; }
+  .board.board-feature ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 3), auto); grid-auto-flow: column; column-gap: 48px; }
+  @media (max-width: 700px) { .board.board-feature ol { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; } }
   .board.board-feature li { break-inside: avoid; }
-  .board .ends { margin-left: 6px; color: var(--accent-text); font-weight: 600; }
+  .board .ends { margin-left: 6px; color: var(--ink); font-weight: 600; }
   /* podium */
   .board li.podium .val, .board li.podium .pos { font-size: 26px; }
   .board li.p1 .pos, .board li.p1 .val { color: var(--accent-text); }
   .board li.you { background: var(--tint); box-shadow: -10px 0 0 var(--tint), 10px 0 0 var(--tint); }
   .board .me { margin-left: 6px; padding: 1px 6px; border-radius: 3px; font-size: 11.5px; font-weight: 700; background: var(--accent); color: var(--accent-ink); }
   .board .you-line { margin: 8px 0 0; font-size: 14px; color: var(--soft); }
-  .board .you-line b { color: var(--accent-text); }
-  .board .see-all { align-self: flex-start; min-height: 36px; padding: 0; border: 0; background: none; color: var(--accent-text); font-weight: 600; font-size: 14px; cursor: pointer; }
+  .board .you-line b { color: var(--ink); }
+  .board .see-all { align-self: flex-start; min-height: 36px; padding: 0; border: 0; background: none; color: var(--ink); text-decoration: underline; text-underline-offset: 4px; font-weight: 600; font-size: 14px; cursor: pointer; }
   .board .see-all:hover { text-decoration: underline; }
   .board-intro .live-key { padding: 1px 6px; border-radius: 3px; background: var(--plate); font-size: 12px; font-weight: 600; color: var(--muted); }
   .board .sample { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
   .board .btn-sm { align-self: flex-start; margin-top: auto; }
+  .board:not(.board-feature) .btn-sm { background: var(--ink); color: var(--bg); }   /* lime is kept for this week's challenge */
+  .board:not(.board-feature) .btn-sm:hover { background: var(--soft); }
   /* "Enter a challenge" on a result */
   .enter { margin-top: 28px; padding: 20px; border: 1px solid var(--line); border-radius: var(--r); background: var(--plate); }
-  .enter h2 { margin: 0 0 6px; font: italic 800 26px/1.05 var(--display); text-transform: uppercase; }
+  .enter h2 { margin: 0 0 6px; font: 700 26px/1.05 var(--display); text-transform: uppercase; }
   .enter p { margin: 0 0 12px; font-size: 14px; color: var(--muted); }
   .enter label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; }
   .enter input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--edge); border-radius: 10px; background: var(--card); font-size: 16px; }
@@ -396,17 +499,20 @@
   .enter .out.good { color: var(--accent-text); }
   .enter .entered { list-style: none; margin: 4px 0 12px; padding: 0; }
   .enter .entered li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
-  .enter .entered b { font: italic 800 22px/1 var(--display); color: var(--accent-text); }
-  .enter p a { color: var(--accent-text); font-weight: 600; }
+  .enter .entered b { font: 700 22px/1 var(--display); color: var(--accent-text); }
+  .enter p a { color: var(--ink); font-weight: 600; }
+  .enter .name-row { display: flex; gap: 8px; }
+  .enter .name-row input { flex: 1; min-width: 0; }
+  .enter .name-row .ghost { flex: none; min-height: 44px; }
 
   /* "Challenges are live" bar: lime, with a slow shine across it; dismissible */
-  .announce { margin-top: 12px; border-radius: 6px; }   /* sits under the top bar, within the page width */
+  .announce { margin: 0 calc(50% - 50vw); border-radius: 0; }   /* edge to edge under the top bar, whatever the page width */
   .announce { position: relative; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 16px;
               padding: 7px 20px; overflow: hidden; background: #c6f24e; color: #0c0f0d; font-size: 15px; text-align: center; }
   .announce[hidden] { display: none; }
   .announce p { position: relative; margin: 0; }
-  .announce b { font: italic 800 18px/1 var(--display); text-transform: uppercase; margin-right: 4px; }
-  .announce a { position: relative; padding: 6px 16px; background: #0c0f0d; color: #c6f24e; font: italic 800 15px/1 var(--display);
+  .announce b { font: 700 18px/1 var(--display); text-transform: uppercase; margin-right: 4px; }
+  .announce a { position: relative; padding: 6px 16px; background: #0c0f0d; color: #c6f24e; font: 700 15px/1 var(--display);
                 text-transform: uppercase; text-decoration: none; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
   .announce a:hover { color: #eef2ec; }
   .announce a:focus-visible { outline: 2px solid #0c0f0d; outline-offset: 2px; clip-path: none; }
@@ -420,23 +526,73 @@
   @media (max-width: 560px) { .announce { padding: 8px 14px; font-size: 13.5px; } .announce b { font-size: 16px; } }
 
   /* Drop zone: lime border and two curved lime arrows pointing in, with a gentle bob */
-  .drop { border-color: var(--accent-text); }
+  .drop { border-color: var(--edge); }   /* lime only on hover / drag and once a file is chosen */
   .drop-arrows { width: 112px; height: auto; margin-bottom: 4px; stroke: var(--accent-text); animation: bob 1.8s ease-in-out infinite; }
   @keyframes bob { 50% { transform: translateY(6px); } }
   .drop.has .drop-arrows { display: none; }
   /* Live camera: a full-width outlined button with a camera icon, right under Analyse video */
   .live-btn { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 52px; width: 100%; padding: 0 20px;
-              border: 2px solid var(--accent-text); border-radius: 4px; background: var(--tint); color: var(--accent-text);
-              font: italic 800 20px/1 var(--display); text-transform: uppercase; cursor: pointer;
+              border: 2px solid var(--ink); border-radius: 4px; background: transparent; color: var(--ink);
+              font: 700 20px/1 var(--display); text-transform: uppercase; cursor: pointer;
               clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%); transition: background-color .15s; }
   .live-btn svg { width: 26px; height: 26px; flex: none; }
-  .live-btn:hover:not(:disabled) { background: var(--sel); }
+  .live-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 8%, transparent); }
   .live-btn:active:not(:disabled) { transform: translateY(1px); }
   .live-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; clip-path: none; }
   .live-btn:disabled { color: var(--muted); border-color: var(--line); background: none; cursor: not-allowed; }
   .alt-links { align-items: center; justify-content: space-between; }
   .alt-links .note { margin: 0; }
   @media (prefers-reduced-motion: reduce) { .drop-arrows { animation: none; } .live-btn { transition: none; } }
+  /* Progress on the analysis page: a score-over-time chart per test and a weekly activity chart. */
+  .progress { margin: 0 0 40px; }
+  .progress-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .progress-head h2 { margin: 0; font: 700 26px/1 var(--display); text-transform: uppercase; }
+  .sample-tag { font-size: 13px; font-weight: 600; color: var(--muted); border: 1px dashed var(--line); border-radius: 999px; padding: 4px 10px; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 16px; }
+  .chips button { flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card);
+    color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .chips button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .tile small { display: block; font-size: 13px; color: var(--muted); }
+  .tile b { font: 700 26px/1.15 var(--display); }
+  .tile .up { color: var(--accent-text); } .tile .down { color: var(--err); }
+  .charts { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 10px; }
+  .chart-card { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 14px 8px; }
+  .chart-card h3 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--soft); }
+  .chart-card svg { display: block; width: 100%; height: 210px; overflow: visible; }
+  .chart-card .grid line { stroke: var(--line); stroke-width: 1; }
+  .chart-card .axis text { fill: var(--muted); font-size: 11px; }
+  .chart-card .line { fill: none; stroke: var(--accent-text); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart-card .area { fill: var(--tint); }
+  .chart-card .dot { fill: var(--accent-text); stroke: var(--card); stroke-width: 2; }
+  .chart-card .dot.best { fill: var(--card); stroke: var(--accent-text); stroke-width: 2.5; }
+  .chart-card .bar { fill: var(--soft); }
+  .chart-card .cross { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+  .chart-card .lbl { fill: var(--ink); font-size: 11px; font-weight: 600; }
+  .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 13px; line-height: 1.35;
+    padding: 6px 9px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -100%); z-index: 2; }
+  .tip b { font-weight: 700; }
+  .progress details { margin-top: 8px; font-size: 14px; color: var(--muted); }
+  .progress table { border-collapse: collapse; margin-top: 8px; } .progress td, .progress th { padding: 4px 14px 4px 0; text-align: left; }
+  @media (max-width: 700px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .charts { grid-template-columns: minmax(0, 1fr); } }
+  /* Phone: the upload and camera sit below the test picture, so a bar at the bottom of the screen offers them
+     until the real upload area scrolls into view. */
+  .quick-bar { display: none; }
+  @media (max-width: 900px) {
+    .quick-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; gap: 10px;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--bg) 92%, transparent);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid var(--line);
+      transform: translateY(110%); transition: transform .25s ease; }
+    .quick-bar.show { transform: none; }
+    .quick-bar > * { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; border-radius: 6px;
+      font: 700 16px/1 var(--display); text-transform: uppercase; cursor: pointer; border: 0; }
+    .quick-bar svg { width: 20px; height: 20px; flex: none; }
+    .quick-bar .q-up { background: var(--accent); color: var(--accent-ink); }
+    .quick-bar .q-live { background: var(--ink); color: var(--bg); }
+    body:has(.quick-bar.show) { padding-bottom: 76px; }
+  }
+  @media (max-width: 900px) and (prefers-reduced-motion: reduce) { .quick-bar { transition: none; } }
 
   /* Reduced motion: the loading spinners slow down, everything else holds still. */
   @media (prefers-reduced-motion: reduce) {
@@ -445,6 +601,165 @@
     .tests label, .drop, .btn, .bar div, .saved .prog i { transition: none; }
     .btn:active:not(:disabled), .btn-sm:active:not(:disabled), .ghost:active:not(:disabled), .theme-btn:active, .saved .retry:active { transform: none; }
   }
+
+  /* Glass: translucent, blurred panels with a thin light edge. Two faint glows on the page give them something to frost. */
+  :root { --glass: color-mix(in srgb, var(--plate) 52%, transparent); --glass-edge: color-mix(in srgb, var(--ink) 13%, transparent);
+          --glass-hi: inset 0 1px 0 color-mix(in srgb, #fff 9%, transparent); --blur: blur(18px) saturate(160%); }
+  body { background-image:
+           radial-gradient(700px 520px at 88% 8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%),
+           radial-gradient(640px 640px at 4% 70%, color-mix(in srgb, var(--ink) 5%, transparent), transparent 70%),
+           repeating-linear-gradient(-62deg, transparent 0 26px, color-mix(in srgb, var(--ink) 2.5%, transparent) 26px 28px);
+         background-attachment: fixed, fixed, scroll; }
+  header { background: transparent; box-shadow: none; clip-path: none; }   /* clip-path would stop the blur reaching the page */
+  header::before { content: ""; position: absolute; inset: 0 calc(50% - 50vw); z-index: -1; background: color-mix(in srgb, var(--bg) 82%, transparent);
+                   backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border-bottom: 1px solid var(--glass-edge); }
+  .how-strip, .board, .tile, .chart-card, .enter, .saved li, .mock {
+    background: var(--glass); border-color: var(--glass-edge); box-shadow: var(--glass-hi);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
+  .mock { box-shadow: var(--glass-hi), 0 30px 60px -30px var(--shadow); }
+  .board.board-feature { background: linear-gradient(color-mix(in srgb, var(--accent) 10%, transparent), var(--glass)); }
+  .saved li.active { background: color-mix(in srgb, var(--accent) 10%, var(--glass)); }
+
+  /* Refined: calmer type, plain rounded buttons, no stripes or shine, lime used sparingly. */
+  h1, h2, h3, .btn, .btn-sm, .live-btn, .drop strong, .board h2, .list-head, .progress-head h2, .r-sec .label, .enter h2,
+  .r-card.main span, .r-card:not(.main) b, .mock-lbl, .mock-rate b, .live-idle b, .foot-brand p { letter-spacing: .015em; }
+  .btn, .btn-sm, .live-btn, .quick-bar > * { clip-path: none; border-radius: 10px; letter-spacing: .05em; }
+  .btn { font-size: 19px; } .btn-sm { font-size: 17px; padding-inline: 28px; } .live-btn { font-size: 17px; border-width: 1.5px; }
+  body { background-image:
+           radial-gradient(700px 520px at 88% 8%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%),
+           radial-gradient(640px 640px at 4% 70%, color-mix(in srgb, var(--ink) 4%, transparent), transparent 70%);
+         background-attachment: fixed, fixed; }
+  /* The challenges bar: a slim dark strip, lime only on the dot */
+  .announce { background: color-mix(in srgb, var(--plate) 70%, transparent); color: var(--soft); border-bottom: 1px solid var(--line); padding: 9px 20px; font-size: 14px; }
+  .announce::before { display: none; }
+  .announce p::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 10px; border-radius: 50%; background: var(--accent);
+                        vertical-align: middle; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .announce b { font: 600 14px/1 var(--sans); text-transform: none; color: var(--ink); letter-spacing: 0; }
+  .announce a { clip-path: none; border-radius: 999px; padding: 6px 14px; background: transparent; color: var(--ink); border: 1px solid var(--edge);
+                font: 600 13px/1 var(--sans); text-transform: none; }
+  .announce a:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  /* Headings a notch smaller */
+  .page-head h1 { font-size: clamp(44px, 5vw, 66px); }
+  .land-h { font-size: clamp(36px, 4.2vw, 58px); }
+  .board.board-feature h2 { font-size: clamp(30px, 3.4vw, 44px); }
+  .r-card.main b { font-size: clamp(96px, 10vw, 168px); }
+  .mock-num { font-size: 100px; }
+  .test-panel h1::before { transform: none; height: 4px; width: 40px; border-radius: 2px; }
+  .drop-arrows { animation-duration: 3.2s; }
+  /* The weekly band: a contained card with a faint lime wash, not a full lime block */
+  .cta-band { margin: 72px 0 0; border-radius: var(--r); border: 1px solid var(--glass-edge); color: var(--ink);
+              background: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%), var(--glass);
+              backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); padding: 56px 0; }
+  .cta-band .inner { padding: 0 48px; }
+  .cta-band p { color: var(--soft); }
+  .cta-band .btn-sm { background: var(--accent); color: var(--accent-ink); }
+  .cta-band .ghost { border-color: var(--edge); color: var(--ink); }
+  body:not(.page-analyses):not(.page-leaderboard):not(.page-analyse):has(#empty:not(.hidden)) .site-foot { margin-top: 72px; }
+  .site-foot { border-top: 1px solid var(--line); }
+  @media (max-width: 560px) { .cta-band .inner { padding: 0 20px; } }
+
+  /* ---- Finish: hero, trust sections, grain, depth, motion ---- */
+  .hero { display: none; }
+  body:not(.page-analyses):not(.page-leaderboard):not(.page-analyse):has(#empty:not(.hidden)) .hero { display: grid; }
+  .hero { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 48px; align-items: center; padding: 64px 0 56px; }
+  .hero h1 { margin: 0; font: italic 800 clamp(48px, 6vw, 92px)/.9 var(--display); white-space: nowrap; text-transform: uppercase; letter-spacing: -.005em; }
+  .hero h1 span { color: var(--accent-text); }
+  .hero-sub { margin: 22px 0 0; max-width: 46ch; font-size: 18px; line-height: 1.6; color: var(--soft); }
+  .hero-btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+  .hero-btns .btn-sm { min-height: 54px; font-size: 18px; }
+  .hero-live { min-height: 54px; gap: 10px; padding: 0 22px; font-weight: 600; }
+  .hero-live svg { width: 20px; height: 20px; }
+  .hero-trust { display: flex; flex-wrap: wrap; gap: 8px 20px; list-style: none; margin: 26px 0 0; padding: 0; font-size: 14px; color: var(--muted); }
+  .hero-trust li::before { content: "✓"; margin-right: 7px; color: var(--accent-text); font-weight: 700; }
+  .hero-shot { position: relative; margin: 0; padding: 10px; border-radius: 22px; background: var(--glass); border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-hi), 0 40px 80px -40px rgba(0,0,0,.55), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
+  .hero-shot video { display: block; width: 100%; height: auto; border-radius: 14px; background: #0c0f0d; }
+  .hero-count { position: absolute; top: 24px; left: 24px; display: grid; justify-items: start; padding: 12px 18px 12px; border-radius: 14px;
+    background: rgba(12,15,13,.62); border: 1px solid rgba(238,242,236,.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #eef2ec; }
+  .hero-count b { font: italic 800 64px/.85 var(--display); color: #c6f24e; font-variant-numeric: tabular-nums; display: inline-block; }
+  .hero-count span { margin-top: 6px; font: 700 13px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
+  .hero-shot video { transition: filter 1.2s ease; }
+  .hero-shot.done video { filter: brightness(.72) saturate(.85); }
+  .hero-shot.done .hero-count { box-shadow: 0 0 0 1px rgba(198,242,78,.35), 0 12px 32px -10px rgba(198,242,78,.35); transition: box-shadow 1.2s ease; }
+  .hero-count b.bump { animation: bump .45s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.28); } 100% { transform: scale(1); } }
+  .hero-shot img { display: block; width: 100%; height: auto; border-radius: 14px; }
+  .hero-shot figcaption { position: absolute; left: 24px; bottom: 24px; display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
+    background: rgba(12,15,13,.72); color: #eef2ec; font-size: 13px; font-weight: 600; backdrop-filter: blur(8px); }
+  .hero-shot .rec { width: 8px; height: 8px; border-radius: 50%; background: #ff5a4f; box-shadow: 0 0 0 3px rgba(255,90,79,.25); animation: pulse 1.6s ease-in-out infinite; }
+  .land-sub { margin: -16px 0 0; max-width: 44ch; color: var(--soft); line-height: 1.6; }
+  .trust-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .trust-card { padding: 28px; border-radius: var(--r); background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--glass-hi), var(--lift);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); transition: transform .2s ease, box-shadow .2s ease; }
+  .trust-card h3 { margin: 18px 0 8px; font: 700 26px/1.05 var(--display); text-transform: uppercase; letter-spacing: .015em; }
+  .trust-card p { margin: 0; color: var(--soft); line-height: 1.6; }
+  .t-ic { width: 40px; height: 40px; padding: 8px; border-radius: 12px; color: var(--ink); background: color-mix(in srgb, var(--ink) 7%, transparent); border: 1px solid var(--glass-edge); }
+  .privacy, .faq { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 56px; align-items: start; }
+  .priv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .priv-list li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px; padding: 20px; border-radius: 16px; background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--glass-hi); }
+  .priv-list b { display: block; margin-bottom: 3px; font-size: 17px; }
+  .priv-list span { color: var(--soft); line-height: 1.55; }
+  .faq-list { display: grid; gap: 10px; }
+  .faq-list details { border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--glass-hi); }
+  .faq-list summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 20px; font-weight: 600; font-size: 17px; cursor: pointer; list-style: none; }
+  .faq-list summary::-webkit-details-marker { display: none; }
+  .faq-list summary::after { content: "+"; font: 400 24px/1 var(--sans); color: var(--muted); transition: transform .2s ease; }
+  .faq-list details[open] summary::after { transform: rotate(45deg); }
+  .faq-list details p { margin: 0; padding: 0 20px 18px; color: var(--soft); line-height: 1.6; }
+  /* Grain over everything, very faint */
+  body::after { content: ""; position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: .045; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  /* Depth: layered shadows, gentle lift on hover */
+  :root { --lift: 0 1px 2px rgba(0,0,0,.08), 0 12px 32px -16px rgba(0,0,0,.35); }
+  .board, .tile, .chart-card, .test-panel, .mock { box-shadow: var(--glass-hi), var(--lift); }
+  .board, .trust-card, .tests label { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .board:hover, .trust-card:hover { transform: translateY(-3px); box-shadow: var(--glass-hi), 0 2px 4px rgba(0,0,0,.08), 0 24px 48px -20px rgba(0,0,0,.45); border-color: color-mix(in srgb, var(--ink) 22%, transparent); }
+  .tests label:hover { transform: translateX(2px); }
+  .btn:not(:disabled):hover, .btn-sm:not(:disabled):hover { box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--accent) 60%, transparent); }
+  /* Personality kept for the big numbers */
+  .r-card.main b, .mock-num { font-style: italic; font-weight: 800; }
+  /* Reveal on scroll */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } .hero-shot .rec { animation: none; } .board:hover, .trust-card:hover, .tests label:hover { transform: none; } }
+  @media (max-width: 900px) { .hero h1 { white-space: normal; } .hero, .privacy, .faq { grid-template-columns: minmax(0, 1fr); gap: 32px; } .hero { padding: 36px 0 24px; } .trust-grid { grid-template-columns: minmax(0, 1fr); } }
+  .trust-grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 1100px) { .trust-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .trust-grid.four { grid-template-columns: minmax(0, 1fr); } }
+  /* Home vs Analyse: the tool lives on its own page (#analyse); the home page is the hero and landing sections. */
+  body:not(.page-analyses):not(.page-leaderboard):not(.page-analyse):has(#empty:not(.hidden)) main { display: none; }
+  .nav-cta { display: inline-flex; align-items: center; min-height: 42px; padding: 0 20px; border-radius: 10px; background: var(--accent); color: var(--accent-ink);
+    font: 700 16px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; text-decoration: none; margin-right: 6px; transition: box-shadow .2s ease; }
+  .nav-cta:hover { box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--accent) 60%, transparent); }
+  body.page-analyse .nav-cta { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+  @media (max-width: 560px) { .nav-cta { min-height: 36px; padding: 0 12px; font-size: 14px; margin-right: 2px; } }
+  @media (max-width: 440px) { #boardLink { display: none; } .wordmark { font-size: 22px; gap: 7px; } }   /* the bar below has See challenges */
+  /* The top of the exercise card is white in both themes, edge to edge, so every picture sits on the same clean ground */
+  .plate:has(img.big) { background: #fff; border-radius: calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0; padding-bottom: 8px; }
+  .plate:has(img.big) picture, .plate img.big { background: #fff; }
+  /* FAQ, compact: one card, questions separated by hairlines, less padding */
+  .land-sec.faq { padding: 48px 0; gap: 40px; }
+  .faq .land-h { margin-bottom: 0; }
+  .faq-list { gap: 0; border-radius: 14px; overflow: hidden; background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--glass-hi); }
+  .faq-list details { margin: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+  .faq-list details + details { border-top: 1px solid var(--glass-edge); }
+  .faq-list summary { padding: 13px 18px; font-size: 16px; color: var(--ink); }
+  .faq-list summary::after { font-size: 20px; }
+  .faq-list details p { padding: 0 18px 14px; font-size: 15px; }
+  /* Challenges bar: white in both themes, with a soft sheen */
+  .announce { background: linear-gradient(180deg, #ffffff, #f1f4ee); color: #434a45; border-bottom: 1px solid rgba(14,17,15,.08);
+              box-shadow: inset 0 1px 0 #fff, 0 6px 18px -12px rgba(0,0,0,.45); }
+  .announce b { color: #0e110f; }
+  .announce p::before { box-shadow: 0 0 0 4px rgba(150,200,40,.25); background: #9ccc1f; }
+  .announce a { background: #0e110f; color: #fff; border-color: #0e110f; }
+  .announce a:hover { background: #2a302b; color: #fff; }
+  .announce::before { display: block; content: ""; position: absolute; inset: 0 auto 0 -40%; width: 28%; transform: skewX(-20deg); pointer-events: none;
+                      background: linear-gradient(90deg, transparent, rgba(255,255,255,.9), transparent); mix-blend-mode: soft-light; opacity: .9;
+                      animation: shine 6s ease-in-out infinite; }
+  .announce::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+                     background: linear-gradient(100deg, transparent 30%, rgba(198,242,78,.10) 50%, transparent 70%); }
+  @media (prefers-reduced-motion: reduce) { .announce::before { animation: none; display: none; } }
 </style>
 </head>
 <body>
@@ -452,9 +767,9 @@
   <header>
     <a class="wordmark" href="/">FitCheck</a>
     <nav aria-label="Main">
+      <a class="nav-cta" href="#analyse" id="analyseLink">Analyse</a>
       <a class="nav-link" href="#challenges" id="boardLink">Challenges</a>
-      <a class="nav-link" href="#analyses" id="analysesLink"><span class="hide-sm">Your&nbsp;</span><span class="cap-sm">analyses</span></a>
-      <a class="nav-link" href="https://github.com/saanvi-kanodia/FitCheck" target="_blank" rel="noopener">GitHub</a>
+      <a class="nav-link" href="#analyses" id="analysesLink"><span class="hide-sm">Your&nbsp;</span><span class="cap-sm">analysis</span></a>
       <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch theme"></button>
     </nav>
   </header>
@@ -462,6 +777,26 @@
     <p><b>Challenges are live.</b> <span id="announceWeek">Climb the rankings on six new boards.</span></p>
     <a href="#challenges" id="announceGo">See challenges</a>
   </div>
+  <section class="hero" aria-labelledby="heroHead">
+    <div class="hero-copy">
+      <p class="land-kicker">Free AI rep counter &amp; form checker</p>
+      <h1 id="heroHead">Count every rep.<br><span>Check your form.</span></h1>
+      <p class="hero-sub">Film a push-up, squat, plank or six other exercises, or count live with your camera. FitCheck counts only clean reps, scores your form and tells you what to fix.</p>
+      <div class="hero-btns">
+        <button type="button" class="btn-sm" id="heroUpload">Upload a video</button>
+        <button type="button" class="ghost hero-live" id="heroLive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Count live</button>
+      </div>
+      <ul class="hero-trust">
+        <li>Free, no sign-up</li><li>Works in your browser</li><li>Live video never leaves your device</li>
+      </ul>
+    </div>
+    <figure class="hero-shot">
+      <video id="heroVid" src="/static/hero-curlups.mp4" poster="/static/hero-curlups-poster.webp" width="960" height="540" muted playsinline autoplay preload="auto"
+             aria-label="A person doing curl-ups with FitCheck's pose overlay; the counter ticks up with each full curl-up."></video>
+      <div class="hero-count" aria-hidden="true"><b id="heroCount">0</b><span>Curl-ups</span></div>
+      <figcaption><span class="rec" aria-hidden="true"></span>Pose tracking on a real clip</figcaption>
+    </figure>
+  </section>
 
   {% set hints = {
     "pushup": "Upper body", "squats": "Lower body", "curlups": "Core",
@@ -471,7 +806,7 @@
   <form id="form"><main>
     <div class="picker">
       <div class="group">
-        <p class="label"><span>Choose a test</span></p>
+        <p class="label"><span>Choose an exercise</span></p>
         <div class="tests">
           {% for key, t in tests.items() %}
           <label><input type="radio" name="test" value="{{ key }}" {% if loop.first %}checked{% endif %}
@@ -482,11 +817,22 @@
 
       <div class="group" id="savedGroup">
         <div class="page-head">
-          <h1>Your analyses <span id="savedCount"></span></h1>
-          <a class="ghost" href="#">New analysis</a>
+          <h1>Your analysis <span id="savedCount"></span></h1>
+          <a class="ghost" href="#analyse">New analysis</a>
         </div>
+        <section class="progress" id="progress" aria-labelledby="progressTitle">
+          <div class="progress-head"><h2 id="progressTitle">Your progress</h2><span class="sample-tag hidden" id="sampleTag">Sample data: your own analyses replace it</span></div>
+          <div class="chips" id="progChips" role="group" aria-label="Exercise"></div>
+          <div class="tiles" id="progTiles"></div>
+          <div class="charts">
+            <div class="chart-card"><h3 id="trendTitle">Score over time</h3><svg id="trendSvg" role="img"></svg></div>
+            <div class="chart-card"><h3>Analyses per week</h3><svg id="weekSvg" role="img"></svg></div>
+          </div>
+          <details><summary>Show as a table</summary><table id="progTable"></table></details>
+        </section>
+        <h2 class="list-head">History</h2>
         <ul class="saved" id="saved"></ul>
-        <p class="saved-empty" id="savedEmpty">Your analyses appear here automatically, with the video and PDF.</p>
+        <p class="saved-empty" id="savedEmpty">Every analysis you run appears here automatically, with the video and PDF.</p>
         <p class="store-note">Kept privately in this browser on this device.</p>
       </div>
     </div>
@@ -514,7 +860,7 @@
           </label>
 
           <div class="field hidden" id="heightField">
-            <label class="label" for="heightInput"><span>Your height in cm</span><span class="need" id="heightNeed">needed for this test</span></label>
+            <label class="label" for="heightInput"><span>Your height in cm</span><span class="need" id="heightNeed">needed for this exercise</span></label>
             <input id="heightInput" type="number" name="height" min="80" max="250" step="0.5" inputmode="decimal">
           </div>
 
@@ -552,16 +898,18 @@
       <div id="result" class="hidden">
         <div class="stage-head"><h2 id="resTitle">Results</h2><span class="tag" id="resChip">Saved</span>
           <button class="ghost new-btn" type="button" data-new>New analysis</button></div>
-        <video class="media" id="video" controls playsinline></video>
+        <div class="res-side">
+          <video class="media" id="video" controls playsinline></video>
+          <div class="actions">
+            <a class="btn-sm" id="dlReport" download>Download PDF</a>
+            <a class="ghost" id="dl" download>Download video</a>
+          </div>
+        </div>
         <div class="report" id="reportView"></div>
         <details id="reportBox" class="hidden">
           <summary>Console output</summary>
           <pre id="report"></pre>
         </details>
-        <div class="actions">
-          <a class="btn-sm" id="dlReport" download>Download PDF</a>
-          <a class="ghost" id="dl" download>Download video</a>
-        </div>
       </div>
 
       <div id="live" class="hidden">
@@ -570,6 +918,10 @@
         <div class="media-box live-box">
           <video id="cam" playsinline muted></video>
           <canvas id="liveCanvas" width="640" height="480" role="img" aria-label="Live camera view with the pose overlay and rep counter"></canvas>
+          <div class="live-idle" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            <b>Your camera appears here</b><span>Press Start. A 3-second countdown gives you time to get into position.</span>
+          </div>
           <div class="live-time" id="liveTime">0:00</div>
         </div>
         <p class="live-cue" id="liveCue">Press Start and allow camera access.</p>
@@ -581,6 +933,55 @@
       </div>
     </section>
   </main></form>
+  <div class="landing" id="landing">
+    <section class="land-sec" aria-labelledby="howHead">
+      <p class="land-kicker">How it works</p>
+      <h2 class="land-h" id="howHead">Body tracking, not guesswork.</h2>
+      <div class="trust-grid four">
+        <div class="trust-card"><svg class="t-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v6m0 0l-4 7m4-7l4 7M6 10l6-2 6 2"/><circle cx="6" cy="10" r=".8" fill="currentColor"/><circle cx="18" cy="10" r=".8" fill="currentColor"/><circle cx="8" cy="20" r=".8" fill="currentColor"/><circle cx="16" cy="20" r=".8" fill="currentColor"/></svg><h3>33 body points, every frame</h3><p>A pose model (MediaPipe) follows your shoulders, hips, knees, elbows and ankles through the whole video.</p></div>
+        <div class="trust-card"><svg class="t-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M4 20L14 6"/><path d="M10 20a6 6 0 0 0-2.4-4.8"/></svg><h3>Full range or it doesn't count</h3><p>Push-ups need your elbows to reach about 90°, squats need your hips to drop towards your knees. Half reps are flagged, not counted.</p></div>
+        <div class="trust-card"><svg class="t-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16a8 8 0 1 1 16 0"/><path d="M12 16l4-5"/><circle cx="12" cy="16" r="1.2" fill="currentColor"/></svg><h3>A form score out of 4</h3><p>Every rep is rated and averaged into one score, with the moments that pulled it down and what to change next time.</p></div>
+        <div class="trust-card"><svg class="t-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><h3>Your video, PDF and progress</h3><p>Watch your set with the pose overlay, keep a PDF report to share, and track every exercise over time on your device.</p></div>
+      </div>
+    </section>
+    <section class="land-sec privacy" aria-labelledby="privHead">
+      <div>
+        <p class="land-kicker">Your privacy</p>
+        <h2 class="land-h" id="privHead">Your videos stay yours.</h2>
+        <p class="land-sub">No account, no profile. The only thing that ever goes public is a display name and score on the challenge boards, and only if you choose a name.</p>
+      </div>
+      <ul class="priv-list">
+        <li><svg class="t-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><div><b>Uploads are deleted</b><span>An uploaded video is analysed on the server, then deleted as soon as your browser has saved the result. Anything left over is removed within 24 hours.</span></div></li>
+        <li><svg class="t-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg><div><b>History lives on your device</b><span>Your results, videos and PDFs are kept in this browser only.</span></div></li>
+      </ul>
+    </section>
+    <section class="land-sec faq" aria-labelledby="faqHead">
+      <div>
+        <p class="land-kicker">FAQ</p>
+        <h2 class="land-h" id="faqHead">Good questions.</h2>
+      </div>
+      <div class="faq-list">
+        <details><summary>Is FitCheck free?</summary><p>Yes. There's no account, no trial and nothing to sign up for.</p></details>
+        <details><summary>How accurate is it?</summary><p>An uploaded video gets the most careful check: every rep is measured for full range of motion. Live mode is instant but a little less precise. Either way, results are estimates to help you train, not a medical assessment.</p></details>
+        <details><summary>How should I film?</summary><p>Prop your phone on the floor or a chair so it stays still, with your whole body in frame and good light. Push-ups, planks and curl-ups work best side-on. Each exercise shows its own filming tip.</p></details>
+        <details><summary>What do I need?</summary><p>A phone or laptop with a camera and an up-to-date browser. Uploaded videos can be MP4 or MOV, up to {{ max_mb }} MB.</p></details>
+        <details><summary>Can coaches and teachers use it?</summary><p>Yes. Every analysis comes with a PDF report to share, and the weekly challenge boards work well for a class or team.</p></details>
+      </div>
+    </section>
+    <section class="cta-band" aria-labelledby="ctaHead">
+      <div class="inner">
+        <div><h2 id="ctaHead">Ready when you are.</h2><p>Film a set or count live. Your first result takes about a minute.</p></div>
+        <div class="cta-btns">
+          <button type="button" class="btn-sm" id="ctaStart">Upload a video</button>
+          <button type="button" class="ghost hero-live" id="ctaLive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Count live</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="quick-bar" id="quickBar" aria-label="Start an analysis">
+    <label class="q-up" for="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 20h16"/></svg>Upload video</label>
+    <button type="button" class="q-live" id="quickLive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Live camera</button>
+  </div>
 
   <section id="boardPage" class="board-page" aria-labelledby="boardHead">
     <div class="page-head">
@@ -599,12 +1000,41 @@
           <g clip-path="url(#cupClip)"><rect class="glint" x="-10" y="0" width="8" height="40" fill="#fff" opacity=".7" transform="skewX(-20)"/></g>
         </svg>
       <h1 id="boardHead">Challenges</h1></div>
-      <a class="ghost" href="#">New analysis</a>
+      <a class="ghost" href="#analyse">New analysis</a>
     </div>
     <p class="board-intro">Analyse a video or count live with your camera, and your score goes on the boards automatically. <span class="live-key">Live</span> marks scores counted live in the browser.</p>
     <div class="boards" id="boards"><p class="saved-empty">Loading challenges…</p></div>
   </section>
   <div id="infoPop" class="hidden" role="dialog"></div>
+  <footer class="site-foot">
+    <div class="inner">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="wordmark" href="/">FitCheck</a>
+          <p>Count every rep. Check your form. <em>Climb the board.</em></p>
+        </div>
+        <nav aria-labelledby="footTests">
+          <h2 id="footTests">Exercises</h2>
+          <ul class="foot-tests">
+            {% for key, t in tests.items() %}<li><button type="button" data-foot-test="{{ key }}">{{ t.name }}</button></li>
+            {% endfor %}
+          </ul>
+        </nav>
+        <nav aria-labelledby="footMore">
+          <h2 id="footMore">FitCheck</h2>
+          <ul>
+            <li><a href="#challenges">Challenges</a></li>
+            <li><a href="#analyses">Your analysis</a></li>
+            <li><button type="button" data-foot-new>New analysis</button></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>© {{ year }} FitCheck. Results are estimates from video and are not medical advice.</span>
+        <a href="#top" id="toTop">Back to top ↑</a>
+      </div>
+    </div>
+  </footer>
 </div>
 
 <script>
@@ -709,7 +1139,7 @@ function syncTest() {
   const sel = form.querySelector('input[name=test]:checked');
   // Vertical jump uses height only in live mode, to turn the jump into centimetres.
   $('heightField').classList.toggle('hidden', sel.dataset.height !== '1' && sel.value !== 'verticaljump');
-  $('heightNeed').textContent = sel.dataset.height === '1' ? 'needed for this test' : 'optional, for live jump height in cm';
+  $('heightNeed').textContent = sel.dataset.height === '1' ? 'needed for this exercise' : 'optional, for live jump height in cm';
   const ill = ILLUS[sel.value];
   $('illus').innerHTML = PANEL_PICS[sel.value]
     ? `<picture><source srcset="${PANEL_PICS[sel.value].still}" media="(prefers-reduced-motion: reduce)"><img class="${BIG_PICS[sel.value] ? 'big' : ''}${WHOLE_PICS.includes(sel.value) ? ' whole' : ''}" style="--zoom: ${BIG_PICS[sel.value] || 1}; --shift: ${PIC_SHIFT[sel.value] || 0}px" src="${PANEL_PICS[sel.value].anim}" alt="" width="${PANEL_PICS[sel.value].w}" height="${PANEL_PICS[sel.value].h}"></picture>`
@@ -751,6 +1181,19 @@ $('sampleBtn').addEventListener('click', async () => {
   btn.disabled = false; btn.textContent = 'Try a sample clip';
 });
 file.addEventListener('change', () => { $('err').textContent = ''; setFile(file.files[0]); });
+// Phone bottom bar: shown on the test screen until the upload area itself is on screen.
+const quickBar = $('quickBar'), uploadBox = document.querySelector('.upload');
+function syncQuick() {
+  const r = uploadBox.getBoundingClientRect();
+  const other = /^#(analyses|challenges|leaderboard)$/.test(location.hash);
+  const visible = !other && uploadBox.offsetParent !== null && !$('empty').classList.contains('hidden');
+  quickBar.classList.toggle('show', visible && r.top > innerHeight - 40);
+}
+addEventListener('scroll', syncQuick, { passive: true }); addEventListener('resize', syncQuick); addEventListener('hashchange', syncQuick);
+new MutationObserver(syncQuick).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+$('quickLive').addEventListener('click', () => $('liveBtn').click());
+file.addEventListener('change', () => { if (file.files[0] && matchMedia('(max-width: 900px)').matches) uploadBox.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+syncQuick();
 ['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('over')));
 drop.addEventListener('drop', ev => {
@@ -803,6 +1246,7 @@ let show = function (id) {
 function goNew() {
   selected = null; show('empty'); renderList();
   file.value = ''; setFile(null);
+  goAnalyse();   // New analysis always lands on the tool, not the home page
 }
 document.querySelectorAll('[data-new]').forEach(b => b.addEventListener('click', goNew));
 
@@ -926,7 +1370,7 @@ async function keep(rec, j) {
     } catch (e) { await waitRetry(2000); }
   }
   const entry = { id: rec.jobId, kind: 'upload', test: j.test, test_key: j.test_key, created: j.created,
-                  video_name: rec.name, size: rec.size, summary: j.summary, report: j.report, score_token: j.score_token, video, pdf };
+                  video_name: rec.name, size: rec.size, summary: j.summary, report: j.report, score_token: j.score_token, sample: j.sample, video, pdf };
   await DB.put('history', entry).catch(() => {});
   history.unshift(entry);
   autoEnter(entry);                                // onto the challenge boards, if a name is saved
@@ -982,10 +1426,11 @@ function stateText(rec) {
 }
 
 function renderList() {
+  try { renderProgress(); } catch (e) { console.error(e); }
   const pending = [...items.values()].sort((a, b) => b.created - a.created);
   const n = pending.length + history.length;
   $('savedEmpty').classList.toggle('hidden', n > 0);
-  $('savedCount').textContent = n || '';
+  $('savedCount').textContent = n ? `${n} saved` : '';
   $('saved').innerHTML = pending.map(rec => {
     const [text, frac] = stateText(rec), bad = rec.state === 'failed' || rec.state === 'rejected';
     return `<li data-key="${rec.key}" class="${rec.key === selected ? 'active' : ''}">
@@ -1018,7 +1463,7 @@ function renderRunning(rec) {
   if (showPreview) { $('preview').src = `/jobs/${rec.jobId}/preview.jpg?t=${Date.now()}`; $('waiting').classList.add('hidden'); }
   else { $('preview').removeAttribute('src'); $('waiting').classList.toggle('hidden', bad); }
   $('waitText').textContent = { uploading: 'Uploading your video…', paused: 'Upload paused', queued: 'Waiting for a free slot…',
-                                encoding: 'Finishing up…', saving: 'Saving to your analyses…' }[rec.state] || 'Preparing your video…';
+                                encoding: 'Finishing up…', saving: 'Saving to your analysis…' }[rec.state] || 'Preparing your video…';
   const secs = Math.round((Date.now() - (rec.phaseStart || Date.now())) / 1000);
   let slow = '';
   if (rec.message && !bad) slow = rec.message;
@@ -1047,6 +1492,7 @@ function openResult(h) {
   $('dl').download = `${base}.${h.video?.type.includes('webm') ? 'webm' : 'mp4'}`;
   $('dlReport').classList.toggle('hidden', !pdfUrl); $('dlReport').href = pdfUrl || '#'; $('dlReport').download = `${base}_report.pdf`;
   $('reportView').innerHTML = renderReport(h);
+  countUp($('reportView').querySelector('.r-card.main b'));
   renderEnter(h);
   $('reportBox').classList.add('hidden');
   renderList();
@@ -1069,9 +1515,9 @@ function endsIn(t) {
 }
 function boardRows(c, all) {
   const me = c.you?.name, rows = all ? c.entries : c.entries.slice(0, SHOW);
-  if (!c.entries.length) return '<div class="none">No scores yet. Be the first.</div>';
+  if (!c.entries.length) return `<ol class="open" style="--rows:2">${[1, 2, 3].map(i => `<li><span class="pos">${i}</span><span class="who">Open spot</span><span class="val">—</span></li>`).join('')}</ol><p class="none">No scores yet. Be the first.</p>`;
   const youShown = rows.some(e => e.name === me);
-  return `<ol>${rows.map((e, i) => `<li class="${i < 3 ? 'podium p' + (i + 1) : ''}${e.name === me ? ' you' : ''}"><span class="pos">${i === 0 ? '<svg class="cup" viewBox="0 0 24 24" role="img" aria-label="First place"><path d="M7 3h10v5a5 5 0 0 1-10 0z M7 5H4v1a3 3 0 0 0 3 3 M17 5h3v1a3 3 0 0 1-3 3 M10.5 13h3v3h-3z M8 16h8l1 3H7z" fill="#f6c945" stroke="#b07a0c" stroke-width="1"/></svg>' : i + 1}</span><span class="who">${esc(e.name)}${e.name === me ? ' <small class="me">You</small>' : ''}${e.sample ? ' <small class="sample">Sample</small>' : ''}${e.live ? ' <small class="sample" title="Counted live in the browser, not checked from a video">Live</small>' : ''}</span><span class="val">${fmtScore(e.value, c.unit)}</span></li>`).join('')}</ol>`
+  return `<ol style="--rows:${Math.ceil(rows.length / 2)}">${rows.map((e, i) => `<li class="${i < 3 ? 'podium p' + (i + 1) : ''}${e.name === me ? ' you' : ''}"><span class="pos">${i === 0 ? '<svg class="cup" viewBox="0 0 24 24" role="img" aria-label="First place"><path d="M7 3h10v5a5 5 0 0 1-10 0z M7 5H4v1a3 3 0 0 0 3 3 M17 5h3v1a3 3 0 0 1-3 3 M10.5 13h3v3h-3z M8 16h8l1 3H7z" fill="#f6c945" stroke="#b07a0c" stroke-width="1"/></svg>' : i + 1}</span><span class="who">${esc(e.name)}${e.name === me ? ' <small class="me">You</small>' : ''}${e.sample ? ' <small class="sample">Sample</small>' : ''}${e.live ? ' <small class="sample" title="Counted live in the browser, not checked from a video">Live</small>' : ''}</span><span class="val">${fmtScore(e.value, c.unit)}</span></li>`).join('')}</ol>`
     + (c.you && !youShown ? `<p class="you-line">You: <b>${c.you.rank}${['th','st','nd','rd'][(c.you.rank % 100 > 10 && c.you.rank % 100 < 14) ? 0 : Math.min(c.you.rank % 10, 4) % 4] || 'th'}</b> with ${fmtScore(c.you.value, c.unit)}</p>` : '')
     + (c.entries.length > SHOW ? `<button type="button" class="see-all" data-all="${esc(c.id)}">${all ? 'Show top 5' : `See all ${c.entries.length}`}</button>` : '');
 }
@@ -1127,8 +1573,13 @@ const liveClaim = h => ({ id: h.id, test: h.test_key, value: parseFloat(h.summar
 const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : n % 10] || 'th');
 async function renderEnter(h) {
   const box = document.getElementById('enterBox'); if (box) box.remove();
-  const place = html => document.querySelector('#result .actions').insertAdjacentHTML('afterend', `<div class="enter" id="enterBox">${html}</div>`);
+  const place = html => $('reportView').insertAdjacentHTML('afterend', `<div class="enter" id="enterBox">${html}</div>`);
   if (h.kind === 'live' && !h.summary?.main) return;
+  if (isZero(h)) return;                          // nothing counted: no score to enter, so no challenge card
+  if (h.sample) {
+    place('<h2>Challenges</h2><p>Sample clips can\u2019t be entered into challenges. Analyse your own video, or count live with your camera, to take part.</p>');
+    return;
+  }
   if (!h.score_token && h.kind !== 'live') {
     if (!h.summary?.main) return;
     place('<h2>Challenges</h2><p>This analysis was saved before challenges existed. Analyse a new video to enter.</p>');
@@ -1139,7 +1590,21 @@ async function renderEnter(h) {
     place(`<h2>On the challenge board</h2>
       ${ok.length ? `<ul class="entered">${ok.map(e => `<li><span>${esc(e.title)}</span><b>${e.rank ? ordinal(e.rank) : ''}</b></li>`).join('')}</ul>` : ''}
       ${no.map(e => `<p class="out bad">${esc(e.title)}: ${esc(e.msg)}</p>`).join('')}
-      <p>Entered as <b>${esc(h.enteredAs)}</b>. <a href="#challenges">See challenges</a></p>`);
+      <label for="enterName">Your name on the board</label>
+      <div class="name-row"><input id="enterName" maxlength="24" autocomplete="nickname" value="${esc(h.enteredAs || '')}">
+        <button type="button" class="ghost" id="enterRename">Save name</button></div>
+      <p class="out" id="enterOut" aria-live="polite"></p>
+      <p><a href="#challenges">See challenges</a></p>`);
+    $('enterRename').addEventListener('click', async () => {
+      const name = $('enterName').value.trim().replace(/\s+/g, ' '), out = $('enterOut');
+      if (!/^[\p{L}\p{N} .'\-_]{2,24}$/u.test(name)) { out.className = 'out bad'; out.textContent = 'Use 2 to 24 letters, numbers or spaces.'; return; }
+      if (name === h.enteredAs) { out.className = 'out good'; out.textContent = 'That\u2019s already your name on the board.'; return; }
+      try { localStorage.setItem('fc_name', name); } catch (e) {}
+      $('enterRename').disabled = true; out.className = 'out'; out.textContent = 'Saving…';
+      const before = h.entered; h.entered = null;
+      await autoEnter(h);                              // the server moves this score to the new name
+      if (!h.entered) { h.entered = before; out.className = 'out bad'; out.textContent = 'That didn\u2019t go through. Try again.'; $('enterRename').disabled = false; }
+    });
     return;
   }
   if (savedName()) { place('<h2>Challenges</h2><p>Adding your score to the challenge board…</p>'); autoEnter(h); return; }
@@ -1174,13 +1639,17 @@ function fitAnnounce() { const a = $('announce'); document.documentElement.style
 // (window.history, because this script's own `history` is the saved-analyses list.)
 const syncPage = () => {
   document.body.classList.toggle('page-analyses', location.hash === '#analyses');
+  document.body.classList.toggle('page-analyse', location.hash === '#analyse');
   document.body.classList.toggle('page-leaderboard', /^#(challenges|leaderboard)$/.test(location.hash));
   if (/^#(challenges|leaderboard)$/.test(location.hash)) loadBoards();
+  if (location.hash === '#analyses' && typeof renderProgress === 'function') try { renderProgress(); } catch (e) {}
   scrollTo(0, 0);
 };
 addEventListener('hashchange', syncPage);
 syncPage();
-const leaveAnalysesPage = () => { if (location.hash) { window.history.pushState(null, '', location.pathname + location.search); syncPage(); } };
+// Opening a result (or anything from the tool) goes to the Analyse page.
+function goAnalyse() { if (location.hash !== '#analyse') { window.history.pushState(null, '', '#analyse'); syncPage(); } }
+const leaveAnalysesPage = goAnalyse;
 
 $('saved').addEventListener('click', async ev => {
   const li = ev.target.closest('li'); if (!li) return;
@@ -1267,6 +1736,14 @@ document.addEventListener('click', ev => {
 addEventListener('scroll', () => $('infoPop').classList.add('hidden'), true);
 addEventListener('keydown', ev => { if (ev.key === 'Escape') $('infoPop').classList.add('hidden'); });
 
+// Nothing counted (sit and reach / back stretch measure a position, where zero is a real result).
+const isZero = h => { const v = parseFloat(h.summary?.main?.[1]);
+  return h.summary?.main && isFinite(v) && v <= 0 && !['sitreach', 'backstretch'].includes(h.test_key); };
+$('reportView').addEventListener('click', ev => {
+  const t = ev.target.closest('[data-try]');
+  if (t) { const r = radios.find(r => r.value === t.dataset.try); if (r) r.checked = true; syncTest(); openLive(); return; }
+  if (ev.target.closest('[data-new-zero]')) goNew();
+});
 function renderReport(j) {
   const r = j.summary || {};
   const rows = (items, cls = '') => items.map(([a, b]) =>
@@ -1277,14 +1754,24 @@ function renderReport(j) {
   if (r.main) cards.push(`<div class="r-card main"><b>${esc(r.main[1])}</b><span>${esc(r.main[0])}${infoBtn(r.main[0])}</span></div>`);
   if (r.rating) cards.push(`<div class="r-card"><b>${esc(r.rating)}</b><span>Form ${r.form.toFixed(1)} out of 4${infoBtn('Form')}</span></div>`);
   if (cards.length) html += `<div class="r-cards">${cards.join('')}</div>`;
-  if (r.main && /^0(\.0+)?( |$)/.test(r.main[1])) html += `<p class="r-zero">Nothing was counted. Check that you picked the right test above and that the clip shows the full movement, then try again.</p>`;
-  else if (!j.report && !r.main) html += `<p>This test does not produce a scored report yet. Watch the video above to see your movement with the pose overlay.</p>`;
+  if (isZero(j)) {
+    const away = (r.issues || []).some(([a, b]) => /frame/i.test(a) && parseFloat(b) >= 50);
+    const why = away ? (j.kind === 'live' ? 'You were out of view for most of it: put the camera further back so your hips and knees are in the picture.'
+                                         : 'You were out of view for most of the clip: film from further back so your whole body is in the picture.')
+          : j.kind === 'live' ? 'Do the full movement where the camera can see you.'
+          : 'Check that you picked the right exercise and that the clip shows the full movement.';
+    html += `<div class="r-zero"><p>Nothing was counted. ${why}</p>${j.kind === 'live'
+      ? `<button type="button" class="btn-sm" data-try="${esc(j.test_key)}">Try again</button>`
+      : '<button type="button" class="btn-sm" data-new-zero>New analysis</button>'}</div>`;
+  }
+  else if (!j.report && !r.main) html += `<p>This exercise does not produce a scored report yet. Watch the video above to see your movement with the pose overlay.</p>`;
   if (r.highlights && r.highlights.length) html += sec('Your session', rows(r.highlights));
   if (r.issues && r.issues.length) html += sec('What to work on', rows(r.issues, 'warn'));
   else if (j.report || j.kind === 'live') html += sec('What to work on', '<p>No form problems came up often enough to flag. Well done.</p>');
   if (r.tips && r.tips.length) html += sec('Tips', `<ul>${r.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`);
-  if (r.filming) html += sec('For your next recording', `<p>${esc(r.filming)}</p>`);
-  html += `<p class="r-note">Results are estimates from video and are not medical advice.</p>`;
+  // Live sessions get the live set-up advice (e.g. squats can face the camera), not the upload filming tip.
+  const filming = j.kind === 'live' ? LIVE[j.test_key]?.start || r.filming : r.filming;
+  if (filming) html += sec(j.kind === 'live' ? 'For your next session' : 'For your next recording', `<p>${esc(filming)}</p>`);
   return html;
 }
 
@@ -1295,7 +1782,7 @@ const LM = { nose: 0, lEar: 7, rEar: 8, lSh: 11, rSh: 12, lEl: 13, rEl: 14, lWr:
 const BONES = [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28]];
 const LIVE = {
   pushup:      { label: 'valid push-ups', start: 'Get into a push-up position, side-on to the camera.' },
-  squats:      { label: 'squats', start: 'Stand side-on to the camera with your whole body in view.' },
+  squats:      { label: 'squats', start: 'Face the camera or stand side-on, with your hips and knees in view.' },
   curlups:     { label: 'curl-ups', start: 'Lie down side-on to the camera with your knees bent.' },
   jumpingjack: { label: 'jumping jacks', start: 'Face the camera with room above your hands and below your feet.' },
   plank:       { label: 'seconds held', start: 'Get into a forearm plank, side-on to the camera.' },
@@ -1353,21 +1840,35 @@ function step(s, p, vis, now) {
     }
     if (body < 150 && now > s.cueUntil) cue(s, 'Keep your hips in line with your shoulders and ankles', 'warn', 600);
   } else if (s.key === 'squats') {
-    const k = sm(s, 'k', angle(hip, kn, an));
+    // Depth = how far the hips have dropped towards the knees, as a share of the standing gap. Unlike the
+    // knee angle it works facing the camera as well as side-on, and it doesn't need the ankles in view.
+    const both = vis(LM.lHip) && vis(LM.rHip) && vis(LM.lKn) && vis(LM.rKn);
+    const hy = both ? (p(LM.lHip).y + p(LM.rHip).y) / 2 : hip.y, ky = both ? (p(LM.lKn).y + p(LM.rKn).y) / 2 : kn.y;
+    const gap = sm(s, 'gap', ky - hy);
+    s.stand = Math.max(gap, (s.stand ?? gap) * 0.998);         // standing gap, slowly forgotten if you move closer or away
+    const d = gap / (s.stand || 1);                             // 1 standing, 0 hips level with knees
+    const k = vis(LM[side + 'An']) ? sm(s, 'k', angle(hip, kn, an)) : 180;
+    const low = d < 0.5 || k < 100, top = d > 0.82 && k > 150;
     if (s.phase === 'up') {
-      s.min = Math.min(s.min, k);
-      if (k < 100) s.phase = 'down';
-      else if (k > 160 && s.min < 140) { s.attempts++; fault(s, 'Not deep enough'); cue(s, 'Not counted: go deeper', 'warn'); s.min = 999; }
-      else if (k > 160) s.min = 999;
-    } else if (k > 160) { s.attempts++; if (repOk(s, now)) { s.count++; cue(s, 'Good squat', 'good'); } s.phase = 'up'; s.min = 999; }
+      s.min = Math.min(s.min, d);
+      if (low) s.phase = 'down';
+      else if (top && s.min < 0.75) { s.attempts++; fault(s, 'Not deep enough'); cue(s, 'Not counted: go deeper', 'warn'); s.min = 999; }
+      else if (top) s.min = 999;
+    } else if (top) { s.attempts++; if (repOk(s, now)) { s.count++; cue(s, 'Good squat', 'good'); } s.phase = 'up'; s.min = 999; }
   } else if (s.key === 'curlups') {
+    // Two ways to see a curl-up: the hip angle closing (side-on), or the shoulders rising off the floor, measured in
+    // torso lengths from the lying position (works when the camera is at an angle too).
     const h = sm(s, 'h', angle(sh, hip, kn));
+    const lift = sm(s, 'lift', (hip.y - sh.y) / (dist(sh, hip) || 1));
+    s.lbase = Math.min(lift, (s.lbase ?? lift) + 0.002);
+    const rise = lift - s.lbase;
+    const up = h < 80 || rise > 0.35, flat = h > 115 && rise < 0.15;
     if (s.phase === 'up') {                          // "up" here means lying back, ready
-      s.min = Math.min(s.min, h);
-      if (h < 80) s.phase = 'down';
-      else if (h > 115 && s.min < 100) { s.attempts++; fault(s, 'Not a full rep'); cue(s, 'Not counted: curl up further', 'warn'); s.min = 999; }
-      else if (h > 115) s.min = 999;
-    } else if (h > 115) { s.attempts++; if (repOk(s, now)) { s.count++; cue(s, 'Good curl-up', 'good'); } s.phase = 'up'; s.min = 999; }
+      s.peak = Math.max(s.peak || 0, rise);
+      if (up) s.phase = 'down';
+      else if (flat && s.peak > 0.2) { s.attempts++; fault(s, 'Not a full rep'); cue(s, 'Not counted: curl up further', 'warn'); s.peak = 0; }
+      else if (flat) s.peak = 0;
+    } else if (flat) { s.attempts++; if (repOk(s, now)) { s.count++; cue(s, 'Good curl-up', 'good'); } s.phase = 'up'; s.peak = 0; }
   } else if (s.key === 'jumpingjack') {
     // Front view. Arms use the elbows and legs fall back to the knees, so a rep still counts
     // when hands go above the frame or feet slip below it.
@@ -1462,7 +1963,7 @@ function openLive() {
   selected = null; renderList(); show('live');
   $('liveTitle').textContent = testName(key); $('liveTag').textContent = 'Live';
   $('liveTime').textContent = '0:00';
-  $('liveStart').disabled = false; $('liveStop').disabled = true;
+  $('liveStart').disabled = false; $('liveStop').disabled = true; $('liveStart').textContent = 'Start';
   liveCue(`${LIVE[key].start} Then press Start.`);
   const c = $('liveCanvas').getContext('2d'); c.fillStyle = '#050705'; c.fillRect(0, 0, 640, 480);   // same as --media, so the letterbox is seamless
   $('liveStart').dataset.test = key;
@@ -1479,7 +1980,7 @@ $('liveStart').addEventListener('click', async () => {
     cam.getVideoTracks()[0].addEventListener('ended', () => {
       if (session) { liveCue('The camera stopped. Saving what was recorded…', 'warn'); $('liveStop').click(); }
     });
-    $('cam').srcObject = cam; await $('cam').play();
+    $('cam').srcObject = cam; await $('cam').play(); document.querySelector('.live-box').classList.add('on');
     liveCue('Loading the pose model (first time only)…');
     await loadLandmarker();
   } catch (e) {
@@ -1502,7 +2003,7 @@ $('liveStart').addEventListener('click', async () => {
     recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
     recorder.start(1000);
   } catch (e) { recorder = null; }
-  $('liveStop').disabled = false;
+  $('liveStop').disabled = false; $('liveStart').textContent = 'Start';
   liveCue(LIVE[key].start);
   lastTs = 0;
   loop();
@@ -1525,8 +2026,10 @@ function loop() {
     const vis = i => (lm[i].visibility ?? 1) > 0.5 && lm[i].x > -0.02 && lm[i].x < 1.02 && lm[i].y > -0.02 && lm[i].y < 1.02 ? 1 : 0;
     const head = vis(LM.nose) || vis(LM.lEar) || vis(LM.rEar);
     // Jumping jacks are filmed from the front and can count from the knees, so feet and head are optional.
-    const need = s.key === 'jumpingjack' ? ['Sh', 'Hip', 'Kn'] : ['Sh', 'Hip', 'Kn', 'An'];
-    const full = (head || s.key === 'jumpingjack') && need.every(n => s.key === 'jumpingjack' ? vis(LM['l' + n]) && vis(LM['r' + n]) : vis(LM['l' + n]) || vis(LM['r' + n]));
+    // Squats count from hips and knees, so feet and head may be out of frame (a laptop on a table).
+    const loose = s.key === 'jumpingjack' || s.key === 'squats';
+    const need = loose ? ['Sh', 'Hip', 'Kn'] : ['Sh', 'Hip', 'Kn', 'An'];
+    const full = (head || loose) && need.every(n => s.key === 'jumpingjack' ? vis(LM['l' + n]) && vis(LM['r' + n]) : vis(LM['l' + n]) || vis(LM['r' + n]));
     c.lineWidth = Math.max(3, W / 200); c.strokeStyle = 'rgba(198,242,78,.9)'; c.fillStyle = '#fff';
     for (const [a, b] of BONES) if (vis(a) && vis(b)) { c.beginPath(); c.moveTo(p(a).x, p(a).y); c.lineTo(p(b).x, p(b).y); c.stroke(); }
     for (const i of Object.values(LM)) if (vis(i)) { c.beginPath(); c.arc(p(i).x, p(i).y, W / 160, 0, 7); c.fill(); }
@@ -1556,6 +2059,7 @@ function loop() {
 
 let lastTs = 0;
 function stopCamera() {
+  document.querySelector('.live-box')?.classList.remove('on');
   cancelAnimationFrame(rafId);
   cam?.getTracks().forEach(t => t.stop()); cam = null;
   radios.forEach(r => r.disabled = false);
@@ -1617,8 +2121,20 @@ function liveSummary(s) {
 $('liveStop').addEventListener('click', async () => {
   const s = session; if (!s) return;
   session = null; $('liveStop').disabled = true;
-  liveCue('Saving your session…');
   const summary = liveSummary(s);
+  // Nothing counted: don't save an empty result. Say why and offer another go.
+  const val = parseFloat(summary.main?.[1]);
+  // Sit and reach / back stretch measure a position, where zero or below is a real result.
+  if (!isFinite(val) || (val <= 0 && !['sitreach', 'backstretch'].includes(s.key))) {
+    endLive();
+    const out = s.frames ? s.outFrames / s.frames : 1;
+    liveCue(out > 0.5 ? 'Nothing was counted: you were out of view most of the time. Step back so your hips and knees are in the picture.'
+          : s.attempts ? `Nothing was counted: ${(Object.keys(s.faults)[0] || 'the reps were not complete').toLowerCase()}. Have another go.`
+          : 'Nothing was counted. Make sure you are in view and do the full movement.', 'warn');
+    $('liveStart').textContent = 'Try again'; $('liveStart').disabled = false;
+    return;
+  }
+  liveCue('Saving your session…');
   let video = null;
   if (recorder && recorder.state !== 'inactive') {
     await new Promise(r => { recorder.onstop = r; recorder.stop(); });
@@ -1644,6 +2160,165 @@ $('liveClose').addEventListener('click', () => { endLive(); goNew(); });
 const _show = show;
 show = id => { if (view === 'live' && id !== 'live') endLive(); _show(id); };
 
+
+/* ------------------------------------------------------------------ progress */
+const LOWER_BETTER = new Set(['shuttlerun']);
+function scoreOf(h) {
+  const m = h.summary && h.summary.main; if (!m) return null;
+  const v = parseFloat(m[1]); if (!isFinite(v)) return null;
+  return { v, unit: (String(m[1]).match(/[a-z%]+/i) || [''])[0], label: m[0] };
+}
+// Shown until you have two scored analyses of one test: a made-up eight weeks, clearly labelled.
+function sampleHistory() {
+  const out = [], now = Date.now() / 1000, day = 86400;
+  const plan = { pushup: [14, 1.1, 'Valid push-ups', ''], squats: [22, .9, 'Squats', ''], plank: [48, 4.5, 'Hold', 's'],
+                 verticaljump: [31, .5, 'Jump height', 'cm'], curlups: [18, .8, 'Curl-ups', ''] };
+  let seed = 11; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  Object.entries(plan).forEach(([k, [base, step, label, unit]], ti) => {
+    const n = 9 + ti % 3;
+    for (let i = 0; i < n; i++) {
+      const v = base + step * i * 1.6 + (rnd() - .4) * step * 3;
+      out.push({ id: `sample-${k}-${i}`, test: testName(k), test_key: k, created: now - ((n - 1 - i) * 6 + ti + rnd() * 2) * day,
+                 summary: { main: [label, (unit === 'cm' ? v.toFixed(1) : Math.round(v)) + (unit ? ' ' + unit : '')] } });
+    }
+  });
+  return out;
+}
+let progTest = null;
+function renderProgress() {
+  const real = history.filter(h => scoreOf(h));
+  const counts = {}; real.forEach(h => counts[h.test_key] = (counts[h.test_key] || 0) + 1);
+  const isSample = !Object.values(counts).some(n => n >= 2);
+  const data = isSample ? sampleHistory() : real;
+  $('sampleTag').classList.toggle('hidden', !isSample);
+  const byTest = {}; data.forEach(h => (byTest[h.test_key] ||= []).push(h));
+  const keys = Object.keys(byTest).sort((a, b) => byTest[b].length - byTest[a].length);
+  if (!keys.includes(progTest)) progTest = keys[0];
+  $('progChips').innerHTML = keys.map(k => `<button type="button" data-k="${k}" aria-pressed="${k === progTest}">${esc(byTest[k][0].test)} <span style="opacity:.6">${byTest[k].length}</span></button>`).join('');
+  const pts = byTest[progTest].map(h => ({ t: h.created, ...scoreOf(h) })).sort((a, b) => a.t - b.t);
+  const low = LOWER_BETTER.has(progTest), unit = pts[0].unit, fmt = v => `${+v.toFixed(1)}${unit ? ' ' + unit : ''}`;
+  const best = pts.reduce((b, p) => (low ? p.v < b.v : p.v > b.v) ? p : b);
+  const diff = pts[pts.length - 1].v - pts[0].v, good = low ? diff < 0 : diff > 0;
+  $('progTiles').innerHTML = [['Latest', fmt(pts[pts.length - 1].v)], ['Best', fmt(best.v)],
+    ['Since first', `<span class="${diff === 0 ? '' : good ? 'up' : 'down'}">${diff > 0 ? '+' : diff < 0 ? '−' : ''}${fmt(Math.abs(diff))}</span>`],
+    ['Analyses', pts.length]].map(([k, v]) => `<div class="tile"><small>${k}</small><b>${v}</b></div>`).join('');
+  $('trendTitle').textContent = `${pts[0].label} over time`;
+  drawTrend(pts, best, fmt);
+  // Analyses per week, last 8 weeks, every test
+  const wk = 7 * 86400, end = Math.max(Date.now() / 1000, ...data.map(h => h.created));
+  const weeks = Array.from({ length: 8 }, (_, i) => ({ start: end - (8 - i) * wk, n: 0 }));
+  data.forEach(h => { const w = weeks.find(w => h.created >= w.start && h.created < w.start + wk); if (w) w.n++; });
+  drawWeeks(weeks);
+  $('progTable').innerHTML = '<tr><th>Date</th><th>Result</th></tr>' + pts.slice().reverse().map(p => `<tr><td>${new Date(p.t * 1000).toLocaleDateString()}</td><td>${fmt(p.v)}</td></tr>`).join('');
+}
+const shortDate = t => new Date(t * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+function niceMax(v) { const m = Math.pow(10, Math.floor(Math.log10(v || 1))); return Math.ceil(v / m * 2) / 2 * m; }
+function drawTrend(pts, best, fmt) {
+  const svg = $('trendSvg'), W = svg.clientWidth || 500, H = 210, L = 34, R = 12, T = 18, B = 24;
+  const t0 = pts[0].t, t1 = pts[pts.length - 1].t || t0 + 1, max = niceMax(Math.max(...pts.map(p => p.v)) * 1.1);
+  const x = t => L + (t1 === t0 ? (W - L - R) / 2 : (t - t0) / (t1 - t0) * (W - L - R)), y = v => T + (1 - v / max) * (H - T - B);
+  const ticks = [0, .5, 1].map(f => f * max);
+  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join('');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('aria-label', `${pts.length} results from ${fmt(pts[0].v)} to ${fmt(pts[pts.length - 1].v)}, best ${fmt(best.v)}`);
+  svg.innerHTML = `<g class="grid">${ticks.map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/>`).join('')}</g>
+    <g class="axis">${ticks.map(v => `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${+v.toFixed(1)}</text>`).join('')}
+      <text x="${L}" y="${H - 6}">${shortDate(t0)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${shortDate(t1)}</text></g>
+    <path class="area" d="${path}L${x(t1)},${y(0)}L${x(t0)},${y(0)}Z"/><path class="line" d="${path}"/>
+    <line class="cross hidden" id="trendCross" y1="${T}" y2="${H - B}"/>
+    ${pts.map(p => `<circle class="dot${p === best ? ' best' : ''}" cx="${x(p.t)}" cy="${y(p.v)}" r="${p === best ? 5.5 : 4}"/>`).join('')}
+    <text class="lbl" x="${x(best.t)}" y="${y(best.v) - 10}" text-anchor="${x(best.t) > W - 60 ? 'end' : x(best.t) < L + 40 ? 'start' : 'middle'}">Best ${fmt(best.v)}</text>
+    <rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent" id="trendHit"/>`;
+  hoverTip(svg, ev => {
+    const r = svg.getBoundingClientRect(), mx = (ev.clientX - r.left) * W / r.width;
+    const p = pts.reduce((a, b) => Math.abs(x(b.t) - mx) < Math.abs(x(a.t) - mx) ? b : a);
+    const c = svg.querySelector('#trendCross'); c.setAttribute('x1', x(p.t)); c.setAttribute('x2', x(p.t)); c.classList.remove('hidden');
+    return { x: x(p.t) / W * r.width, y: y(p.v) / H * r.height - 10, html: `<b>${fmt(p.v)}</b> · ${shortDate(p.t)}` };
+  }, () => svg.querySelector('#trendCross').classList.add('hidden'));
+}
+function drawWeeks(weeks) {
+  const svg = $('weekSvg'), W = svg.clientWidth || 260, H = 210, L = 22, R = 4, T = 18, B = 24;
+  const max = Math.max(2, ...weeks.map(w => w.n)), bw = (W - L - R) / weeks.length, y = v => T + (1 - v / max) * (H - T - B);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('aria-label', `Analyses per week for the last 8 weeks: ${weeks.map(w => w.n).join(', ')}`);
+  svg.innerHTML = `<g class="grid"><line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}"/><line x1="${L}" x2="${W - R}" y1="${y(max)}" y2="${y(max)}"/></g>
+    <g class="axis"><text x="${L - 6}" y="${y(max) + 4}" text-anchor="end">${max}</text><text x="${L - 6}" y="${y(0) + 4}" text-anchor="end">0</text>
+      <text x="${L}" y="${H - 6}">${shortDate(weeks[0].start)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">This week</text></g>
+    ${weeks.map((w, i) => w.n ? `<path class="bar" d="${barPath(L + i * bw + 3, y(w.n), bw - 6, y(0) - y(w.n))}"/>` : '').join('')}`;
+  hoverTip(svg, ev => {
+    const r = svg.getBoundingClientRect(), i = Math.max(0, Math.min(weeks.length - 1, Math.floor(((ev.clientX - r.left) * W / r.width - L) / bw)));
+    const w = weeks[i];
+    return { x: (L + i * bw + bw / 2) / W * r.width, y: y(w.n) / H * r.height - 8, html: `<b>${w.n}</b> ${w.n === 1 ? 'analysis' : 'analyses'} · week of ${shortDate(w.start)}` };
+  });
+}
+// A bar with its top corners rounded (4px) and a square base on the axis.
+function barPath(x, y, w, h) { const r = Math.min(4, w / 2, h); return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; }
+function hoverTip(svg, at, leave) {
+  const card = svg.parentElement; let tip = card.querySelector('.tip');
+  if (!tip) { tip = document.createElement('div'); tip.className = 'tip hidden'; card.appendChild(tip); }
+  const move = ev => { const e = ev.touches ? ev.touches[0] : ev, o = at(e), r = svg.getBoundingClientRect(), c = card.getBoundingClientRect();
+    tip.innerHTML = o.html; tip.style.left = `${r.left - c.left + o.x}px`; tip.style.top = `${r.top - c.top + o.y}px`; tip.classList.remove('hidden'); };
+  svg.onpointermove = move; svg.onpointerdown = move;
+  svg.onpointerleave = () => { tip.classList.add('hidden'); leave && leave(); };
+}
+$('progChips').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { progTest = b.dataset.k; renderProgress(); } });
+addEventListener('resize', () => { if (document.body.classList.contains('page-analyses')) renderProgress(); });
+
+
+// Footer: a test link opens that test on the main page; Back to top scrolls up.
+const leaveToMain = () => { goAnalyse(); goNew(); };
+document.querySelectorAll('[data-foot-test]').forEach(b => b.addEventListener('click', () => {
+  leaveToMain();
+  const r = radios.find(r => r.value === b.dataset.footTest); if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+  scrollTo({ top: 0, behavior: 'smooth' });
+}));
+document.querySelector('[data-foot-new]').addEventListener('click', () => { leaveToMain(); scrollTo({ top: 0, behavior: 'smooth' }); });
+$('toTop').addEventListener('click', ev => { ev.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
+$('ctaStart').addEventListener('click', () => $('heroUpload').click());
+$('ctaLive').addEventListener('click', () => $('heroLive').click());
+
+// Hero buttons
+// Upload opens the file picker straight away; the tool page opens with the video loaded.
+$('heroUpload').addEventListener('click', () => file.click());
+file.addEventListener('change', () => { if (file.files[0]) goAnalyse(); });
+$('heroLive').addEventListener('click', () => { goAnalyse(); $('liveBtn').click(); });
+// Count a number up from 0 (keeps decimals and any unit after it)
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function countUp(el, ms = 900) {
+  if (!el || calm) return;
+  const m = el.textContent.match(/^(\D*)(\d+(?:\.\d+)?)(.*)$/s); if (!m) return;
+  const [, pre, num, post] = m, end = parseFloat(num), dec = (num.split('.')[1] || '').length, t0 = performance.now();
+  const tick = now => { const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = pre + (end * e).toFixed(dec) + post; if (k < 1) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+}
+// Sections fade up as they come into view; the example number counts up
+(() => {
+  const els = document.querySelectorAll('.land-sec, .cta-band, .hero-shot');
+  if (calm || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return;
+    e.target.classList.add('in'); io.unobserve(e.target); countUp(e.target.querySelector('.mock-num')); }), { threshold: .15 });
+  els.forEach(el => { el.classList.add('reveal'); io.observe(el); });
+})();
+
+// Hero clip: the count follows the video. Rep times come from running the curl-up rule on this clip.
+(() => {
+  const v = $('heroVid'), out = $('heroCount'), REPS = [3.56, 7.48]; let shown = -1;
+  if (!v) return;
+  if (calm) { v.removeAttribute('autoplay'); v.pause(); out.textContent = REPS.length; return; }
+  // After the last rep, ease the playback down to a stop and dim the picture, instead of cutting.
+  const EASE_FROM = REPS[REPS.length - 1] + 0.05, EASE_FOR = 0.45;
+  const tick = () => { const t = v.currentTime, n = REPS.filter(r => t >= r).length;
+    if (n !== shown) { if (n > shown && shown >= 0) { out.classList.remove('bump'); void out.offsetWidth; out.classList.add('bump'); } out.textContent = n; shown = n; }
+    if (t >= EASE_FROM && !v.paused) {
+      const k = Math.min(1, (t - EASE_FROM) / EASE_FOR);
+      v.playbackRate = Math.max(0.08, 1 - (1 - Math.pow(1 - k, 2)) * 0.92);
+      if (k >= 1 || v.duration - t < 0.06) { v.pause(); v.closest('.hero-shot').classList.add('done'); return; }
+    }
+    requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+  v.play().catch(() => {});
+})();
 /* ------------------------------------------------------------------ startup */
 (async () => {
   try {
