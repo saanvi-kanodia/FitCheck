@@ -734,7 +734,11 @@
   .nav-cta:hover { box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--accent) 60%, transparent); }
   body.page-analyse .nav-cta { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
   @media (max-width: 560px) { .nav-cta { min-height: 36px; padding: 0 12px; font-size: 14px; margin-right: 2px; } }
-  @media (max-width: 440px) { #boardLink { display: none; } .wordmark { font-size: 22px; gap: 7px; } }   /* the bar below has See challenges */
+  @media (max-width: 440px) {   /* Analyse, Challenges, Analysis and the theme button all fit on a phone */
+    .wordmark { font-size: 20px; gap: 6px; } header nav { gap: 2px; }
+    .nav-link { font-size: 13px; padding: 0 5px; } .nav-cta { min-height: 34px; padding: 0 10px; font-size: 13px; margin-right: 0; }
+    .theme-btn { width: 36px; min-height: 36px; } }
+  @media (max-width: 370px) { .wordmark { font-size: 18px; } .nav-link { padding: 0 3px; font-size: 12.5px; } .nav-cta { padding: 0 8px; } }
   /* The top of the exercise card is white in both themes, edge to edge, so every picture sits on the same clean ground */
   .plate:has(img.big) { background: #fff; border-radius: calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0; padding-bottom: 8px; }
   .plate:has(img.big) picture, .plate img.big { background: #fff; }
@@ -760,6 +764,7 @@
   .announce::after { content: ""; position: absolute; inset: 0; pointer-events: none;
                      background: linear-gradient(100deg, transparent 30%, rgba(198,242,78,.10) 50%, transparent 70%); }
   @media (prefers-reduced-motion: reduce) { .announce::before { animation: none; display: none; } }
+  .cam-switch { gap: 8px; } .cam-switch svg { width: 18px; height: 18px; }
 </style>
 </head>
 <body>
@@ -928,6 +933,7 @@
         <div class="actions">
           <button class="btn-sm" type="button" id="liveStart">Start</button>
           <button class="ghost" type="button" id="liveStop" disabled>Stop and save</button>
+          <button class="ghost cam-switch" type="button" id="camSwitch" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-3l-2-3H9L7 7H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1z"/><path d="M9 13a3 3 0 0 1 5.2-2M15 13a3 3 0 0 1-5.2 2"/><path d="M14.5 9v2h-2M9.5 17v-2h2"/></svg><span>Use back camera</span></button>
         </div>
         <p class="r-note">Counting runs in your browser and the camera video never leaves this device. Live results are less precise than an uploaded analysis.</p>
       </div>
@@ -1177,8 +1183,10 @@ $('sampleBtn').addEventListener('click', async () => {
     const dt = new DataTransfer(); dt.items.add(new File([await res.blob()], `sample-${key}.mp4`, { type: 'video/mp4' }));
     file.files = dt.files;
     setFile(file.files[0]);
+    form.requestSubmit();          // "Try a sample clip" runs it straight away
   } catch (e) { $('err').textContent = 'Could not load the sample video.'; }
   btn.disabled = false; btn.textContent = 'Try a sample clip';
+  if (view === 'empty' && $('err').textContent) $('err').scrollIntoView({ behavior: 'smooth', block: 'center' });   // e.g. a height is needed
 });
 file.addEventListener('change', () => { $('err').textContent = ''; setFile(file.files[0]); });
 // Phone bottom bar: shown on the test screen until the upload area itself is on screen.
@@ -1242,6 +1250,11 @@ let view = 'empty';
 let show = function (id) {
   view = id;
   ['empty', 'running', 'result', 'live'].forEach(x => $(x).classList.toggle('hidden', x !== id));
+  // On a phone the button you tapped can be far down the page: bring the view that just opened into sight.
+  if (id !== 'empty') requestAnimationFrame(() => {
+    const top = $('stage').getBoundingClientRect().top;
+    if (top < 0 || top > innerHeight * 0.5) scrollTo({ top: Math.max(0, scrollY + top - 96), behavior: 'smooth' });
+  });
 }
 function goNew() {
   selected = null; show('empty'); renderList();
@@ -1967,20 +1980,44 @@ function openLive() {
   liveCue(`${LIVE[key].start} Then press Start.`);
   const c = $('liveCanvas').getContext('2d'); c.fillStyle = '#050705'; c.fillRect(0, 0, 640, 480);   // same as --media, so the letterbox is seamless
   $('liveStart').dataset.test = key;
+  syncCamSwitch();
 }
 $('liveBtn').addEventListener('click', openLive);
 
+// Front or back camera (remembered). The switch can be used before or during a session.
+let facing = localStorage.getItem('fc_cam') === 'environment' ? 'environment' : 'user';
+async function openCam() {
+  const c = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facing }, width: { ideal: 960 }, height: { ideal: 720 } }, audio: false });
+  c.getVideoTracks()[0].addEventListener('ended', () => {
+    if (session && cam === c) { liveCue('The camera stopped. Saving what was recorded…', 'warn'); $('liveStop').click(); }
+  });
+  return c;
+}
+async function syncCamSwitch() {
+  $('camSwitch').querySelector('span').textContent = facing === 'environment' ? 'Use front camera' : 'Use back camera';
+  try { const n = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput').length;
+        $('camSwitch').hidden = n < 2 && !matchMedia('(pointer: coarse)').matches; } catch (e) {}
+}
+$('camSwitch').addEventListener('click', async () => {
+  facing = facing === 'user' ? 'environment' : 'user'; localStorage.setItem('fc_cam', facing);
+  syncCamSwitch();
+  if (!cam) { liveCue(`The ${facing === 'environment' ? 'back' : 'front'} camera will be used. Press Start.`); return; }
+  try {
+    const next = await openCam(), old = cam; cam = next;
+    $('cam').srcObject = next; await $('cam').play();
+    old.getTracks().forEach(t => t.stop());
+  } catch (e) { facing = facing === 'user' ? 'environment' : 'user'; localStorage.setItem('fc_cam', facing); syncCamSwitch();
+    liveCue('That camera could not be opened.', 'warn'); }
+});
 $('liveStart').addEventListener('click', async () => {
   const key = $('liveStart').dataset.test;
   $('liveStart').disabled = true;
   stopCamera();
   try {
     liveCue('Starting camera…');
-    cam = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 960 }, height: { ideal: 720 } }, audio: false });
-    cam.getVideoTracks()[0].addEventListener('ended', () => {
-      if (session) { liveCue('The camera stopped. Saving what was recorded…', 'warn'); $('liveStop').click(); }
-    });
+    cam = await openCam();
     $('cam').srcObject = cam; await $('cam').play(); document.querySelector('.live-box').classList.add('on');
+    syncCamSwitch();
     liveCue('Loading the pose model (first time only)…');
     await loadLandmarker();
   } catch (e) {
