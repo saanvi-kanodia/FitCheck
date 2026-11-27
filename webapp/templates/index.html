@@ -231,7 +231,7 @@
   /* Result: full width (the test list steps aside). The video and downloads stay in view on the left while the
      score, coaching and challenge card scroll on the right, so no column stops short of the others. */
   main:has(#result:not(.hidden)) { grid-template-columns: minmax(0, 1fr); }
-  main:has(#result:not(.hidden)) .picker { display: none; }
+  body:not(.page-analyses) main:has(#result:not(.hidden)) .picker { display: none; }   /* the saved list lives in .picker */
   #result:not(.hidden) { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); column-gap: 48px; align-items: start;
                          grid-template-areas: "head head" "side report" "side enter" "side box"; grid-template-rows: auto auto auto 1fr; }
   #result .stage-head { grid-area: head; }
@@ -933,6 +933,19 @@
     border: 1px solid var(--edge); border-radius: 999px; }
   .site-foot ul .install-btn:hover { border-color: var(--accent); text-decoration: none; }
   .install-btn svg { width: 16px; height: 16px; color: var(--accent-text); }
+  /* Challenges bar: the original lime bar (lime, slanted capitals, black slanted button, shine sweep), in both themes */
+  .announce { background: #c6f24e; color: #0c0f0d; border-bottom: 0; box-shadow: none; padding: 7px 20px; font-size: 15px; }
+  .announce p::before { content: none; display: none; }
+  .announce b { font: italic 800 18px/1 var(--display); text-transform: uppercase; letter-spacing: 0; color: #0c0f0d; margin-right: 4px; }
+  .announce a { padding: 6px 16px; border: 0; border-radius: 0; background: #0c0f0d; color: #c6f24e; letter-spacing: 0;
+                font: italic 800 15px/1 var(--display); text-transform: uppercase; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+  .announce a:hover { background: #0c0f0d; color: #eef2ec; }
+  .announce::before { display: block; content: ""; position: absolute; inset: 0 auto 0 -40%; width: 30%; transform: skewX(-24deg); pointer-events: none;
+                      background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); mix-blend-mode: normal; opacity: 1;
+                      animation: shine 3.2s ease-in-out infinite; }
+  .announce::after { content: none; }
+  @media (max-width: 560px) { .announce { padding: 8px 14px; font-size: 13.5px; } .announce b { font-size: 16px; } }
+  @media (prefers-reduced-motion: reduce) { .announce::before { animation: none; display: none; } }
 </style>
 </head>
 <body>
