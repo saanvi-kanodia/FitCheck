@@ -346,6 +346,70 @@ def sitemap():
     return app.response_class(body, mimetype="application/xml")
 
 
+# ------------------------------------------------------------------ app (PWA) ---
+# The installable app: a manifest describing it, and a service worker that makes it open fast and work offline.
+MANIFEST = {
+    "id": "/",
+    "name": "FitCheck: AI rep counter & form checker",
+    "short_name": "FitCheck",
+    "description": "Film a push-up, squat, plank or other exercise, or count live with your camera. "
+                   "FitCheck counts your valid reps, scores your form and tells you what to fix.",
+    "start_url": "/#analyse",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#1e1f1e",
+    "theme_color": "#1e1f1e",
+    "categories": ["health", "fitness", "sports"],
+    "icons": [
+        {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+        {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+        {"src": "/static/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+        {"src": "/static/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"},
+    ],
+    "shortcuts": [
+        {"name": "Analyse", "short_name": "Analyse", "url": "/#analyse",
+         "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]},
+        {"name": "Challenges", "short_name": "Challenges", "url": "/#challenges",
+         "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]},
+        {"name": "Your analysis", "short_name": "Analysis", "url": "/#analyses",
+         "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]},
+    ],
+    "screenshots": [
+        {"src": "/static/screen-narrow.webp", "sizes": "780x1688", "type": "image/webp", "form_factor": "narrow",
+         "label": "Count every rep and check your form"},
+        {"src": "/static/screen-wide.webp", "sizes": "1440x900", "type": "image/webp", "form_factor": "wide",
+         "label": "Pick an exercise, then upload a video or count live"},
+    ],
+}
+
+
+def _asset_version():
+    """Changes whenever the page or the service worker changes, so each deploy installs a fresh worker."""
+    h = hashlib.sha256()
+    for name in ("templates/index.html", "sw.js"):
+        with open(os.path.join(APP_DIR, name), "rb") as f:
+            h.update(f.read())
+    return h.hexdigest()[:12]
+
+
+ASSET_VERSION = _asset_version()
+
+
+@app.get("/manifest.webmanifest")
+def manifest():
+    return app.response_class(json.dumps(MANIFEST), mimetype="application/manifest+json")
+
+
+@app.get("/sw.js")
+def service_worker():
+    with open(os.path.join(APP_DIR, "sw.js"), encoding="utf-8") as f:
+        body = f.read().replace("__VERSION__", ASSET_VERSION)
+    resp = app.response_class(body, mimetype="application/javascript")
+    resp.headers["Cache-Control"] = "no-cache"          # the browser checks for a new worker on every visit
+    resp.headers["Service-Worker-Allowed"] = "/"
+    return resp
+
+
 @app.get("/")
 def index():
     samples = [k for k in TESTS if os.path.exists(os.path.join(APP_DIR, "static", f"sample-{k}.mp4"))]

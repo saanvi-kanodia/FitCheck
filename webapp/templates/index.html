@@ -7,6 +7,12 @@
 <meta name="description" content="Film a push-up, squat, plank or other fitness test, or count live with your camera. FitCheck counts your valid reps, scores your form and tells you what to fix. Free, in your browser.">
 <link rel="canonical" href="{{ base }}/">
 <meta name="theme-color" content="#1e1f1e">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="application-name" content="FitCheck">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FitCheck">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/static/icon-512.png" type="image/png" sizes="512x512">
 <link rel="apple-touch-icon" href="/static/icon-180.png">
@@ -922,6 +928,11 @@
     .landing .land-sec.hiw > .trust-grid { margin-top: 40px; }
     .landing .privacy > ul, .landing .faq > .faq-list { margin-top: 32px; } }
   @media (max-width: 640px) { .landing .hiw .trust-card h3 { margin-top: 18px; } }
+  .install-tip { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); max-width: 26ch; }
+  .site-foot ul .install-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; margin-top: 4px; padding: 0 16px;
+    border: 1px solid var(--edge); border-radius: 999px; }
+  .site-foot ul .install-btn:hover { border-color: var(--accent); text-decoration: none; }
+  .install-btn svg { width: 16px; height: 16px; color: var(--accent-text); }
 </style>
 </head>
 <body>
@@ -1191,6 +1202,8 @@
             <li><a href="#challenges">Challenges</a></li>
             <li><a href="#analyses">Your analysis</a></li>
             <li><button type="button" data-foot-new>New analysis</button></li>
+            <li><button type="button" class="install-btn" id="installBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Install the app</button>
+              <p class="install-tip" id="installTip" hidden>On iPhone or iPad: tap Share, then “Add to Home Screen”.</p></li>
           </ul>
         </nav>
       </div>
@@ -2551,6 +2564,29 @@ function countUp(el, ms = 900) {
     requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
   v.play().catch(() => {});
+})();
+
+/* ------------------------------------------------------------------ app (PWA) */
+// The service worker makes FitCheck installable, quick to open and usable offline.
+if ('serviceWorker' in navigator && window.isSecureContext) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+// The phone's status bar follows the site's light or dark theme.
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+const syncThemeColor = () => { themeMeta.content = document.documentElement.dataset.theme === 'light' ? '#f4f5f2' : '#1e1f1e'; };
+syncThemeColor(); new MutationObserver(syncThemeColor).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+// Install: Android and desktop Chrome/Edge offer a prompt; iPhone and iPad need Share → Add to Home Screen.
+(() => {
+  const btn = $('installBtn'), tip = $('installTip');
+  const installed = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let prompt = null;
+  if (installed) return;
+  if (ios) btn.hidden = false;
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); prompt = e; btn.hidden = false; });
+  addEventListener('appinstalled', () => { btn.hidden = true; tip.hidden = true; prompt = null; });
+  btn.addEventListener('click', async () => {
+    if (prompt) { prompt.prompt(); const choice = await prompt.userChoice.catch(() => null); prompt = null; if (choice?.outcome === 'accepted') btn.hidden = true; }
+    else tip.hidden = !tip.hidden;
+  });
 })();
 /* ------------------------------------------------------------------ startup */
 (async () => {
