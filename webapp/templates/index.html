@@ -380,6 +380,7 @@
   .board .you-line b { color: var(--accent-text); }
   .board .see-all { align-self: flex-start; min-height: 36px; padding: 0; border: 0; background: none; color: var(--accent-text); font-weight: 600; font-size: 14px; cursor: pointer; }
   .board .see-all:hover { text-decoration: underline; }
+  .board-intro .live-key { padding: 1px 6px; border-radius: 3px; background: var(--plate); font-size: 12px; font-weight: 600; color: var(--muted); }
   .board .sample { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
   .board .btn-sm { align-self: flex-start; margin-top: auto; }
   /* "Enter a challenge" on a result */
@@ -401,7 +402,7 @@
   /* "Challenges are live" bar: lime, with a slow shine across it; dismissible */
   .announce { margin-top: 12px; border-radius: 6px; }   /* sits under the top bar, within the page width */
   .announce { position: relative; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 16px;
-              padding: 7px 52px; overflow: hidden; background: #c6f24e; color: #0c0f0d; font-size: 15px; text-align: center; }
+              padding: 7px 20px; overflow: hidden; background: #c6f24e; color: #0c0f0d; font-size: 15px; text-align: center; }
   .announce[hidden] { display: none; }
   .announce p { position: relative; margin: 0; }
   .announce b { font: italic 800 18px/1 var(--display); text-transform: uppercase; margin-right: 4px; }
@@ -416,7 +417,7 @@
                 color: #0c0f0d; font-size: 24px; line-height: 1; cursor: pointer; }
   .announce-x:focus-visible { outline: 2px solid #0c0f0d; }
   @media (prefers-reduced-motion: reduce) { .announce::before { animation: none; display: none; } }
-  @media (max-width: 560px) { .announce { padding: 8px 44px 8px 14px; font-size: 13.5px; } .announce b { font-size: 16px; } }
+  @media (max-width: 560px) { .announce { padding: 8px 14px; font-size: 13.5px; } .announce b { font-size: 16px; } }
 
   /* Drop zone: lime border and two curved lime arrows pointing in, with a gentle bob */
   .drop { border-color: var(--accent-text); }
@@ -460,7 +461,6 @@
   <div class="announce" id="announce" hidden>
     <p><b>Challenges are live.</b> <span id="announceWeek">Climb the rankings on six new boards.</span></p>
     <a href="#challenges" id="announceGo">See challenges</a>
-    <button type="button" class="announce-x" id="announceX" aria-label="Dismiss">&times;</button>
   </div>
 
   {% set hints = {
@@ -601,7 +601,7 @@
       <h1 id="boardHead">Challenges</h1></div>
       <a class="ghost" href="#">New analysis</a>
     </div>
-    <p class="board-intro">Analyse a video, then enter your score from the result screen.</p>
+    <p class="board-intro">Analyse a video or count live with your camera, and your score goes on the boards automatically. <span class="live-key">Live</span> marks scores counted live in the browser.</p>
     <div class="boards" id="boards"><p class="saved-empty">Loading challenges…</p></div>
   </section>
   <div id="infoPop" class="hidden" role="dialog"></div>
@@ -1071,7 +1071,7 @@ function boardRows(c, all) {
   const me = c.you?.name, rows = all ? c.entries : c.entries.slice(0, SHOW);
   if (!c.entries.length) return '<div class="none">No scores yet. Be the first.</div>';
   const youShown = rows.some(e => e.name === me);
-  return `<ol>${rows.map((e, i) => `<li class="${i < 3 ? 'podium p' + (i + 1) : ''}${e.name === me ? ' you' : ''}"><span class="pos">${i === 0 ? '<svg class="cup" viewBox="0 0 24 24" role="img" aria-label="First place"><path d="M7 3h10v5a5 5 0 0 1-10 0z M7 5H4v1a3 3 0 0 0 3 3 M17 5h3v1a3 3 0 0 1-3 3 M10.5 13h3v3h-3z M8 16h8l1 3H7z" fill="#f6c945" stroke="#b07a0c" stroke-width="1"/></svg>' : i + 1}</span><span class="who">${esc(e.name)}${e.name === me ? ' <small class="me">You</small>' : ''}${e.sample ? ' <small class="sample">Sample</small>' : ''}</span><span class="val">${fmtScore(e.value, c.unit)}</span></li>`).join('')}</ol>`
+  return `<ol>${rows.map((e, i) => `<li class="${i < 3 ? 'podium p' + (i + 1) : ''}${e.name === me ? ' you' : ''}"><span class="pos">${i === 0 ? '<svg class="cup" viewBox="0 0 24 24" role="img" aria-label="First place"><path d="M7 3h10v5a5 5 0 0 1-10 0z M7 5H4v1a3 3 0 0 0 3 3 M17 5h3v1a3 3 0 0 1-3 3 M10.5 13h3v3h-3z M8 16h8l1 3H7z" fill="#f6c945" stroke="#b07a0c" stroke-width="1"/></svg>' : i + 1}</span><span class="who">${esc(e.name)}${e.name === me ? ' <small class="me">You</small>' : ''}${e.sample ? ' <small class="sample">Sample</small>' : ''}${e.live ? ' <small class="sample" title="Counted live in the browser, not checked from a video">Live</small>' : ''}</span><span class="val">${fmtScore(e.value, c.unit)}</span></li>`).join('')}</ol>`
     + (c.you && !youShown ? `<p class="you-line">You: <b>${c.you.rank}${['th','st','nd','rd'][(c.you.rank % 100 > 10 && c.you.rank % 100 < 14) ? 0 : Math.min(c.you.rank % 10, 4) % 4] || 'th'}</b> with ${fmtScore(c.you.value, c.unit)}</p>` : '')
     + (c.entries.length > SHOW ? `<button type="button" class="see-all" data-all="${esc(c.id)}">${all ? 'Show top 5' : `See all ${c.entries.length}`}</button>` : '');
 }
@@ -1104,14 +1104,15 @@ $('boards').addEventListener('click', ev => {
 const savedName = () => { try { return localStorage.getItem('fc_name') || ''; } catch (e) { return ''; } };
 async function autoEnter(h) {
   const name = savedName();
-  if (!h.score_token || !name || h.entered) return;
+  const live = h.kind === 'live' && h.summary?.main ? liveClaim(h) : null;
+  if ((!h.score_token && !live) || !name || h.entered) return;
   let list = boardCache; try { list = list || await fetchBoards(); } catch (e) { return; }
   const fits = list.filter(c => c.test === h.test_key); if (!fits.length) return;
   const results = [];
   for (const c of fits) {
     try {
       const r = await fetch('/api/leaderboard', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: h.score_token, challenge: c.id, name }) });
+        body: JSON.stringify(live ? { live, challenge: c.id, name } : { token: h.score_token, challenge: c.id, name }) });
       const d = await r.json().catch(() => ({}));
       results.push({ id: c.id, title: c.title, ok: r.ok, rank: d.rank, msg: r.ok ? '' : (d.error || 'Not entered.') });
     } catch (e) { return; }                     // offline: try again next time this result is opened
@@ -1120,12 +1121,15 @@ async function autoEnter(h) {
   await DB.put('history', h).catch(() => {});
   if (selected === h.id) renderEnter(h);
 }
+// A live session's result as the server expects it (checked there for believability, then marked Live).
+const liveClaim = h => ({ id: h.id, test: h.test_key, value: parseFloat(h.summary.main[1]),
+  unit: (String(h.summary.main[1]).match(/[a-z%]+/i) || [''])[0], seconds: h.summary.duration });
 const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : n % 10] || 'th');
 async function renderEnter(h) {
   const box = document.getElementById('enterBox'); if (box) box.remove();
   const place = html => document.querySelector('#result .actions').insertAdjacentHTML('afterend', `<div class="enter" id="enterBox">${html}</div>`);
-  if (!h.score_token) {
-    if (h.kind === 'live') return;   // live results are counted in the browser, so they can't be verified
+  if (h.kind === 'live' && !h.summary?.main) return;
+  if (!h.score_token && h.kind !== 'live') {
     if (!h.summary?.main) return;
     place('<h2>Challenges</h2><p>This analysis was saved before challenges existed. Analyse a new video to enter.</p>');
     return;
@@ -1157,16 +1161,13 @@ async function renderEnter(h) {
 
 // The bar's height, so the main screen's fit-to-window sizing leaves room for it.
 function fitAnnounce() { const a = $('announce'); document.documentElement.style.setProperty('--ann', (a.hidden ? 0 : a.offsetHeight + parseFloat(getComputedStyle(a).marginTop)) + 'px'); }
-// "Challenges are live" bar: shown until dismissed; names this week's challenge when it's known.
+// "Challenges are live" bar: always shown; names this week's challenge when it's known.
 (() => {
-  let gone = false; try { gone = localStorage.getItem('fc_announce') === 'challenges-2'; } catch (e) {}
-  if (gone) return;
   $('announce').hidden = false;
   fitAnnounce(); addEventListener('resize', fitAnnounce);
   fetch('/api/leaderboard').then(r => r.ok ? r.json() : null).then(d => {
     const w = d?.challenges?.find(c => c.kind === 'weekly'); if (w) $('announceWeek').textContent = `This week: ${w.title.replace(/^This week:\s*/i, '')}. Can you top the board?`; fitAnnounce();
   }).catch(() => {});
-  $('announceX').addEventListener('click', () => { $('announce').hidden = true; fitAnnounce(); try { localStorage.setItem('fc_announce', 'challenges-2'); } catch (e) {} });
 })();
 
 // The analyses page lives at #analyses; any other address shows the test picker and stage.
@@ -1635,6 +1636,7 @@ $('liveStop').addEventListener('click', async () => {
                   video_name: 'Camera session', summary, report: null, video, pdf };
   await DB.put('history', entry).catch(() => {});
   history.unshift(entry);
+  autoEnter(entry);                                // live scores go on the boards too, marked Live
   selected = entry.id; openResult(entry);
 });
 $('liveClose').addEventListener('click', () => { endLive(); goNew(); });

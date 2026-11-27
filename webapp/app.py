@@ -520,7 +520,8 @@ def get_leaderboard():
 @app.post("/api/leaderboard")
 def post_leaderboard():
     data = request.get_json(silent=True) or {}
-    ok, message, rank = leaderboard.submit(store(), DATA_DIR, data.get("token"), data.get("challenge"), data.get("name"))
+    ok, message, rank = leaderboard.submit(store(), DATA_DIR, data.get("token"), data.get("challenge"), data.get("name"),
+                                           live=data.get("live") if isinstance(data.get("live"), dict) else None)
     return (jsonify(ok=True, message=message, rank=rank) if ok else (jsonify(error=message), 400))
 
 

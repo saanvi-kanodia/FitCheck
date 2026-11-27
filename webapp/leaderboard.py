@@ -131,13 +131,16 @@ class Store:
     def top(self, challenge, period, n=TOP):
         """Each person's best entry, best first."""
         # The pattern goes in as a parameter: a literal % in the SQL breaks Postgres's driver.
-        q = (f"SELECT name, MAX(value) AS best, MIN(created), MIN(CASE WHEN job LIKE {self.ph} THEN 1 ELSE 0 END) "
+        q = (f"SELECT name, MAX(value) AS best, MIN(created), MIN(CASE WHEN job LIKE {self.ph} THEN 1 ELSE 0 END), "
+             f"MAX(CASE WHEN job LIKE {self.ph} THEN value ELSE NULL END) "
              f"FROM entries WHERE challenge = {self.ph} AND period = {self.ph} "
              f"GROUP BY name ORDER BY best DESC, MIN(created) ASC LIMIT {int(n)}")
         with self.lock, self._conn() as c:
-            cur = c.cursor(); cur.execute(q, ("demo-%", challenge, period))
+            cur = c.cursor(); cur.execute(q, ("demo-%", "live-%", challenge, period))
             # sample: only sample scores (seed_leaderboard.py) behind this row, so the page can say so
-            return [{"name": r[0], "value": r[1], "created": r[2], "sample": bool(r[3])} for r in cur.fetchall()]
+            # live: the best score came from a live camera session (counted in the browser, not checked on the server)
+            return [{"name": r[0], "value": r[1], "created": r[2], "sample": bool(r[3]),
+                     "live": r[4] is not None and r[4] >= r[1]} for r in cur.fetchall()]
 
     def best(self, challenge, period, name):
         q = f"SELECT MAX(value) FROM entries WHERE challenge = {self.ph} AND period = {self.ph} AND name = {self.ph}"
@@ -177,9 +180,37 @@ def board(store, name=None):
     return out
 
 
-def submit(store, data_dir, token, challenge_id, name):
-    """Returns (ok, message, rank)."""
-    claim = verify(data_dir, token or "")
+# Live camera scores are counted in the browser, so the server can only check they are believable.
+LIVE_PER_MIN = {"pushup": 70, "squats": 70, "curlups": 70, "jumpingjack": 130}
+LIVE_ID = re.compile(r"^live-[0-9a-z]{4,20}$")
+
+
+def live_claim(live):
+    """Turn a live session's result into a claim like a signed one, or explain why it isn't believable."""
+    try:
+        test, value, seconds, unit = live["test"], float(live["value"]), float(live["seconds"]), str(live.get("unit") or "")
+        job = str(live["id"])
+    except (KeyError, TypeError, ValueError):
+        return None, "This live result is incomplete."
+    if test not in TEST_NAMES or not LIVE_ID.match(job) or not (3 <= seconds <= 1800):
+        return None, "This live result is incomplete."
+    if test in LIVE_PER_MIN and value > max(5, LIVE_PER_MIN[test] * seconds / 60):
+        return None, "That count is faster than a person can go, so it wasn't entered."
+    if test == "plank" and value > seconds + 2:
+        return None, "The hold is longer than the session, so it wasn't entered."
+    if test == "verticaljump" and (unit.strip() != "cm" or value > 120):
+        return None, "Enter your height before a live jump so it can be measured in centimetres."
+    return {"test": test, "value": value, "seconds": seconds, "job": job, "week": week_key()}, None
+
+
+def submit(store, data_dir, token, challenge_id, name, live=None):
+    """Returns (ok, message, rank). A signed token (uploaded analysis) or a live session's result."""
+    if live is not None:
+        claim, why = live_claim(live)
+        if not claim:
+            return False, why, None
+    else:
+        claim = verify(data_dir, token or "")
     if not claim:
         return False, "This result can't be submitted (it wasn't analysed by FitCheck, or it is too old).", None
     ch = next((c for c in CHALLENGES if c["id"] == challenge_id), None)
